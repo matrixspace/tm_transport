@@ -212,6 +212,15 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         >
     >;
 
+    class MultiTransportBroadcastListenerRedisTopicHelper final {
+    public:
+        static std::string redisTopicHelper(std::string const &input) {
+            std::string ret = input;
+            std::replace(ret.begin(), ret.end(), '#', '*');
+            return ret;
+        }
+    };
+
     template <class Component>
     class MultiTransportBroadcastListenerTopicHelper final {
     public:
@@ -219,12 +228,47 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
             typename Component::NoTopicSelection, std::string, std::regex
         > parseTopic(std::string const &s) {
             if (s == "") {
-                return typename Component::NoTopicSelection {};
-            } else {
-                if (boost::starts_with(s, "r/") && boost::ends_with(s, "/") && s.length() > 3) {
-                    return std::regex {s.substr(2, s.length()-3)};
+                if constexpr(std::is_same_v<Component, rabbitmq::RabbitMQComponent>) {
+                    return "#";
+                } else if constexpr (std::is_same_v<Component, redis::RedisComponent>) {
+                    return "*";
                 } else {
+                    return typename Component::NoTopicSelection {};
+                }
+            } else {
+                if constexpr(
+                    std::is_same_v<Component, rabbitmq::RabbitMQComponent>
+                ) {
                     return s;
+                } else if constexpr(
+                    std::is_same_v<Component, redis::RedisComponent>
+                ) {
+                    return MultiTransportBroadcastListenerRedisTopicHelper::redisTopicHelper(s);
+                } else {
+                    if (boost::starts_with(s, "r/") && boost::ends_with(s, "/") && s.length() > 3) {
+                        return std::regex {s.substr(2, s.length()-3)};
+                    } else {
+                        std::ostringstream oss;
+                        bool rabbitMQStyle = false;
+                        for (char c : s) {
+                            if (c == '#') {
+                                oss << ".+";
+                                rabbitMQStyle = true;
+                            } else if (c == '*') {
+                                oss << "[^\\.]+";
+                                rabbitMQStyle = true;
+                            } else if (c == '.') {
+                                oss << "\\.";
+                            } else {
+                                oss << c;
+                            }
+                        }
+                        if (rabbitMQStyle) {
+                            return std::regex {oss.str()};
+                        } else {
+                            return s;
+                        }
+                    }
                 }
             }
         }
@@ -400,7 +444,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             }
                             auto res = component->redis_addSubscriptionClient(
                                 x.connectionLocator
-                                , x.topicDescription
+                                , MultiTransportBroadcastListenerRedisTopicHelper::redisTopicHelper(x.topicDescription)
                                 , [this,env](basic::ByteDataWithTopic &&d) {
                                     TM_INFRA_IMPORTER_TRACER_WITH_SUFFIX(env, ":data");
                                     T t;
