@@ -813,6 +813,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 const char *depthEnv = std::getenv("TM_REDIS_SENDER_USE_DEPTH_HEURISTIC");
                 useDepthHeuristic_ = (depthEnv && std::string_view(depthEnv) == "1");
 
+                const char* drainQueueEnv = std::getenv("TM_REDIS_DRAIN_QUEUE_ON_SHUTDOWN");
+                drainQueueOnShutdown_ = (drainQueueEnv && std::string_view(drainQueueEnv) == "1");
+
                 senderThread_ = std::thread([this]() { senderThreadMain(); });
             }
 
