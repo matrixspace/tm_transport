@@ -15,6 +15,9 @@
 #include <tm_kit/transport/nng/NNGComponent.hpp>
 #include <tm_kit/transport/socket_rpc/SocketRPCComponent.hpp>
 #include <tm_kit/transport/shared_memory_broadcast/SharedMemoryBroadcastComponent.hpp>
+#ifdef __linux__
+#include <tm_kit/transport/shm_cursor/ShmCursorComponent.hpp>
+#endif
 #include <tm_kit/transport/AbstractHookFactoryComponent.hpp>
 #include <tm_kit/transport/grpc_interop/GrpcInteropComponent.hpp>
 #include <tm_kit/transport/json_rest/JsonRESTComponent.hpp>
@@ -41,6 +44,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         , json_rest::JsonRESTComponent
         , web_socket::WebSocketComponent
         , singlecast::SinglecastComponent
+#ifdef __linux__
+        , shm_cursor::ShmCursorComponent
+#endif
     >;
 
     template <class Env>
@@ -83,6 +89,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         if constexpr (std::is_convertible_v<Env *, singlecast::SinglecastComponent *>) {
             retVal["singlecast"] = env->singlecast_threadHandles();
         }
+#ifdef __linux__
+        if constexpr (std::is_convertible_v<Env *, shm_cursor::ShmCursorComponent *>) {
+            retVal["shm_cursor"] = env->shm_cursor_threadHandles();
+        }
+#endif
         return retVal;
     }
 
@@ -96,8 +107,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         , SharedMemoryBroadcast
         , WebSocket
         , Singlecast
+        , ShmCursor
     };
-    inline const std::array<std::string,9> MULTI_TRANSPORT_SUBSCRIBER_CONNECTION_TYPE_STR = {
+    inline const std::array<std::string,10> MULTI_TRANSPORT_SUBSCRIBER_CONNECTION_TYPE_STR = {
         "multicast"
         , "rabbitmq"
         , "redis"
@@ -107,6 +119,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         , "shared_memory_broadcast"
         , "websocket"
         , "singlecast"
+        , "shm_cursor"
     };
     inline auto parseMultiTransportBroadcastChannel(std::string const &s) 
         -> std::optional<std::tuple<MultiTransportBroadcastListenerConnectionType, ConnectionLocator>>
@@ -134,6 +147,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         case MultiTransportBroadcastListenerConnectionType::SharedMemoryBroadcast:
             return true;
             break;
+#ifdef __linux__
+        case MultiTransportBroadcastListenerConnectionType::ShmCursor:
+            return true;
+            break;
+#endif
         case MultiTransportBroadcastListenerConnectionType::ZeroMQ:
            {
                auto const &h = std::get<1>(c).host();
@@ -732,6 +750,58 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             );
                         }
                         break;
+#ifdef __linux__
+                    case MultiTransportBroadcastListenerConnectionType::ShmCursor:
+                        if constexpr (std::is_convertible_v<Env *, shm_cursor::ShmCursorComponent *>) {
+                            auto *component = static_cast<shm_cursor::ShmCursorComponent *>(env);
+                            auto actualHook = wireToUserHook_;
+                            if (!actualHook) {
+                                actualHook = DefaultHookFactory<Env>::template incomingHook<T>(env);
+                            }
+                            auto res = component->shm_cursor_addSubscriptionClient(
+                                x.connectionLocator
+                                , MultiTransportBroadcastListenerTopicHelper<shm_cursor::ShmCursorComponent>::parseTopic(x.topicDescription)
+                                , [this,env](basic::ByteDataWithTopic &&d) {
+                                    TM_INFRA_IMPORTER_TRACER_WITH_SUFFIX(env, ":data");
+                                    T t;
+                                    auto tRes = basic::bytedata_utils::RunDeserializer<T>::applyInPlace(t, d.content);
+                                    if (tRes) {
+                                        this->ImporterParent::publish(M::template pureInnerData<basic::TypedDataWithTopic<T>>(env, {std::move(d.topic), std::move(t)}));
+                                    }
+                                }
+                                , actualHook
+                            );
+                            {
+                                std::lock_guard<std::mutex> _(subscriptionsMutex_);
+                                subscriptions_.insert({{x.connectionType, res}, x});
+                            }
+                            this->FacilityParent::publish(
+                                env
+                                , typename M::template Key<MultiTransportBroadcastListenerOutput> {
+                                    id
+                                    , MultiTransportBroadcastListenerOutput { {
+                                        MultiTransportBroadcastListenerAddSubscriptionResponse {res}
+                                    } }
+                                }
+                                , true
+                            );
+                        } else {
+                            std::ostringstream errOss;
+                            errOss << "[MultiTransportBroadcastListner::actuallyHandle] trying to set up shm cursor channel " << x.connectionLocator << " but shm cursor is unsupported in the environment";
+                            env->log(infra::LogLevel::Warning, errOss.str());
+                            this->FacilityParent::publish(
+                                env
+                                , typename M::template Key<MultiTransportBroadcastListenerOutput> {
+                                    id
+                                    , MultiTransportBroadcastListenerOutput { {
+                                        MultiTransportBroadcastListenerAddSubscriptionResponse {0}
+                                    } }
+                                }
+                                , true
+                            );
+                        }
+                        break;
+#endif
                     case MultiTransportBroadcastListenerConnectionType::WebSocket:
                         if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                             auto *component = static_cast<web_socket::WebSocketComponent *>(env);
@@ -929,6 +999,18 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             }
                         }
                         break;
+#ifdef __linux__
+                    case MultiTransportBroadcastListenerConnectionType::ShmCursor:
+                        if constexpr (std::is_convertible_v<Env *, shm_cursor::ShmCursorComponent *>) {
+                            static_cast<shm_cursor::ShmCursorComponent *>(env)
+                                ->shm_cursor_removeSubscriptionClient(x.subscriptionID);
+                            {
+                                std::lock_guard<std::mutex> _(subscriptionsMutex_);
+                                subscriptions_.erase({x.connectionType, x.subscriptionID});
+                            }
+                        }
+                        break;
+#endif
                     case MultiTransportBroadcastListenerConnectionType::WebSocket:
                         if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                             static_cast<web_socket::WebSocketComponent *>(env)
@@ -1008,6 +1090,14 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                                     ->shared_memory_broadcast_removeSubscriptionClient(std::get<1>(x.first));
                             }
                             break;
+#ifdef __linux__
+                        case MultiTransportBroadcastListenerConnectionType::ShmCursor:
+                            if constexpr (std::is_convertible_v<Env *, shm_cursor::ShmCursorComponent *>) {
+                                static_cast<shm_cursor::ShmCursorComponent *>(env)
+                                    ->shm_cursor_removeSubscriptionClient(std::get<1>(x.first));
+                            }
+                            break;
+#endif
                         case MultiTransportBroadcastListenerConnectionType::WebSocket:
                             if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                                 static_cast<web_socket::WebSocketComponent *>(env)

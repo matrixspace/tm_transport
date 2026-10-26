@@ -44,6 +44,9 @@ subdir('security')
 subdir('named_value_store_components')
 subdir('complex_key_value_store_components')
 subdir('shared_memory_broadcast')
+if build_machine.system() == 'linux'
+    subdir('shm_cursor')
+endif
 subdir('bcl_compat')
 subdir('socket_rpc')
 subdir('db_table_importer_exporter')

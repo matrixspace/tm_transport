@@ -10,6 +10,9 @@
 #include <tm_kit/transport/zeromq/ZeroMQImporterExporter.hpp>
 #include <tm_kit/transport/nng/NNGImporterExporter.hpp>
 #include <tm_kit/transport/shared_memory_broadcast/SharedMemoryBroadcastImporterExporter.hpp>
+#ifdef __linux__
+#include <tm_kit/transport/shm_cursor/ShmCursorImporterExporter.hpp>
+#endif
 #include <tm_kit/transport/websocket/WebSocketImporterExporter.hpp>
 #include <tm_kit/transport/singlecast/SinglecastImporterExporter.hpp>
 #include <tm_kit/transport/HostNameUtil.hpp>
@@ -212,6 +215,20 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             r.environment()->log(infra::LogLevel::Warning, "[MultiTransportBroadcastListenerManagingUtils::setupBroadcastListeners_internal] Trying to create shared memory broadcast publisher with channel spec '"+spec.channel+"', but shared memory broadcast is unsupported in the environment");
                         }
                         break;
+#ifdef __linux__
+                    case MultiTransportBroadcastListenerConnectionType::ShmCursor:
+                        if constexpr (std::is_convertible_v<Env *, shm_cursor::ShmCursorComponent *>) {
+                            sub = shm_cursor::ShmCursorImporterExporter<Env>::template createTypedImporter<FirstInputType>(
+                                std::get<1>(*parsedSpec)
+                                , MultiTransportBroadcastListenerTopicHelper<shm_cursor::ShmCursorComponent>::parseTopic(getTopic_internal(std::get<0>(*parsedSpec), spec.topicDescription))
+                                , hookFactory(spec.name)
+                            );
+                            r.registerImporter(prefix+"/"+spec.name, sub);
+                        } else {
+                            r.environment()->log(infra::LogLevel::Warning, "[MultiTransportBroadcastListenerManagingUtils::setupBroadcastListeners_internal] Trying to create shm cursor publisher with channel spec '"+spec.channel+"', but shm cursor is unsupported in the environment");
+                        }
+                        break;
+#endif
                     case MultiTransportBroadcastListenerConnectionType::WebSocket:
                         if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                             sub = web_socket::WebSocketImporterExporter<Env>::template createTypedImporter<FirstInputType>(
@@ -586,6 +603,21 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                     throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils::oneByteDataBroadcastListener] Trying to create shared memory broadcast publisher with channel spec '"+channelSpec+"', but shared memory broadcast is unsupported in the environment");
                 }
                 break;
+#ifdef __linux__
+            case MultiTransportBroadcastListenerConnectionType::ShmCursor:
+                if constexpr (std::is_convertible_v<Env *, shm_cursor::ShmCursorComponent *>) {
+                    auto sub = shm_cursor::ShmCursorImporterExporter<Env>::createImporter(
+                        std::get<1>(*parsed)
+                        , MultiTransportBroadcastListenerTopicHelper<shm_cursor::ShmCursorComponent>::parseTopic(getTopic_internal(std::get<0>(*parsed), topicDescription))
+                        , hook
+                    );
+                    r.registerImporter(name, sub);
+                    return r.importItem(sub);
+                } else {
+                    throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils::oneByteDataBroadcastListener] Trying to create shm cursor publisher with channel spec '"+channelSpec+"', but shm cursor is unsupported in the environment");
+                }
+                break;
+#endif
             case MultiTransportBroadcastListenerConnectionType::WebSocket:
                 if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                     auto sub = web_socket::WebSocketImporterExporter<Env>::createImporter(
@@ -887,6 +919,20 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                     throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils::fetchFirstUpdateAndDisconnect] Trying to create shared memory broadcast publisher with channel spec '"+channelSpec+"', but shared memory broadcast is unsupported in the environment");
                 }
                 break;
+#ifdef __linux__
+            case MultiTransportBroadcastListenerConnectionType::ShmCursor:
+                if constexpr (std::is_convertible_v<Env *, shm_cursor::ShmCursorComponent *>) {
+                    return shm_cursor::ShmCursorImporterExporter<Env>::fetchFirstUpdateAndDisconnect(
+                        env
+                        , std::get<1>(*parsed)
+                        , MultiTransportBroadcastListenerTopicHelper<shm_cursor::ShmCursorComponent>::parseTopic(getTopic_internal(std::get<0>(*parsed), topicDescription))
+                        , hook
+                    );
+                } else {
+                    throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils::fetchFirstUpdateAndDisconnect] Trying to create shm cursor publisher with channel spec '"+channelSpec+"', but shm cursor is unsupported in the environment");
+                }
+                break;
+#endif
             case MultiTransportBroadcastListenerConnectionType::WebSocket:
                 if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                     return web_socket::WebSocketImporterExporter<Env>::fetchFirstUpdateAndDisconnect(
@@ -1027,6 +1073,21 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                     throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils::fetchTypedFirstUpdateAndDisconnect] Trying to create shared memory broadcast publisher with channel spec '"+channelSpec+"', but shared memory broadcast is unsupported in the environment");
                 }
                 break;
+#ifdef __linux__
+            case MultiTransportBroadcastListenerConnectionType::ShmCursor:
+                if constexpr (std::is_convertible_v<Env *, shm_cursor::ShmCursorComponent *>) {
+                    return shm_cursor::ShmCursorImporterExporter<Env>::template fetchTypedFirstUpdateAndDisconnect<T>(
+                        env
+                        , std::get<1>(*parsed)
+                        , MultiTransportBroadcastListenerTopicHelper<shm_cursor::ShmCursorComponent>::parseTopic(getTopic_internal(std::get<0>(*parsed), topicDescription))
+                        , predicate
+                        , hook
+                    );
+                } else {
+                    throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils::fetchTypedFirstUpdateAndDisconnect] Trying to create shm cursor publisher with channel spec '"+channelSpec+"', but shm cursor is unsupported in the environment");
+                }
+                break;
+#endif
             case MultiTransportBroadcastListenerConnectionType::WebSocket:
                 if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                     return web_socket::WebSocketImporterExporter<Env>::template fetchTypedFirstUpdateAndDisconnect<T>(

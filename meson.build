@@ -49,3 +49,5 @@ pkg = import('pkgconfig')
 subdir('build_environment_tools')
 subdir('tm_kit/transport')
 subdir('src')
+
+subdir('test')

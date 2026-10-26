@@ -23,6 +23,9 @@ tm_transport_sources = [
       , 'singlecast/SinglecastComponent.cpp'
       , 'BoostCertifyAdaptor.cpp'
 ]
+if build_machine.system() == 'linux'
+      tm_transport_sources += ['shm_cursor/ShmCursorComponent.cpp']
+endif
 if get_option('buildtype') == 'debug'
       tm_transport_lib_debug = static_library('tm_kit_transport_debug', tm_transport_sources, include_directories: inc, dependencies: common_deps, install: true)
       pkg.generate(tm_transport_lib_debug)
