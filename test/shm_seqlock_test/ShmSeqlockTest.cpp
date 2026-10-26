@@ -1,6 +1,6 @@
 //Functional test driver for the shm_seqlock transport.
 //
-//  shm_seqlock_test stress --segment=<name> [--readers=2] [--read=spec|classic] [--wait=spin|futex]
+//  shm_seqlock_test stress --segment=<name> [--readers=2] [--read=classic|spec] [--wait=spin|futex]
 //                          [--slotCount=64] [--slotSize=512] [--count=3000000] [--readerSlowEvery=0]
 //      single process, one publisher thread and N reader threads on the component
 //      directly; checks integrity and accounting under lapping. Not a latency tool.
@@ -188,7 +188,7 @@ namespace {
             "::::"+segment
             +"[slotSize="+std::to_string(slotSize)
             +",slotCount="+opt(o, "slotCount", "64")
-            +",read="+opt(o, "read", "spec")
+            +",read="+opt(o, "read", "classic")
             +",wait="+opt(o, "wait", "spin")
             +"]"
         );
@@ -252,7 +252,7 @@ namespace {
         bool pass = true;
         auto ps = pubComp.shm_seqlock_publisherStats().begin()->second;
         std::printf("STRESS read=%s wait=%s slots=%s published=%lu rate=%.2fM msg/s\n"
-            , opt(o, "read", "spec").c_str(), opt(o, "wait", "spin").c_str(), opt(o, "slotCount", "64").c_str()
+            , opt(o, "read", "classic").c_str(), opt(o, "wait", "spin").c_str(), opt(o, "slotCount", "64").c_str()
             , static_cast<unsigned long>(ps.published), count*1000.0/static_cast<double>(t1-t0));
         for (std::size_t ii=0; ii<readers; ++ii) {
             auto s = statsOf(ii);

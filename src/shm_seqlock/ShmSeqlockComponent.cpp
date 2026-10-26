@@ -756,7 +756,15 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         public:
             OneShmSeqlockSubscription(ConnectionLocator const &locator)
                 : locator_(locator), shmName_(shmNameFor(locator)), lockPath_()
-                , spec_(locator.query("read", "spec") != "classic")
+                //read=classic is the default: in the pinned IPC profiling matrix
+                //(2026-10-26) it beat read=spec on every tail metric, more so with
+                //more readers: 1 reader p50/p90/p99 classic 356/470/545ns vs spec
+                //318/555/692ns; 4 readers p90/p99 classic 629/731ns vs spec 965/1155ns.
+                //Spec also raised the publisher's publish() p99 (266-465ns vs 213-277ns),
+                //most likely because a spinning speculative reader keeps pulling the next
+                //slot's lines into its cache, so every publisher write pays an extra
+                //ownership transfer. read=spec stays available for comparison.
+                , spec_(locator.query("read", "classic") == "spec")
                 , futex_(locator.query("wait", "spin") == "futex")
                 , joinLatest_(locator.query("join", "latest") != "next")
                 , doMlock_(queryBool(locator, "mlock", true))

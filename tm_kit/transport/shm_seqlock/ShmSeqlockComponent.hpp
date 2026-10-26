@@ -42,8 +42,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     //so readers resume transparently; with a different layout the old segment is
     //marked superseded and readers reopen the new one.
     //Reader properties (layout is read from the segment header):
-    //  read=spec|classic spec: copy the slot speculatively then validate (default),
-    //                    classic: spin until the slot is ready, then copy
+    //  read=classic|spec classic: spin until the slot is ready, then copy (default),
+    //                    spec: copy the slot speculatively then validate (lower p50
+    //                    but worse tails and publisher cost in profiling, see the .cpp)
     //  wait=spin|futex   futex: spin spinCount polls then FUTEX_WAIT (default spin)
     //  spinCount=<n>     polls before sleeping in futex mode (default 20000)
     //  futexTimeoutUs=<n> futex wait timeout in microseconds (default 100000)

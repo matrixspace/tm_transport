@@ -87,6 +87,8 @@ t1() { # tag pubProps subProps
 }
 t1 spec_spin "slotSize=1000,slotCount=4096" "read=spec"
 t1 classic_spin "slotSize=1000,slotCount=4096" "read=classic"
+# no read property: must select the default (classic)
+t1 default_read "slotSize=1000,slotCount=4096" "wait=spin"
 t1 spec_futex "slotSize=1000,slotCount=4096,wait=futex" "read=spec,wait=futex"
 # slotSize=1050: stride 1088 by default, 1152 with stride128
 t1 spec_stride128 "slotSize=1050,slotCount=4096,stride128=true" "read=spec"
