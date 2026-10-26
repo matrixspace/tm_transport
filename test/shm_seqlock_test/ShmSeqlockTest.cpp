@@ -79,14 +79,14 @@ namespace {
         uint32_t topicIdx;
     };
     inline char fillByte(uint64_t seq, std::size_t k) {
-        return static_cast<char>((seq*131u+k*7u+13u) & 0xffu);
+        return static_cast<char>((seq * 131u + k * 7u + 13u) & 0xffu);
     }
     void makePayload(std::string &s, uint64_t run, uint64_t seq, std::size_t len, uint32_t topicIdx) {
         len = std::max(len, sizeof(PayloadHeader));
         s.resize(len);
         PayloadHeader h {run, seq, static_cast<uint32_t>(len), topicIdx};
         std::memcpy(s.data(), &h, sizeof(h));
-        for (std::size_t k=sizeof(h); k<len; ++k) {
+        for (std::size_t k = sizeof(h); k < len; ++k) {
             s[k] = fillByte(seq, k);
         }
     }
@@ -98,7 +98,7 @@ namespace {
         if (h.len != content.size()) {
             return false;
         }
-        for (std::size_t k=sizeof(h); k<content.size(); ++k) {
+        for (std::size_t k = sizeof(h); k < content.size(); ++k) {
             if (content[k] != fillByte(h.seq, k)) {
                 return false;
             }
@@ -159,7 +159,7 @@ namespace {
                         if (h.seq <= iter->second.lastSeq) {
                             ++ooo;
                         } else {
-                            gaps += h.seq-iter->second.lastSeq-1;
+                            gaps += h.seq - iter->second.lastSeq - 1;
                         }
                         ++(iter->second.count);
                         iter->second.lastSeq = h.seq;
@@ -167,12 +167,12 @@ namespace {
                 }
             }
             lastRecvNs.store(nowNs(), std::memory_order_relaxed);
-            auto r = received.fetch_add(1, std::memory_order_relaxed)+1;
+            auto r = received.fetch_add(1, std::memory_order_relaxed) + 1;
             if (sleepUs != 0) {
                 std::this_thread::sleep_for(std::chrono::microseconds(sleepUs));
             }
             if (slowEvery != 0 && r % slowEvery == 0) {
-                auto until = nowNs()+20000;
+                auto until = nowNs() + 20000;
                 while (nowNs() < until) {
                 }
             }
@@ -185,33 +185,29 @@ namespace {
         auto count = optNum(o, "count", 3000000);
         auto slotSize = optNum(o, "slotSize", 512);
         auto locator = transport::ConnectionLocator::parse(
-            "::::"+segment
-            +"[slotSize="+std::to_string(slotSize)
-            +",slotCount="+opt(o, "slotCount", "64")
-            +",read="+opt(o, "read", "spec")
-            +",wait="+opt(o, "wait", "spin")
-            +"]"
-        );
+            "::::" + segment
+            + "[slotSize=" + std::to_string(slotSize)
+            + ",slotCount=" + opt(o, "slotCount", "64")
+            + ",read=" + opt(o, "read", "spec")
+            + ",wait=" + opt(o, "wait", "spin")
+            + "]");
         std::vector<std::string> topics {"a.x", "a.yy", "b.zzzzzz"};
-        std::size_t maxPayload = slotSize-topics[2].size();
+        std::size_t maxPayload = slotSize - topics[2].size();
 
         transport::shm_seqlock::ShmSeqlockComponent pubComp;
         auto pub = pubComp.shm_seqlock_getPublisher(locator);
         std::vector<std::unique_ptr<transport::shm_seqlock::ShmSeqlockComponent>> comps;
         std::vector<std::unique_ptr<Checker>> checkers;
-        for (uint64_t ii=0; ii<readers; ++ii) {
+        for (uint64_t ii = 0; ii < readers; ++ii) {
             auto c = std::make_unique<Checker>();
             c->topics = topics;
-            c->slowEvery = optNum(o, "readerSlowEvery", 0)*(ii+1);
+            c->slowEvery = optNum(o, "readerSlowEvery", 0) * (ii + 1);
             auto comp = std::make_unique<transport::shm_seqlock::ShmSeqlockComponent>();
             auto *cp = c.get();
             comp->shm_seqlock_addSubscriptionClient(
-                locator
-                , transport::shm_seqlock::ShmSeqlockComponent::NoTopicSelection {}
-                , [cp](basic::ByteDataWithTopic &&d) {
+                locator, transport::shm_seqlock::ShmSeqlockComponent::NoTopicSelection {}, [cp](basic::ByteDataWithTopic &&d) {
                     cp->on(d);
-                }
-            );
+                });
             comps.push_back(std::move(comp));
             checkers.push_back(std::move(c));
         }
@@ -220,8 +216,8 @@ namespace {
         auto t0 = nowNs();
         std::thread th([&]() {
             std::string payload;
-            for (uint64_t seq=0; seq<count; ++seq) {
-                std::size_t len = sizeof(PayloadHeader)+(seq*2654435761ULL) % (maxPayload-sizeof(PayloadHeader)+1);
+            for (uint64_t seq = 0; seq < count; ++seq) {
+                std::size_t len = sizeof(PayloadHeader) + (seq * 2654435761ULL) % (maxPayload - sizeof(PayloadHeader) + 1);
                 uint32_t ti = static_cast<uint32_t>(seq % topics.size());
                 makePayload(payload, 1, seq, len, ti);
                 pub({topics[ti], payload});
@@ -231,16 +227,16 @@ namespace {
         auto t1 = nowNs();
 
         //wait for readers to account for every message
-        auto deadline = nowNs()+5000000000LL;
+        auto deadline = nowNs() + 5000000000LL;
         auto statsOf = [&](std::size_t ii) {
             auto m = comps[ii]->shm_seqlock_readerStats();
             return (m.empty() ? transport::shm_seqlock::ShmSeqlockReaderStats {} : m.begin()->second);
         };
         while (nowNs() < deadline) {
             bool all = true;
-            for (std::size_t ii=0; ii<readers; ++ii) {
+            for (std::size_t ii = 0; ii < readers; ++ii) {
                 auto s = statsOf(ii);
-                if (checkers[ii]->received.load()+s.lost < count) {
+                if (checkers[ii]->received.load() + s.lost < count) {
                     all = false;
                 }
             }
@@ -251,29 +247,23 @@ namespace {
         }
         bool pass = true;
         auto ps = pubComp.shm_seqlock_publisherStats().begin()->second;
-        std::printf("STRESS read=%s wait=%s slots=%s published=%lu rate=%.2fM msg/s\n"
-            , opt(o, "read", "spec").c_str(), opt(o, "wait", "spin").c_str(), opt(o, "slotCount", "64").c_str()
-            , static_cast<unsigned long>(ps.published), count*1000.0/static_cast<double>(t1-t0));
-        for (std::size_t ii=0; ii<readers; ++ii) {
+        std::printf("STRESS read=%s wait=%s slots=%s published=%lu rate=%.2fM msg/s\n", opt(o, "read", "spec").c_str(), opt(o, "wait", "spin").c_str(), opt(o, "slotCount", "64").c_str(), static_cast<unsigned long>(ps.published), count * 1000.0 / static_cast<double>(t1 - t0));
+        for (std::size_t ii = 0; ii < readers; ++ii) {
             auto s = statsOf(ii);
             auto &c = *checkers[ii];
             std::lock_guard<std::mutex> _(c.mutex);
             uint64_t rec = c.received.load();
             //a futex-waiting reader may be lapped before its first delivery, so the
             //first seq is not required to be 0; every index must be delivered or lost
-            bool ok = (c.bad == 0 && c.ooo == 0 && c.topicBad == 0 && rec+s.lost == count && s.corrupt == 0
-                && c.haveFirst && c.firstSeq == s.lost-c.gaps);
+            bool ok = (c.bad == 0 && c.ooo == 0 && c.topicBad == 0 && rec + s.lost == count && s.corrupt == 0
+                && c.haveFirst && c.firstSeq == s.lost - c.gaps);
             pass = pass && ok;
-            std::printf("  reader %zu: received=%lu lost=%lu lapResyncs=%lu bad=%lu ooo=%lu topicBad=%lu gaps=%lu corrupt=%lu first=%lu %s\n"
-                , ii, static_cast<unsigned long>(rec), static_cast<unsigned long>(s.lost), static_cast<unsigned long>(s.lapResyncs)
-                , static_cast<unsigned long>(c.bad), static_cast<unsigned long>(c.ooo), static_cast<unsigned long>(c.topicBad)
-                , static_cast<unsigned long>(c.gaps), static_cast<unsigned long>(s.corrupt), static_cast<unsigned long>(c.firstSeq)
-                , (ok ? "OK" : "FAIL"));
+            std::printf("  reader %zu: received=%lu lost=%lu lapResyncs=%lu bad=%lu ooo=%lu topicBad=%lu gaps=%lu corrupt=%lu first=%lu %s\n", ii, static_cast<unsigned long>(rec), static_cast<unsigned long>(s.lost), static_cast<unsigned long>(s.lapResyncs), static_cast<unsigned long>(c.bad), static_cast<unsigned long>(c.ooo), static_cast<unsigned long>(c.topicBad), static_cast<unsigned long>(c.gaps), static_cast<unsigned long>(s.corrupt), static_cast<unsigned long>(c.firstSeq), (ok ? "OK" : "FAIL"));
         }
         std::printf("STRESS %s\n", (pass ? "PASS" : "FAIL"));
         std::fflush(stdout);
-        ::unlink(("/dev/shm/"+segment).c_str());
-        ::unlink(("/dev/shm/"+segment+".lock").c_str());
+        ::unlink(("/dev/shm/" + segment).c_str());
+        ::unlink(("/dev/shm/" + segment + ".lock").c_str());
         _exit(pass ? 0 : 1);
     }
 
@@ -282,8 +272,7 @@ namespace {
         infra::TrivialExitControlComponent,
         basic::TrivialBoostLoggingComponent,
         basic::real_time_clock::ClockComponent,
-        transport::shm_seqlock::ShmSeqlockComponent
-    >;
+        transport::shm_seqlock::ShmSeqlockComponent>;
     using M = infra::RealTimeApp<TheEnvironment>;
     using R = infra::AppRunner<M>;
 
@@ -328,12 +317,12 @@ namespace {
                     makePayload(payload, run, seq, payloadLen, ti);
                     auto t0 = nowNs();
                     pub(basic::ByteDataWithTopic {topics[ti], std::move(payload)});
-                    publishNs += nowNs()-t0;
+                    publishNs += nowNs() - t0;
                     if (logEvery != 0 && seq % logEvery == 0) {
                         std::printf("SENT seq=%lu\n", static_cast<unsigned long>(seq));
                         std::fflush(stdout);
                     }
-                    if (oversizeEvery != 0 && (seq+1) % oversizeEvery == 0) {
+                    if (oversizeEvery != 0 && (seq + 1) % oversizeEvery == 0) {
                         makePayload(big, run, ~0ULL, oversizeLen, 0);
                         pub(basic::ByteDataWithTopic {topics[0], big});
                         ++oversizeSent;
@@ -341,7 +330,7 @@ namespace {
                     if (intervalNs > 0) {
                         next += intervalNs;
                         if (intervalNs >= 1000000) {
-                            std::this_thread::sleep_for(std::chrono::nanoseconds(next-nowNs()));
+                            std::this_thread::sleep_for(std::chrono::nanoseconds(next - nowNs()));
                         } else {
                             while (nowNs() < next) {
                             }
@@ -351,14 +340,12 @@ namespace {
                 state->sent = seq;
                 state->oversizeSent = oversizeSent;
                 state->publishNs = publishNs;
-                state->elapsedNs = nowNs()-start;
+                state->elapsedNs = nowNs() - start;
                 state->done = true;
-            }
-            , infra::LiftParameters<M::TimePoint>().SuggestThreaded(true)
-        );
+            },
+            infra::LiftParameters<M::TimePoint>().SuggestThreaded(true));
         auto sink = transport::MultiTransportBroadcastPublisherManagingUtils<R>::oneByteDataBroadcastPublisher(
-            r, "pub", channel
-        );
+            r, "pub", channel);
         r.connect(r.importItem("source", importer), sink);
         r.finalize();
 
@@ -366,14 +353,12 @@ namespace {
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
         uint64_t rejected = 0;
+        uint64_t waiterResets = 0;
         for (auto const &item : env.shm_seqlock_publisherStats()) {
             rejected += item.second.rejected;
+            waiterResets += item.second.waiterResets;
         }
-        std::printf("PUBRESULT sent=%lu oversizeSent=%lu rejected=%lu publishNsAvg=%.1f elapsedSec=%.3f\n"
-            , static_cast<unsigned long>(state->sent), static_cast<unsigned long>(state->oversizeSent)
-            , static_cast<unsigned long>(rejected)
-            , (state->sent ? static_cast<double>(state->publishNs)/static_cast<double>(state->sent) : 0.0)
-            , static_cast<double>(state->elapsedNs)/1e9);
+        std::printf("PUBRESULT sent=%lu oversizeSent=%lu rejected=%lu waiterResets=%lu publishNsAvg=%.1f elapsedSec=%.3f\n", static_cast<unsigned long>(state->sent), static_cast<unsigned long>(state->oversizeSent), static_cast<unsigned long>(rejected), static_cast<unsigned long>(waiterResets), (state->sent ? static_cast<double>(state->publishNs) / static_cast<double>(state->sent) : 0.0), static_cast<double>(state->elapsedNs) / 1e9);
         std::fflush(stdout);
         std::this_thread::sleep_for(std::chrono::seconds(holdSec));
         _exit(0);
@@ -401,8 +386,7 @@ namespace {
         TheEnvironment env;
         R r(&env);
         auto source = transport::MultiTransportBroadcastListenerManagingUtils<R>::oneByteDataBroadcastListener(
-            r, "sub", channel, topic
-        );
+            r, "sub", channel, topic);
         auto sink = M::simpleExporter<basic::ByteDataWithTopic>([checker](M::InnerData<basic::ByteDataWithTopic> &&d) {
             checker->on(d.timedData.value);
         });
@@ -420,10 +404,10 @@ namespace {
             if (count != 0 && rec >= count) {
                 break;
             }
-            if (timeoutSec != 0 && now-start > static_cast<int64_t>(timeoutSec)*1000000000LL) {
+            if (timeoutSec != 0 && now - start > static_cast<int64_t>(timeoutSec) * 1000000000LL) {
                 break;
             }
-            if (idleExitSec != 0 && rec > 0 && now-checker->lastRecvNs.load() > static_cast<int64_t>(idleExitSec)*1000000000LL) {
+            if (idleExitSec != 0 && rec > 0 && now - checker->lastRecvNs.load() > static_cast<int64_t>(idleExitSec) * 1000000000LL) {
                 break;
             }
         }
@@ -432,14 +416,7 @@ namespace {
             s = item.second;
         }
         std::lock_guard<std::mutex> _(checker->mutex);
-        std::printf("SUBRESULT received=%lu bad=%lu ooo=%lu gaps=%lu topicBad=%lu sizeMismatch=%lu first=%lu runs=%zu lost=%lu lapResyncs=%lu restarts=%lu reopens=%lu corrupt=%lu"
-            , static_cast<unsigned long>(checker->received.load()), static_cast<unsigned long>(checker->bad)
-            , static_cast<unsigned long>(checker->ooo), static_cast<unsigned long>(checker->gaps)
-            , static_cast<unsigned long>(checker->topicBad), static_cast<unsigned long>(checker->sizeMismatch)
-            , static_cast<unsigned long>(checker->firstSeq), checker->runs.size()
-            , static_cast<unsigned long>(s.lost), static_cast<unsigned long>(s.lapResyncs)
-            , static_cast<unsigned long>(s.publisherRestarts), static_cast<unsigned long>(s.reopens)
-            , static_cast<unsigned long>(s.corrupt));
+        std::printf("SUBRESULT received=%lu bad=%lu ooo=%lu gaps=%lu topicBad=%lu sizeMismatch=%lu first=%lu runs=%zu lost=%lu lapResyncs=%lu restarts=%lu reopens=%lu corrupt=%lu", static_cast<unsigned long>(checker->received.load()), static_cast<unsigned long>(checker->bad), static_cast<unsigned long>(checker->ooo), static_cast<unsigned long>(checker->gaps), static_cast<unsigned long>(checker->topicBad), static_cast<unsigned long>(checker->sizeMismatch), static_cast<unsigned long>(checker->firstSeq), checker->runs.size(), static_cast<unsigned long>(s.lost), static_cast<unsigned long>(s.lapResyncs), static_cast<unsigned long>(s.publisherRestarts), static_cast<unsigned long>(s.reopens), static_cast<unsigned long>(s.corrupt));
         for (auto const &item : checker->runs) {
             std::printf(" run%lu=%lu", static_cast<unsigned long>(item.first), static_cast<unsigned long>(item.second.count));
         }
@@ -447,7 +424,7 @@ namespace {
         std::fflush(stdout);
         _exit(0);
     }
-}
+} //namespace
 
 namespace {
     int runFetch(Options const &o) {
@@ -461,8 +438,7 @@ namespace {
         //component-only Env: this utility does not compile with AllNetworkTransportComponents
         //(pre-existing ambiguous websocket overload)
         auto f = transport::MultiTransportBroadcastFirstUpdateQueryManagingUtils<TheEnvironment>::fetchFirstUpdateAndDisconnect(
-            &env, channel, topic
-        );
+            &env, channel, topic);
         if (f.wait_for(std::chrono::seconds(timeoutSec)) != std::future_status::ready) {
             std::printf("FETCHRESULT ok=0 reason=timeout\n");
             std::fflush(stdout);
@@ -474,12 +450,11 @@ namespace {
         //the subscription (and its reader thread) must be gone after the fetch
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         auto left = env.shm_seqlock_threadHandles().size();
-        std::printf("FETCHRESULT ok=%d topic=%s seq=%lu readersLeft=%zu\n"
-            , (ok ? 1 : 0), d.topic.c_str(), static_cast<unsigned long>(h.seq), left);
+        std::printf("FETCHRESULT ok=%d topic=%s seq=%lu readersLeft=%zu\n", (ok ? 1 : 0), d.topic.c_str(), static_cast<unsigned long>(h.seq), left);
         std::fflush(stdout);
         _exit((ok && left == 0) ? 0 : 1);
     }
-}
+} //namespace
 
 int main(int argc, char **argv) {
     if (argc < 2) {
@@ -487,7 +462,7 @@ int main(int argc, char **argv) {
         return 2;
     }
     Options o;
-    for (int ii=2; ii<argc; ++ii) {
+    for (int ii = 2; ii < argc; ++ii) {
         std::string a = argv[ii];
         if (!boost::starts_with(a, "--")) {
             std::fprintf(stderr, "bad argument '%s'\n", argv[ii]);
@@ -497,7 +472,7 @@ int main(int argc, char **argv) {
         if (eq == std::string::npos) {
             o[a.substr(2)] = "true";
         } else {
-            o[a.substr(2, eq-2)] = a.substr(eq+1);
+            o[a.substr(2, eq - 2)] = a.substr(eq + 1);
         }
     }
     std::string mode = argv[1];

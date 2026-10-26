@@ -252,6 +252,45 @@ ok=0
 awk -v c=$futexCpu 'BEGIN { exit !(c < 5) }' && [ -n "$futexRec" ] && [ "$futexRec" -ge 25 ] && [ "$futexGaps" = 0 ] && ok=1
 result "7 (futex wait mode idle CPU)" $ok "reader CPU: futex=${futexCpu}% (received $futexRec, gaps $futexGaps), futex reader + spin publisher=${froCpu}% (received $froRec), busy-spin control=${spinCpu}%"
 
+# 7b: a futex reader SIGKILLed while asleep leaks its waiter registration. The live
+# reader spins, so after the kill every wake finds no sleeper and the publisher must
+# clear the leaked count; the live reader must still receive everything.
+# The victim is killed only while the header shows it registered (waiters, a u32 at
+# offset 512 of the segment); a kill that races with its wake-up leaks nothing, so retry.
+seg=${PFX}_t7b
+waitersOf() {
+    od -An -tu4 -j512 -N4 /dev/shm/$seg 2>/dev/null | tr -d ' '
+}
+"$BIN" sub --channel="shm_seqlock://::::$seg[wait=spin]" --count=600 --timeoutSec=20 > "$OUT/t7b_live.log" 2>&1 &
+pl=$!
+sleep 0.3
+"$BIN" pub --channel="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096,wait=futex]" --count=600 \
+    --intervalNs=10000000 --startDelayMs=500 > "$OUT/t7b_pub.log" 2>&1 &
+pp=$!
+sleep 0.8
+leaked=0
+for attempt in 1 2 3 4 5; do
+    "$BIN" sub --channel="shm_seqlock://::::$seg[wait=futex]" --timeoutSec=20 > "$OUT/t7b_victim$attempt.log" 2>&1 &
+    pv=$!
+    for k in $(seq 1 200); do
+        [ "$(waitersOf)" = 1 ] && break
+        sleep 0.005
+    done
+    kill -9 $pv
+    wait $pv 2>/dev/null
+    leaked=$(waitersOf)
+    [ "$leaked" = 1 ] && break
+done
+sleep 1.5
+afterClear=$(waitersOf)
+wait $pp
+wait $pl
+ok=0
+resets=$(field "$OUT/t7b_pub.log" waiterResets)
+[ "$leaked" = 1 ] && [ "$afterClear" = 0 ] && [ -n "$resets" ] && [ "$resets" -ge 1 ] \
+    && [ "$(field $OUT/t7b_live.log received)" = 600 ] && [ "$(field $OUT/t7b_live.log gaps)" = 0 ] && ok=1
+result "7b (leaked futex waiter cleared after reader SIGKILL)" $ok "attempts=$attempt waiters right after kill=$leaked, 1.5s later=$afterClear, publisher waiterResets=$resets; live reader: $(summary $OUT/t7b_live.log)"
+
 # ---------------------------------------------------------------- test 8
 # all pub/sub runs above go through oneByteDataBroadcastPublisher / oneByteDataBroadcastListener;
 # additionally check fetchFirstUpdateAndDisconnect (component-only Env) via the channel string
