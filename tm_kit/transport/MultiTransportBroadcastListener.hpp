@@ -15,6 +15,9 @@
 #include <tm_kit/transport/nng/NNGComponent.hpp>
 #include <tm_kit/transport/socket_rpc/SocketRPCComponent.hpp>
 #include <tm_kit/transport/shared_memory_broadcast/SharedMemoryBroadcastComponent.hpp>
+#ifdef __linux__
+#include <tm_kit/transport/shm_seqlock/ShmSeqlockComponent.hpp>
+#endif
 #include <tm_kit/transport/AbstractHookFactoryComponent.hpp>
 #include <tm_kit/transport/grpc_interop/GrpcInteropComponent.hpp>
 #include <tm_kit/transport/json_rest/JsonRESTComponent.hpp>
@@ -36,6 +39,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         , zeromq::ZeroMQComponent
         , nng::NNGComponent
         , shared_memory_broadcast::SharedMemoryBroadcastComponent
+#ifdef __linux__
+        , shm_seqlock::ShmSeqlockComponent
+#endif
         , socket_rpc::SocketRPCComponent
         , grpc_interop::GrpcInteropComponent
         , json_rest::JsonRESTComponent
@@ -71,6 +77,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         if constexpr (std::is_convertible_v<Env *, shared_memory_broadcast::SharedMemoryBroadcastComponent *>) {
             retVal["shared_memory_broadcast"] = env->shared_memory_broadcast_threadHandles();
         }
+#ifdef __linux__
+        if constexpr (std::is_convertible_v<Env *, shm_seqlock::ShmSeqlockComponent *>) {
+            retVal["shm_seqlock"] = env->shm_seqlock_threadHandles();
+        }
+#endif
         if constexpr (std::is_convertible_v<Env *, zeromq::ZeroMQComponent *>) {
             retVal["zeromq"] = env->zeromq_threadHandles();
         }
@@ -96,8 +107,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         , SharedMemoryBroadcast
         , WebSocket
         , Singlecast
+        , ShmSeqlock
     };
-    inline const std::array<std::string,9> MULTI_TRANSPORT_SUBSCRIBER_CONNECTION_TYPE_STR = {
+    inline const std::array<std::string,10> MULTI_TRANSPORT_SUBSCRIBER_CONNECTION_TYPE_STR = {
         "multicast"
         , "rabbitmq"
         , "redis"
@@ -107,6 +119,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         , "shared_memory_broadcast"
         , "websocket"
         , "singlecast"
+        , "shm_seqlock"
     };
     inline auto parseMultiTransportBroadcastChannel(std::string const &s) 
         -> std::optional<std::tuple<MultiTransportBroadcastListenerConnectionType, ConnectionLocator>>
@@ -132,6 +145,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         switch (std::get<0>(c)) {
         case MultiTransportBroadcastListenerConnectionType::Multicast:
         case MultiTransportBroadcastListenerConnectionType::SharedMemoryBroadcast:
+        case MultiTransportBroadcastListenerConnectionType::ShmSeqlock:
             return true;
             break;
         case MultiTransportBroadcastListenerConnectionType::ZeroMQ:
@@ -732,6 +746,58 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             );
                         }
                         break;
+#ifdef __linux__
+                    case MultiTransportBroadcastListenerConnectionType::ShmSeqlock:
+                        if constexpr (std::is_convertible_v<Env *, shm_seqlock::ShmSeqlockComponent *>) {
+                            auto *component = static_cast<shm_seqlock::ShmSeqlockComponent *>(env);
+                            auto actualHook = wireToUserHook_;
+                            if (!actualHook) {
+                                actualHook = DefaultHookFactory<Env>::template incomingHook<T>(env);
+                            }
+                            auto res = component->shm_seqlock_addSubscriptionClient(
+                                x.connectionLocator
+                                , MultiTransportBroadcastListenerTopicHelper<shm_seqlock::ShmSeqlockComponent>::parseTopic(x.topicDescription)
+                                , [this,env](basic::ByteDataWithTopic &&d) {
+                                    TM_INFRA_IMPORTER_TRACER_WITH_SUFFIX(env, ":data");
+                                    T t;
+                                    auto tRes = basic::bytedata_utils::RunDeserializer<T>::applyInPlace(t, d.content);
+                                    if (tRes) {
+                                        this->ImporterParent::publish(M::template pureInnerData<basic::TypedDataWithTopic<T>>(env, {std::move(d.topic), std::move(t)}));
+                                    }
+                                }
+                                , actualHook
+                            );
+                            {
+                                std::lock_guard<std::mutex> _(subscriptionsMutex_);
+                                subscriptions_.insert({{x.connectionType, res}, x});
+                            }
+                            this->FacilityParent::publish(
+                                env
+                                , typename M::template Key<MultiTransportBroadcastListenerOutput> {
+                                    id
+                                    , MultiTransportBroadcastListenerOutput { {
+                                        MultiTransportBroadcastListenerAddSubscriptionResponse {res}
+                                    } }
+                                }
+                                , true
+                            );
+                        } else {
+                            std::ostringstream errOss;
+                            errOss << "[MultiTransportBroadcastListner::actuallyHandle] trying to set up shm seqlock channel " << x.connectionLocator << " but shm seqlock is unsupported in the environment";
+                            env->log(infra::LogLevel::Warning, errOss.str());
+                            this->FacilityParent::publish(
+                                env
+                                , typename M::template Key<MultiTransportBroadcastListenerOutput> {
+                                    id
+                                    , MultiTransportBroadcastListenerOutput { {
+                                        MultiTransportBroadcastListenerAddSubscriptionResponse {0}
+                                    } }
+                                }
+                                , true
+                            );
+                        }
+                        break;
+#endif
                     case MultiTransportBroadcastListenerConnectionType::WebSocket:
                         if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                             auto *component = static_cast<web_socket::WebSocketComponent *>(env);
@@ -929,6 +995,18 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             }
                         }
                         break;
+#ifdef __linux__
+                    case MultiTransportBroadcastListenerConnectionType::ShmSeqlock:
+                        if constexpr (std::is_convertible_v<Env *, shm_seqlock::ShmSeqlockComponent *>) {
+                            static_cast<shm_seqlock::ShmSeqlockComponent *>(env)
+                                ->shm_seqlock_removeSubscriptionClient(x.subscriptionID);
+                            {
+                                std::lock_guard<std::mutex> _(subscriptionsMutex_);
+                                subscriptions_.erase({x.connectionType, x.subscriptionID});
+                            }
+                        }
+                        break;
+#endif
                     case MultiTransportBroadcastListenerConnectionType::WebSocket:
                         if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                             static_cast<web_socket::WebSocketComponent *>(env)
@@ -1008,6 +1086,14 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                                     ->shared_memory_broadcast_removeSubscriptionClient(std::get<1>(x.first));
                             }
                             break;
+#ifdef __linux__
+                        case MultiTransportBroadcastListenerConnectionType::ShmSeqlock:
+                            if constexpr (std::is_convertible_v<Env *, shm_seqlock::ShmSeqlockComponent *>) {
+                                static_cast<shm_seqlock::ShmSeqlockComponent *>(env)
+                                    ->shm_seqlock_removeSubscriptionClient(std::get<1>(x.first));
+                            }
+                            break;
+#endif
                         case MultiTransportBroadcastListenerConnectionType::WebSocket:
                             if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                                 static_cast<web_socket::WebSocketComponent *>(env)

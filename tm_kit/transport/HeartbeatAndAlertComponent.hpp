@@ -23,6 +23,9 @@
 #include <tm_kit/transport/nng/NNGComponent.hpp>
 #include <tm_kit/transport/singlecast/SinglecastComponent.hpp>
 #include <tm_kit/transport/shared_memory_broadcast/SharedMemoryBroadcastComponent.hpp>
+#ifdef __linux__
+#include <tm_kit/transport/shm_seqlock/ShmSeqlockComponent.hpp>
+#endif
 #include <tm_kit/transport/websocket/WebSocketComponent.hpp>
 #include <tm_kit/transport/AbstractHookFactoryComponent.hpp>
 #include <tm_kit/transport/MultiTransportBroadcastListener.hpp>
@@ -206,6 +209,24 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
             });
         }
     };
+#ifdef __linux__
+    template <class Env>
+    class HeartbeatAndAlertComponentInitializer<Env, shm_seqlock::ShmSeqlockComponent> {
+    public:
+        void operator()(Env *env, std::string const &identity, ConnectionLocator const &locator, std::optional<UserToWireHook> hook=std::nullopt) {
+            auto realHook = hook;
+            if (!realHook) {
+                realHook = DefaultHookFactory<Env>::template outgoingHook<HeartbeatMessage>(env);
+            }
+            env->HeartbeatAndAlertComponent::assignIdentity(HeartbeatAndAlertComponent {
+                static_cast<basic::real_time_clock::ClockComponent *>(env)
+                , identity
+                , static_cast<shm_seqlock::ShmSeqlockComponent *>(env)
+                    ->shm_seqlock_getPublisher(locator, realHook)
+            });
+        }
+    };
+#endif
     template <class Env>
     class HeartbeatAndAlertComponentInitializer<Env, web_socket::WebSocketComponent> {
     public:
@@ -311,6 +332,17 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                 throw std::runtime_error("initializeHeartbeatAndAlertComponent: connection type SharedMemoryBroadcast not supported in environment");
             }
             break;
+#ifdef __linux__
+        case MultiTransportBroadcastListenerConnectionType::ShmSeqlock:
+            if constexpr (std::is_convertible_v<Env *, shm_seqlock::ShmSeqlockComponent *>) {
+                HeartbeatAndAlertComponentInitializer<Env, shm_seqlock::ShmSeqlockComponent>()(
+                    env, identity, locator, hook
+                );
+            } else {
+                throw std::runtime_error("initializeHeartbeatAndAlertComponent: connection type ShmSeqlock not supported in environment");
+            }
+            break;
+#endif
         case MultiTransportBroadcastListenerConnectionType::WebSocket:
             if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                 HeartbeatAndAlertComponentInitializer<Env, web_socket::WebSocketComponent>()(
