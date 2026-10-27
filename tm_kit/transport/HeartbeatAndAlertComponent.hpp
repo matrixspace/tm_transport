@@ -25,6 +25,7 @@
 #include <tm_kit/transport/shared_memory_broadcast/SharedMemoryBroadcastComponent.hpp>
 #ifdef __linux__
 #include <tm_kit/transport/shm_seqlock/ShmSeqlockComponent.hpp>
+#include <tm_kit/transport/shm_cursor/ShmCursorComponent.hpp>
 #endif
 #include <tm_kit/transport/websocket/WebSocketComponent.hpp>
 #include <tm_kit/transport/AbstractHookFactoryComponent.hpp>
@@ -226,6 +227,21 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
             });
         }
     };
+    class HeartbeatAndAlertComponentInitializer<Env, shm_cursor::ShmCursorComponent> {
+    public:
+        void operator()(Env *env, std::string const &identity, ConnectionLocator const &locator, std::optional<UserToWireHook> hook=std::nullopt) {
+            auto realHook = hook;
+            if (!realHook) {
+                realHook = DefaultHookFactory<Env>::template outgoingHook<HeartbeatMessage>(env);
+            }
+            env->HeartbeatAndAlertComponent::assignIdentity(HeartbeatAndAlertComponent {
+                static_cast<basic::real_time_clock::ClockComponent *>(env)
+                , identity
+                , static_cast<shm_cursor::ShmCursorComponent *>(env)
+                    ->shm_cursor_getPublisher(locator, realHook)
+            });
+        }
+    };
 #endif
     template <class Env>
     class HeartbeatAndAlertComponentInitializer<Env, web_socket::WebSocketComponent> {
@@ -340,6 +356,15 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                 );
             } else {
                 throw std::runtime_error("initializeHeartbeatAndAlertComponent: connection type ShmSeqlock not supported in environment");
+            }
+            break;
+        case MultiTransportBroadcastListenerConnectionType::ShmCursor:
+            if constexpr (std::is_convertible_v<Env *, shm_cursor::ShmCursorComponent *>) {
+                HeartbeatAndAlertComponentInitializer<Env, shm_cursor::ShmCursorComponent>()(
+                    env, identity, locator, hook
+                );
+            } else {
+                throw std::runtime_error("initializeHeartbeatAndAlertComponent: connection type ShmCursor not supported in environment");
             }
             break;
 #endif

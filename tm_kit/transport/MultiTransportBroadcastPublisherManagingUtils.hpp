@@ -11,6 +11,7 @@
 #include <tm_kit/transport/shared_memory_broadcast/SharedMemoryBroadcastImporterExporter.hpp>
 #ifdef __linux__
 #include <tm_kit/transport/shm_seqlock/ShmSeqlockImporterExporter.hpp>
+#include <tm_kit/transport/shm_cursor/ShmCursorImporterExporter.hpp>
 #endif
 #include <tm_kit/transport/websocket/WebSocketImporterExporter.hpp>
 #include <tm_kit/transport/singlecast/SinglecastImporterExporter.hpp>
@@ -157,6 +158,17 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                         throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneBroadcastPublisher] Trying to create shm seqlock publisher with channel spec '"+channelSpec+"', but shm seqlock is unsupported in the environment");
                     }
                     break;
+                case MultiTransportBroadcastListenerConnectionType::ShmCursor:
+                    if constexpr (std::is_convertible_v<Env *, shm_cursor::ShmCursorComponent *>) {
+                        auto pub = shm_cursor::ShmCursorImporterExporter<Env>::template createTypedExporter<OutputType>(
+                            std::get<1>(*parsed), hook, name
+                        );
+                        r.registerExporter(name, pub);
+                        return r.exporterAsSink(pub);
+                    } else {
+                        throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneBroadcastPublisher] Trying to create shm cursor publisher with channel spec '"+channelSpec+"', but shm cursor is unsupported in the environment");
+                    }
+                    break;
 #endif
                 case MultiTransportBroadcastListenerConnectionType::WebSocket:
                     if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
@@ -297,6 +309,17 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                     return r.exporterAsSink(pub);
                 } else {
                     throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneByteDataBroadcastPublisher] Trying to create shm seqlock publisher with channel spec '"+channelSpec+"', but shm seqlock is unsupported in the environment");
+                }
+                break;
+            case MultiTransportBroadcastListenerConnectionType::ShmCursor:
+                if constexpr (std::is_convertible_v<Env *, shm_cursor::ShmCursorComponent *>) {
+                    auto pub = shm_cursor::ShmCursorImporterExporter<Env>::createExporter(
+                        std::get<1>(*parsed), hook, name
+                    );
+                    r.registerExporter(name, pub);
+                    return r.exporterAsSink(pub);
+                } else {
+                    throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneByteDataBroadcastPublisher] Trying to create shm cursor publisher with channel spec '"+channelSpec+"', but shm cursor is unsupported in the environment");
                 }
                 break;
 #endif
