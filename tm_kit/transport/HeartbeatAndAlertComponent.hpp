@@ -26,7 +26,9 @@
 #ifdef __linux__
 #include <tm_kit/transport/shm_seqlock/ShmSeqlockComponent.hpp>
 #include <tm_kit/transport/shm_cursor/ShmCursorComponent.hpp>
+#ifdef TM_KIT_TRANSPORT_AERON_IPC
 #include <tm_kit/transport/aeron_ipc/AeronIpcComponent.hpp>
+#endif // TM_KIT_TRANSPORT_AERON_IPC
 #endif
 #include <tm_kit/transport/websocket/WebSocketComponent.hpp>
 #include <tm_kit/transport/AbstractHookFactoryComponent.hpp>
@@ -244,6 +246,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
             });
         }
     };
+#ifdef TM_KIT_TRANSPORT_AERON_IPC
     template <class Env>
     class HeartbeatAndAlertComponentInitializer<Env, aeron_ipc::AeronIpcComponent> {
     public:
@@ -260,6 +263,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
             });
         }
     };
+#endif // TM_KIT_TRANSPORT_AERON_IPC
 #endif
     template <class Env>
     class HeartbeatAndAlertComponentInitializer<Env, web_socket::WebSocketComponent> {
@@ -385,6 +389,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                 throw std::runtime_error("initializeHeartbeatAndAlertComponent: connection type ShmCursor not supported in environment");
             }
             break;
+#ifdef TM_KIT_TRANSPORT_AERON_IPC
         case MultiTransportBroadcastListenerConnectionType::AeronIpc:
             if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
                 HeartbeatAndAlertComponentInitializer<Env, aeron_ipc::AeronIpcComponent>()(
@@ -394,6 +399,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                 throw std::runtime_error("initializeHeartbeatAndAlertComponent: connection type AeronIpc not supported in environment");
             }
             break;
+#endif // TM_KIT_TRANSPORT_AERON_IPC
 #endif
         case MultiTransportBroadcastListenerConnectionType::WebSocket:
             if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {

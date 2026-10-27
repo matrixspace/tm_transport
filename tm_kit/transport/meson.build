@@ -48,7 +48,9 @@ if build_machine.system() == 'linux'
     subdir('shm_seqlock')
     subdir('shm_cursor')
 endif
-subdir('aeron_ipc')
+if build_aeron_ipc
+    subdir('aeron_ipc')
+endif
 subdir('bcl_compat')
 subdir('socket_rpc')
 subdir('db_table_importer_exporter')

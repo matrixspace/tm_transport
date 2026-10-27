@@ -46,21 +46,21 @@ endif
 
 pkg = import('pkgconfig')
 
-#Aeron is only linked into tm_kit_transport_aeron_ipc, never into tm_kit_transport itself
-aeron_ipc_opt = get_option('aeron_ipc')
-if host_machine.system() != 'linux'
-    aeron_ipc_opt = aeron_ipc_opt.disable_auto_if(true)
-endif
+#Aeron is compiled into tm_kit_transport itself when the dependency can be found
+#(Linux only). When it is not found, the aeron_ipc sources are not compiled and the
+#shared transport headers gate every aeron_ipc reference with TM_KIT_TRANSPORT_AERON_IPC.
 aeron_ipc_deps = []
 build_aeron_ipc = false
-if not aeron_ipc_opt.disabled()
+if host_machine.system() == 'linux'
     aeron_dep = dependency('aeron', method: 'cmake'
         , modules: ['aeron::aeron_client_wrapper', 'aeron::aeron_static', 'aeron::aeron_driver_static']
-        , required: aeron_ipc_opt)
-    uuid_dep = dependency('uuid', required: aeron_ipc_opt)
+        , required: false)
+    uuid_dep = dependency('uuid', required: false)
     if aeron_dep.found() and uuid_dep.found()
         aeron_ipc_deps = [aeron_dep, uuid_dep]
         build_aeron_ipc = true
+        common_deps += aeron_ipc_deps
+        add_global_arguments('-DTM_KIT_TRANSPORT_AERON_IPC=1', language: 'cpp')
     endif
 endif
 

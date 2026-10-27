@@ -18,7 +18,9 @@
 #ifdef __linux__
 #include <tm_kit/transport/shm_seqlock/ShmSeqlockComponent.hpp>
 #include <tm_kit/transport/shm_cursor/ShmCursorComponent.hpp>
+#ifdef TM_KIT_TRANSPORT_AERON_IPC
 #include <tm_kit/transport/aeron_ipc/AeronIpcComponent.hpp>
+#endif // TM_KIT_TRANSPORT_AERON_IPC
 #endif
 #include <tm_kit/transport/AbstractHookFactoryComponent.hpp>
 #include <tm_kit/transport/grpc_interop/GrpcInteropComponent.hpp>
@@ -87,9 +89,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         if constexpr (std::is_convertible_v<Env *, shm_cursor::ShmCursorComponent *>) {
             retVal["shm_cursor"] = env->shm_cursor_threadHandles();
         }
+#ifdef TM_KIT_TRANSPORT_AERON_IPC
         if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
             retVal["aeron_ipc"] = env->aeron_ipc_threadHandles();
         }
+#endif // TM_KIT_TRANSPORT_AERON_IPC
 #endif
         if constexpr (std::is_convertible_v<Env *, zeromq::ZeroMQComponent *>) {
             retVal["zeromq"] = env->zeromq_threadHandles();
@@ -862,6 +866,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             );
                         }
                         break;
+#ifdef TM_KIT_TRANSPORT_AERON_IPC
                     case MultiTransportBroadcastListenerConnectionType::AeronIpc:
                         if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
                             auto *component = static_cast<aeron_ipc::AeronIpcComponent *>(env);
@@ -912,6 +917,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             );
                         }
                         break;
+#endif // TM_KIT_TRANSPORT_AERON_IPC
 #endif
                     case MultiTransportBroadcastListenerConnectionType::WebSocket:
                         if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
@@ -1131,6 +1137,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             }
                         }
                         break;
+#ifdef TM_KIT_TRANSPORT_AERON_IPC
                     case MultiTransportBroadcastListenerConnectionType::AeronIpc:
                         if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
                             static_cast<aeron_ipc::AeronIpcComponent *>(env)
@@ -1141,6 +1148,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             }
                         }
                         break;
+#endif // TM_KIT_TRANSPORT_AERON_IPC
 #endif
                     case MultiTransportBroadcastListenerConnectionType::WebSocket:
                         if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
@@ -1234,12 +1242,14 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                                     ->shm_cursor_removeSubscriptionClient(std::get<1>(x.first));
                             }
                             break;
+#ifdef TM_KIT_TRANSPORT_AERON_IPC
                         case MultiTransportBroadcastListenerConnectionType::AeronIpc:
                             if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
                                 static_cast<aeron_ipc::AeronIpcComponent *>(env)
                                     ->aeron_ipc_removeSubscriptionClient(std::get<1>(x.first));
                             }
                             break;
+#endif // TM_KIT_TRANSPORT_AERON_IPC
 #endif
                         case MultiTransportBroadcastListenerConnectionType::WebSocket:
                             if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
