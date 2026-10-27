@@ -2,6 +2,8 @@
 //
 //  shm_seqlock_test stress --segment=<name> [--readers=2] [--read=classic|spec] [--wait=spin|futex]
 //                          [--slotCount=64] [--slotSize=512] [--count=3000000] [--readerSlowEvery=0]
+//                          [--layout=inline|split] [--noPremark] (noPremark: negative control,
+//                          split layout without the pre-mark, torn reads expected)
 //      single process, one publisher thread and N reader threads on the component
 //      directly; checks integrity and accounting under lapping. Not a latency tool.
 //
@@ -190,6 +192,8 @@ namespace {
             +",slotCount="+opt(o, "slotCount", "64")
             +",read="+opt(o, "read", "classic")
             +",wait="+opt(o, "wait", "spin")
+            +",layout="+opt(o, "layout", "inline")
+            +(o.find("noPremark") != o.end() ? ",testNoPremark=true" : "")
             +"]"
         );
         std::vector<std::string> topics {"a.x", "a.yy", "b.zzzzzz"};
@@ -251,8 +255,10 @@ namespace {
         }
         bool pass = true;
         auto ps = pubComp.shm_seqlock_publisherStats().begin()->second;
-        std::printf("STRESS read=%s wait=%s slots=%s published=%lu rate=%.2fM msg/s\n"
-            , opt(o, "read", "classic").c_str(), opt(o, "wait", "spin").c_str(), opt(o, "slotCount", "64").c_str()
+        std::printf("STRESS read=%s wait=%s layout=%s%s slots=%s published=%lu rate=%.2fM msg/s\n"
+            , opt(o, "read", "classic").c_str(), opt(o, "wait", "spin").c_str()
+            , opt(o, "layout", "inline").c_str(), (o.find("noPremark") != o.end() ? "(noPremark)" : "")
+            , opt(o, "slotCount", "64").c_str()
             , static_cast<unsigned long>(ps.published), count*1000.0/static_cast<double>(t1-t0));
         for (std::size_t ii=0; ii<readers; ++ii) {
             auto s = statsOf(ii);
@@ -434,14 +440,14 @@ namespace {
             s = item.second;
         }
         std::lock_guard<std::mutex> _(checker->mutex);
-        std::printf("SUBRESULT received=%lu bad=%lu ooo=%lu gaps=%lu topicBad=%lu sizeMismatch=%lu first=%lu runs=%zu lost=%lu lapResyncs=%lu restarts=%lu reopens=%lu corrupt=%lu"
+        std::printf("SUBRESULT received=%lu bad=%lu ooo=%lu gaps=%lu topicBad=%lu sizeMismatch=%lu first=%lu runs=%zu lost=%lu lapResyncs=%lu restarts=%lu reopens=%lu corrupt=%lu splitLayout=%lu"
             , static_cast<unsigned long>(checker->received.load()), static_cast<unsigned long>(checker->bad)
             , static_cast<unsigned long>(checker->ooo), static_cast<unsigned long>(checker->gaps)
             , static_cast<unsigned long>(checker->topicBad), static_cast<unsigned long>(checker->sizeMismatch)
             , static_cast<unsigned long>(checker->firstSeq), checker->runs.size()
             , static_cast<unsigned long>(s.lost), static_cast<unsigned long>(s.lapResyncs)
             , static_cast<unsigned long>(s.publisherRestarts), static_cast<unsigned long>(s.reopens)
-            , static_cast<unsigned long>(s.corrupt));
+            , static_cast<unsigned long>(s.corrupt), static_cast<unsigned long>(s.splitLayout));
         for (auto const &item : checker->runs) {
             std::printf(" run%lu=%lu", static_cast<unsigned long>(item.first), static_cast<unsigned long>(item.second.count));
         }

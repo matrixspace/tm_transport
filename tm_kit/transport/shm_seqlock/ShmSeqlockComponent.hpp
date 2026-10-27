@@ -32,6 +32,15 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     //  slotSize=<n>      bytes available for topic+payload per slot (default 1000)
     //  slotCount=<n>     number of slots, power of two (default 4096)
     //  stride128=true    pad slot stride to a multiple of 128 bytes (default: 64)
+    //  layout=inline|split inline: seq shares the first slot line with the slot
+    //                    head and the first data bytes (default); split: seq has
+    //                    its own 64B line, and the next slot is pre-marked right
+    //                    after each commit so that line is written once per
+    //                    message. With split a reader can lag at most slotCount-1
+    //                    messages before it is lapped. Readers always follow the
+    //                    layout of the segment header, whatever their locator says.
+    //  testNoPremark=true (tests only) split layout without the pre-mark; this
+    //                    is not a valid seqlock and lets torn reads through
     //  wait=spin|futex   futex: publisher wakes futex-waiting readers (default spin)
     //  mlock=true|false  best-effort mlock of the segment (default true)
     //  writerLock=true   serialize publish calls made from several threads of
@@ -67,6 +76,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         uint64_t publisherRestarts;
         uint64_t corrupt;
         uint64_t reopens;
+        uint64_t splitLayout; //1 if the current segment uses layout=split
     };
     struct ShmSeqlockPublisherStats {
         uint64_t published;

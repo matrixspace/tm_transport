@@ -29,6 +29,13 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     //Each slot starts with ShmSeqlockSlotHead (24 bytes, same cache line as the
     //first data bytes) followed by topic bytes and then payload bytes.
     //
+    //With layout=split (layout version 2) each slot starts with a 64B line
+    //holding only seq, followed by ShmSeqlockSlotHead (its seq unused), topic
+    //and payload. Right after committing message m the publisher pre-marks
+    //the slot of m+1 odd, so the line readers poll while waiting for a
+    //message gets one writer store (the commit). One slot is always
+    //pre-marked, so a reader can lag at most slotCount-1 messages.
+    //
     //Message i (global index, monotonic across publisher restarts) lives in
     //slot (i & (slotCount-1)). Its seq is 2i+1 while being written and 2i+2
     //when done. Since indices continue across publisher restarts, readers do
@@ -39,7 +46,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         //written into the header of a segment that a restarted publisher replaced
         //(the name now points to a new segment, readers must reopen)
         constexpr uint64_t SHM_SEQLOCK_SUPERSEDED = 0x44454445434F4C53ULL;
-        constexpr uint32_t SHM_SEQLOCK_LAYOUT_VERSION = 1;
+        //layout version 1 (inline): seq in the slot head, on the same line as the
+        //first data bytes; layout version 2 (split): seq alone on the first 64B
+        //line of the slot, slot head and data from the second line on
+        constexpr uint32_t SHM_SEQLOCK_LAYOUT_INLINE = 1;
+        constexpr uint32_t SHM_SEQLOCK_LAYOUT_SPLIT = 2;
+        constexpr std::size_t SHM_SEQLOCK_SPLIT_HEAD_OFFSET = 64;
         constexpr uint32_t SHM_SEQLOCK_FLAG_FUTEX = 1;
 
         struct ShmSeqlockHeader {
@@ -74,9 +86,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             }
             return h;
         }
-        inline std::size_t slotStrideFor(std::size_t capacity, bool stride128) {
+        inline std::size_t slotStrideFor(std::size_t capacity, bool stride128, bool split) {
             std::size_t unit = (stride128 ? 128 : 64);
-            return (sizeof(ShmSeqlockSlotHead)+capacity+unit-1)/unit*unit;
+            return ((split ? SHM_SEQLOCK_SPLIT_HEAD_OFFSET : 0)+sizeof(ShmSeqlockSlotHead)+capacity+unit-1)/unit*unit;
         }
         inline std::size_t segmentSize(std::size_t slotCount, std::size_t stride) {
             return sizeof(ShmSeqlockHeader)+slotCount*stride;
@@ -134,9 +146,21 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::size_t slotStride = 0;
             uint64_t slotMask = 0;
             std::size_t slotCapacity = 0;
+            bool split = false;
 
-            ShmSeqlockSlotHead *slotAt(uint64_t idx) const {
-                return reinterpret_cast<ShmSeqlockSlotHead *>(slots+(idx & slotMask)*slotStride);
+            template <bool Split>
+            ShmSeqlockSlotHead *headAt(uint64_t idx) const {
+                return reinterpret_cast<ShmSeqlockSlotHead *>(slots+(idx & slotMask)*slotStride+(Split ? SHM_SEQLOCK_SPLIT_HEAD_OFFSET : 0));
+            }
+            //the polled sequence word: in the slot head (inline) or alone on
+            //the first line of the slot (split)
+            template <bool Split>
+            std::atomic<uint64_t> *seqAt(uint64_t idx) const {
+                if constexpr (Split) {
+                    return reinterpret_cast<std::atomic<uint64_t> *>(slots+(idx & slotMask)*slotStride);
+                } else {
+                    return &(headAt<false>(idx)->seq);
+                }
             }
             static char *dataOf(ShmSeqlockSlotHead *s) {
                 return reinterpret_cast<char *>(s)+sizeof(ShmSeqlockSlotHead);
@@ -169,6 +193,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 slotStride = header->slotStride;
                 slotMask = static_cast<uint64_t>(header->slotCount)-1;
                 slotCapacity = header->slotCapacity;
+                split = (header->layoutVersion == SHM_SEQLOCK_LAYOUT_SPLIT);
             }
         };
     }
@@ -184,6 +209,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             ShmSeqlockMapping map_;
             bool futex_;
             bool writerLock_;
+            uint32_t layout_;
+            bool noPremark_;
             std::atomic_flag writing_ = ATOMIC_FLAG_INIT;
             uint64_t next_;
             std::string lastTopic_;
@@ -216,6 +243,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 : locator_(locator), shmName_(shmNameFor(locator)), lockPath_(), lockFd_(-1), map_()
                 , futex_(locator.query("wait", "spin") == "futex")
                 , writerLock_(queryBool(locator, "writerLock", false))
+                , layout_(SHM_SEQLOCK_LAYOUT_INLINE), noPremark_(queryBool(locator, "testNoPremark", false))
                 , next_(0), lastTopic_(), lastTopicHash_(topicHash(nullptr, 0)), rejected_(0), emptyWakes_(0), waiterResets_(0)
             {
                 lockPath_ = "/dev/shm"+shmName_+".lock";
@@ -223,13 +251,19 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 std::size_t count = queryNumber(locator, "slotCount", 4096);
                 bool stride128 = queryBool(locator, "stride128", false);
                 bool doMlock = queryBool(locator, "mlock", true);
+                auto layoutName = locator.query("layout", "inline");
+                if (layoutName == "split") {
+                    layout_ = SHM_SEQLOCK_LAYOUT_SPLIT;
+                } else if (layoutName != "inline") {
+                    throw std::runtime_error("[ShmSeqlockComponent] layout must be inline or split");
+                }
                 if (count < 2 || count > (std::size_t(1) << 24) || (count & (count-1)) != 0) {
                     throw std::runtime_error("[ShmSeqlockComponent] slotCount must be a power of two between 2 and 2^24");
                 }
                 if (capacity < 1 || capacity > (std::size_t(1) << 26)) {
                     throw std::runtime_error("[ShmSeqlockComponent] slotSize must be between 1 and 2^26");
                 }
-                std::size_t stride = slotStrideFor(capacity, stride128);
+                std::size_t stride = slotStrideFor(capacity, stride128, layout_ == SHM_SEQLOCK_LAYOUT_SPLIT);
                 std::size_t size = segmentSize(count, stride);
 
                 lockFd_ = ::open(lockPath_.c_str(), O_RDWR|O_CREAT|O_CLOEXEC, 0666);
@@ -265,7 +299,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                         auto magic = h->magic.load(std::memory_order_acquire);
                         if (magic == SHM_SEQLOCK_MAGIC
                             && static_cast<std::size_t>(st.st_size) == size
-                            && h->layoutVersion == SHM_SEQLOCK_LAYOUT_VERSION
+                            && h->layoutVersion == layout_
                             && h->slotCapacity == capacity
                             && h->slotCount == count
                             && h->slotStride == stride) {
@@ -286,14 +320,15 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     //Continue after the highest message index found in the ring: a
                     //crashed publisher may have completed a slot without updating
                     //"published", and readers may already have delivered it.
-                    //A slot left odd (crash during write) is reset; its index is
+                    //A slot left odd (crash during write, or the next slot pre-marked
+                    //by a split layout publisher) is reset; its index is
                     //rewritten by this publisher.
                     uint64_t resume = map_.header->published.load(std::memory_order_acquire);
                     for (uint64_t ii=0; ii<count; ++ii) {
-                        auto *s = map_.slotAt(ii);
-                        auto seq = s->seq.load(std::memory_order_relaxed);
+                        auto *sq = (layout_ == SHM_SEQLOCK_LAYOUT_SPLIT ? map_.seqAt<true>(ii) : map_.seqAt<false>(ii));
+                        auto seq = sq->load(std::memory_order_relaxed);
                         if (seq & 1) {
-                            s->seq.store(0, std::memory_order_relaxed);
+                            sq->store(0, std::memory_order_relaxed);
                         } else if (seq != 0) {
                             resume = std::max(resume, seq/2);
                         }
@@ -333,7 +368,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     //prefault by writing (the segment is already zero filled)
                     std::memset(map_.slots, 0, count*stride);
                     auto *h = map_.header;
-                    h->layoutVersion = SHM_SEQLOCK_LAYOUT_VERSION;
+                    h->layoutVersion = layout_;
                     h->slotCapacity = static_cast<uint32_t>(capacity);
                     h->slotCount = static_cast<uint32_t>(count);
                     h->slotStride = static_cast<uint32_t>(stride);
@@ -346,6 +381,13 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     map_.setLayoutFromHeader();
                 }
                 next_ = map_.header->published.load(std::memory_order_acquire);
+                if (layout_ == SHM_SEQLOCK_LAYOUT_SPLIT && !noPremark_) {
+                    //split layout: the slot of the next message is always pre-marked odd
+                    //before its data is written, so that its polled seq line gets a single
+                    //writer store (the commit) while readers wait for it
+                    map_.seqAt<true>(next_)->store(2*next_+1, std::memory_order_relaxed);
+                    std::atomic_thread_fence(std::memory_order_release);
+                }
             }
             ~OneShmSeqlockSender() {
                 //The segment is left in place so that a restarted publisher continues it
@@ -361,7 +403,13 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             bool writerLock() const {
                 return writerLock_;
             }
-            template <bool Futex, bool Lock>
+            bool split() const {
+                return layout_ == SHM_SEQLOCK_LAYOUT_SPLIT;
+            }
+            bool noPremark() const {
+                return noPremark_;
+            }
+            template <bool Futex, bool Lock, bool Split, bool Premark>
             void publish(std::string const &topic, std::string const &content) {
                 std::size_t tl = topic.size();
                 std::size_t pl = content.size();
@@ -379,18 +427,29 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     lastTopicHash_ = topicHash(topic.data(), tl);
                 }
                 uint64_t i = next_;
-                auto *s = map_.slotAt(i);
-                s->seq.store(2*i+1, std::memory_order_relaxed);
-                std::atomic_thread_fence(std::memory_order_release);
+                auto *s = map_.headAt<Split>(i);
+                auto *sq = map_.seqAt<Split>(i);
+                if constexpr (!Split) {
+                    sq->store(2*i+1, std::memory_order_relaxed);
+                    std::atomic_thread_fence(std::memory_order_release);
+                }
+                //split: the slot was already pre-marked odd after the previous commit
+                //(or when this publisher started), the commit is its only store here
                 s->payloadLen.store(static_cast<uint32_t>(pl), std::memory_order_relaxed);
                 s->topicLen.store(static_cast<uint32_t>(tl), std::memory_order_relaxed);
                 s->topicHash.store(lastTopicHash_, std::memory_order_relaxed);
                 char *d = ShmSeqlockMapping::dataOf(s);
                 std::memcpy(d, topic.data(), tl);
                 std::memcpy(d+tl, content.data(), pl);
-                s->seq.store(2*i+2, std::memory_order_release);
+                sq->store(2*i+2, std::memory_order_release);
                 next_ = i+1;
                 map_.header->published.store(i+1, std::memory_order_release);
+                if constexpr (Split && Premark) {
+                    //pre-mark the next slot while readers are still busy with this message;
+                    //the fence orders it before any data store of the next message
+                    map_.seqAt<true>(i+1)->store(2*i+3, std::memory_order_relaxed);
+                    std::atomic_thread_fence(std::memory_order_release);
+                }
                 if constexpr (Lock) {
                     writing_.clear(std::memory_order_release);
                 }
@@ -477,6 +536,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::atomic<uint64_t> publisherRestarts_;
             std::atomic<uint64_t> corrupt_;
             std::atomic<uint64_t> reopens_;
+            std::atomic<uint64_t> splitLayout_;
 
             alignas(64) std::atomic<bool> running_;
             std::thread th_;
@@ -513,12 +573,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     && map_.map(fd, static_cast<std::size_t>(st.st_size), doMlock_)) {
                     auto *h = map_.header;
                     if (h->magic.load(std::memory_order_acquire) == SHM_SEQLOCK_MAGIC
-                        && h->layoutVersion == SHM_SEQLOCK_LAYOUT_VERSION) {
+                        && (h->layoutVersion == SHM_SEQLOCK_LAYOUT_INLINE || h->layoutVersion == SHM_SEQLOCK_LAYOUT_SPLIT)) {
                         std::size_t count = h->slotCount;
                         std::size_t capacity = h->slotCapacity;
                         std::size_t stride = h->slotStride;
                         if (count >= 2 && (count & (count-1)) == 0
-                            && stride >= sizeof(ShmSeqlockSlotHead)+capacity
+                            && stride >= (h->layoutVersion == SHM_SEQLOCK_LAYOUT_SPLIT ? SHM_SEQLOCK_SPLIT_HEAD_OFFSET : 0)+sizeof(ShmSeqlockSlotHead)+capacity
                             && segmentSize(count, stride) == static_cast<std::size_t>(st.st_size)) {
                             ok = true;
                         }
@@ -549,6 +609,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                             next_ = p;
                         }
                         lastEpoch_ = map_.header->epoch.load(std::memory_order_relaxed);
+                        splitLayout_.store(map_.split ? 1 : 0, std::memory_order_relaxed);
                         if (futex_ && !(map_.header->flags.load(std::memory_order_relaxed) & SHM_SEQLOCK_FLAG_FUTEX)) {
                             std::cerr << "[ShmSeqlockComponent] segment '" << locator_.identifier()
                                 << "': reader uses wait=futex but the publisher does not, readers will poll every 1ms when idle\n";
@@ -559,7 +620,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
                 return false;
             }
-            //called only when the ring is idle; returns false if the reader must stop
+            //called only when the ring is idle; returns false if the loop must exit (stop, or reopen)
             bool idleCheck(bool withStat) {
                 auto *h = map_.header;
                 bool reopen = (h->magic.load(std::memory_order_acquire) != SHM_SEQLOCK_MAGIC);
@@ -573,7 +634,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 if (reopen) {
                     bump(reopens_);
                     bump(publisherRestarts_);
-                    return openAndJoin();
+                    //the new segment may use another layout, run() reopens it
+                    return false;
                 }
                 auto e = h->epoch.load(std::memory_order_relaxed);
                 if (e != lastEpoch_) {
@@ -629,7 +691,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     }
                 }
             }
-            void futexSleep(ShmSeqlockSlotHead *s, uint64_t want) {
+            template <bool Split>
+            void futexSleep(std::atomic<uint64_t> *sq, uint64_t want) {
                 auto *h = map_.header;
                 long timeout = futexTimeoutUs_;
                 if (!(h->flags.load(std::memory_order_relaxed) & SHM_SEQLOCK_FLAG_FUTEX)) {
@@ -638,7 +701,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 uint32_t fw = h->futexWord.load(std::memory_order_acquire);
                 h->waiters.fetch_add(1, std::memory_order_seq_cst);
                 //pairs with the publisher's seq_cst fence before it reads waiters
-                if (s->seq.load(std::memory_order_seq_cst) < want-1 && running_.load(std::memory_order_relaxed)) {
+                //split: a pre-marked slot (want-1) is the normal idle state, so sleep
+                //until the commit; inline: want-1 means a write is in progress
+                if (sq->load(std::memory_order_seq_cst) < (Split ? want : want-1) && running_.load(std::memory_order_relaxed)) {
                     futexWait(&(h->futexWord), fw, timeout);
                 }
                 //saturating: the publisher may have reset the count meanwhile
@@ -647,16 +712,14 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
             }
 
-            template <bool Spec, bool Futex>
+            template <bool Spec, bool Futex, bool Split>
             void runLoop() {
-                if (!openAndJoin()) {
-                    return;
-                }
                 uint64_t empty = 0;
                 while (running_.load(std::memory_order_relaxed)) {
-                    auto *s = map_.slotAt(next_);
+                    auto *s = map_.headAt<Split>(next_);
+                    auto *sq = map_.seqAt<Split>(next_);
                     uint64_t want = 2*next_+2;
-                    uint64_t seq1 = s->seq.load(std::memory_order_acquire);
+                    uint64_t seq1 = sq->load(std::memory_order_acquire);
                     bool got = false;
                     uint32_t tl = 0, pl = 0, hash = 0;
                     if constexpr (Spec) {
@@ -678,7 +741,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                             std::memcpy(buf_.get()+pre, src+pre, tl+pl-pre);
                         }
                         std::atomic_thread_fence(std::memory_order_acquire);
-                        uint64_t seq2 = s->seq.load(std::memory_order_relaxed);
+                        uint64_t seq2 = sq->load(std::memory_order_relaxed);
                         got = (seq1 == want && seq2 == want);
                         seq1 = std::max(seq1, seq2);
                     } else {
@@ -691,7 +754,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                             pl = std::min(pl, cap-tl);
                             std::memcpy(buf_.get(), ShmSeqlockMapping::dataOf(s), tl+pl);
                             std::atomic_thread_fence(std::memory_order_acquire);
-                            uint64_t seq2 = s->seq.load(std::memory_order_relaxed);
+                            uint64_t seq2 = sq->load(std::memory_order_relaxed);
                             got = (seq2 == want);
                             seq1 = seq2;
                         }
@@ -716,7 +779,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     ++empty;
                     if constexpr (Futex) {
                         if (empty >= spinCount_) {
-                            futexSleep(s, want);
+                            futexSleep<Split>(sq, want);
                             //sleep again on the next empty poll; a delivery resets it
                             empty = spinCount_-1;
                             if (!idleCheck((++idleChecks_ & 15) == 0)) {
@@ -738,18 +801,33 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     }
                 }
             }
-            void run() {
-                if (spec_) {
-                    if (futex_) {
-                        runLoop<true, true>();
-                    } else {
-                        runLoop<true, false>();
-                    }
+            template <bool Spec, bool Futex>
+            void runWithLayout() {
+                if (map_.split) {
+                    runLoop<Spec, Futex, true>();
                 } else {
-                    if (futex_) {
-                        runLoop<false, true>();
+                    runLoop<Spec, Futex, false>();
+                }
+            }
+            void run() {
+                //the layout comes from the segment header and may change when the
+                //publisher replaces the segment, so it is dispatched on every (re)open
+                while (running_.load(std::memory_order_relaxed)) {
+                    if (!openAndJoin()) {
+                        return;
+                    }
+                    if (spec_) {
+                        if (futex_) {
+                            runWithLayout<true, true>();
+                        } else {
+                            runWithLayout<true, false>();
+                        }
                     } else {
-                        runLoop<false, false>();
+                        if (futex_) {
+                            runWithLayout<false, true>();
+                        } else {
+                            runWithLayout<false, false>();
+                        }
                     }
                 }
             }
@@ -774,7 +852,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 , map_(), buf_(), next_(0), lastEpoch_(0), idleChecks_(0), predict_(0)
                 , active_(), activeVersion_(0)
                 , mutex_(), pending_(), version_(0), ackVersion_(0)
-                , received_(0), lost_(0), lapResyncs_(0), publisherRestarts_(0), corrupt_(0), reopens_(0)
+                , received_(0), lost_(0), lapResyncs_(0), publisherRestarts_(0), corrupt_(0), reopens_(0), splitLayout_(0)
                 , running_(true), th_(), thId_()
             {
                 lockPath_ = "/dev/shm"+shmName_+".lock";
@@ -860,6 +938,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     , publisherRestarts_.load(std::memory_order_relaxed)
                     , corrupt_.load(std::memory_order_relaxed)
                     , reopens_.load(std::memory_order_relaxed)
+                    , splitLayout_.load(std::memory_order_relaxed)
                 };
             }
         };
@@ -922,18 +1001,30 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             }
             return iter->second.get();
         }
-        template <bool Futex, bool Lock>
+        template <bool Futex, bool Lock, bool Split, bool Premark>
         static std::function<void(basic::ByteDataWithTopic &&)> makePublisher(OneShmSeqlockSender *p, std::optional<UserToWireHook> const &userToWireHook) {
             if (userToWireHook) {
                 auto hook = userToWireHook->hook;
                 return [p,hook](basic::ByteDataWithTopic &&data) {
                     auto w = hook(basic::ByteData {std::move(data.content)});
-                    p->template publish<Futex,Lock>(data.topic, w.content);
+                    p->template publish<Futex,Lock,Split,Premark>(data.topic, w.content);
                 };
             } else {
                 return [p](basic::ByteDataWithTopic &&data) {
-                    p->template publish<Futex,Lock>(data.topic, data.content);
+                    p->template publish<Futex,Lock,Split,Premark>(data.topic, data.content);
                 };
+            }
+        }
+        template <bool Futex, bool Lock>
+        static std::function<void(basic::ByteDataWithTopic &&)> makePublisherForLayout(OneShmSeqlockSender *p, std::optional<UserToWireHook> const &userToWireHook) {
+            if (!p->split()) {
+                return makePublisher<Futex,Lock,false,true>(p, userToWireHook);
+            } else if (!p->noPremark()) {
+                return makePublisher<Futex,Lock,true,true>(p, userToWireHook);
+            } else {
+                //test control only: split layout without the pre-mark, which is
+                //not a valid seqlock (torn reads are not detected)
+                return makePublisher<Futex,Lock,true,false>(p, userToWireHook);
             }
         }
     public:
@@ -990,15 +1081,15 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             auto *p = getOrStartSender(locator);
             if (p->futex()) {
                 if (p->writerLock()) {
-                    return makePublisher<true,true>(p, userToWireHook);
+                    return makePublisherForLayout<true,true>(p, userToWireHook);
                 } else {
-                    return makePublisher<true,false>(p, userToWireHook);
+                    return makePublisherForLayout<true,false>(p, userToWireHook);
                 }
             } else {
                 if (p->writerLock()) {
-                    return makePublisher<false,true>(p, userToWireHook);
+                    return makePublisherForLayout<false,true>(p, userToWireHook);
                 } else {
-                    return makePublisher<false,false>(p, userToWireHook);
+                    return makePublisherForLayout<false,false>(p, userToWireHook);
                 }
             }
         }

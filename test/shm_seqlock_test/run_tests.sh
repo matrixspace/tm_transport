@@ -3,7 +3,10 @@
 # Functional tests for the shm_seqlock transport (multi-process, through the
 # MultiTransport channel string). Not a latency measurement.
 #
-# Usage: run_tests.sh [path/to/shm_seqlock_test] [log dir]
+# Usage: run_tests.sh [path/to/shm_seqlock_test] [log dir] [inline|split]
+#
+# The third argument selects the publisher layout. With inline (default) no
+# layout property is passed, so the default layout is what gets tested.
 #
 # Every test uses its own segment name (prefix shmseqlock_t<pid>_) and the
 # segments are removed on exit.
@@ -14,6 +17,15 @@ BIN=${1:-$HERE/../../builddir_release/test/shm_seqlock_test/shm_seqlock_test}
 OUT=${2:-/tmp/shm_seqlock_test.$$}
 mkdir -p "$OUT"
 PFX=shmseqlock_t$$
+LAYOUT=${3:-inline}
+if [ "$LAYOUT" = inline ]; then
+    LP=""; SL=""; OTHER=split; EXPECT_SPLIT=0
+elif [ "$LAYOUT" = split ]; then
+    LP=",layout=split"; SL="--layout=split"; OTHER=inline; EXPECT_SPLIT=1
+else
+    echo "unknown layout $LAYOUT"
+    exit 2
+fi
 PASS=0
 FAIL=0
 CLK_TCK=$(getconf CLK_TCK)
@@ -53,12 +65,25 @@ summary() {
 for v in "spec spin" "classic spin" "spec futex" "classic futex"; do
     set -- $v
     log=$OUT/stress_$1_$2.log
-    "$BIN" stress --segment=${PFX}_stress_$1_$2 --readers=3 --read=$1 --wait=$2 \
+    "$BIN" stress --segment=${PFX}_stress_$1_$2 --readers=3 --read=$1 --wait=$2 $SL \
         --slotCount=64 --slotSize=512 --count=3000000 --readerSlowEvery=1000 > "$log" 2>&1
     rc=$?
     ok=0; [ $rc = 0 ] && grep -q '^STRESS PASS' "$log" && ok=1
-    result "stress read=$1 wait=$2" $ok "$(grep -E '^  reader' "$log" | sed 's/^ *//' | tr '\n' ';')"
+    result "stress read=$1 wait=$2 layout=$LAYOUT" $ok "$(grep -E '^  reader' "$log" | sed 's/^ *//' | tr '\n' ';')"
 done
+
+# negative control: split layout without the pre-mark is not a valid seqlock,
+# the checker must see torn reads (bad payload or topic) there
+if [ "$LAYOUT" = split ]; then
+    for r in classic spec; do
+        log=$OUT/stress_nopremark_$r.log
+        "$BIN" stress --segment=${PFX}_stress_nopremark_$r --readers=3 --read=$r --wait=spin --layout=split --noPremark \
+            --slotCount=64 --slotSize=512 --count=3000000 --readerSlowEvery=1000 > "$log" 2>&1
+        torn=$(grep -E '^  reader' "$log" | sed -E 's/.* bad=([0-9]+) .* topicBad=([0-9]+) .*/\1 \2/' | awk '{t+=$1+$2} END {print t+0}')
+        ok=0; grep -q '^STRESS FAIL' "$log" && [ "$torn" -gt 0 ] && ok=1
+        result "stress negative control read=$r (split without pre-mark must show torn reads)" $ok "torn=$torn; $(grep -E '^  reader' "$log" | sed 's/^ *//' | tr '\n' ';')"
+    done
+fi
 
 # ---------------------------------------------------------------- test 1
 # 1 publisher, 3 readers, 100k messages, readers keep up
@@ -72,7 +97,7 @@ t1() { # tag pubProps subProps
         pids+=($!)
     done
     sleep 0.3
-    "$BIN" pub --channel="shm_seqlock://::::$seg[$pp]" --count=100000 --intervalNs=2000 \
+    "$BIN" pub --channel="shm_seqlock://::::$seg[$pp$LP]" --count=100000 --intervalNs=2000 \
         --payload=256 --startDelayMs=800 > "$OUT/t1_${tag}_pub.log" 2>&1
     wait "${pids[@]}"
     local ok=1 detail=""
@@ -80,7 +105,8 @@ t1() { # tag pubProps subProps
         local f=$OUT/t1_${tag}_sub$i.log
         [ "$(field $f received)" = 100000 ] && [ "$(field $f bad)" = 0 ] && [ "$(field $f ooo)" = 0 ] \
             && [ "$(field $f gaps)" = 0 ] && [ "$(field $f topicBad)" = 0 ] && [ "$(field $f first)" = 0 ] \
-            && [ "$(field $f sizeMismatch)" = 0 ] && [ "$(field $f lost)" = 0 ] || ok=0
+            && [ "$(field $f sizeMismatch)" = 0 ] && [ "$(field $f lost)" = 0 ] \
+            && [ "$(field $f splitLayout)" = $EXPECT_SPLIT ] || ok=0
         detail="$detail sub$i{received=$(field $f received) gaps=$(field $f gaps) bad=$(field $f bad) first=$(field $f first)}"
     done
     result "1 (3 readers in order, $tag)" $ok "$detail"
@@ -96,7 +122,7 @@ t1 spec_stride128 "slotSize=1050,slotCount=4096,stride128=true" "read=spec"
 # ---------------------------------------------------------------- test 2
 # topic filtering: exact string, regex (r/../ and rabbitmq style), NoTopicSelection
 seg=${PFX}_t2
-ch="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096]"
+ch="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096$LP]"
 "$BIN" sub --channel="$ch" --topic='a.x' --expectTopicRe='a\.x' --timeoutSec=20 --idleExitSec=2 > "$OUT/t2_exact.log" 2>&1 &
 p1=$!
 "$BIN" sub --channel="$ch" --topic='r/a\..*/' --expectTopicRe='a\..*' --timeoutSec=20 --idleExitSec=2 > "$OUT/t2_regex.log" 2>&1 &
@@ -122,7 +148,7 @@ t2check "NoTopicSelection" "$OUT/t2_all.log" 30000
 # slow reader loses messages, publisher rate unaffected, other readers lose nothing
 t3run() { # tag withSlow
     local seg=${PFX}_t3_$1
-    local ch="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096]"
+    local ch="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096$LP]"
     local pids=()
     for i in 1 2; do
         "$BIN" sub --channel="$ch" --count=200000 --timeoutSec=30 > "$OUT/t3_$1_fast$i.log" 2>&1 &
@@ -157,7 +183,7 @@ result "3 (slow reader)" $ok "publishNsAvg base=$baseNs withSlow=$slowNs elapsed
 # ---------------------------------------------------------------- test 4
 # reader SIGKILLed and restarted: first message received is the latest, not backlog
 seg=${PFX}_t4
-ch="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096]"
+ch="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096$LP]"
 "$BIN" pub --channel="$ch" --count=0 --intervalNs=1000000 --logEvery=1 > "$OUT/t4_pub.log" 2>&1 &
 pp=$!
 sleep 0.5
@@ -180,12 +206,12 @@ result "4 (reader SIGKILL+restart starts at latest)" $ok "latest sent before res
 
 # ---------------------------------------------------------------- test 5
 # publisher SIGKILLed and restarted: readers resume receiving
-t5() { # tag pub2Props
+t5() { # tag pub2Props [expected splitLayout at the end]
     local seg=${PFX}_t5_$1
     "$BIN" sub --channel="shm_seqlock://::::$seg" --timeoutSec=10 > "$OUT/t5_$1_sub.log" 2>&1 &
     local ps=$!
     sleep 0.3
-    "$BIN" pub --channel="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096]" --run=1 --count=0 \
+    "$BIN" pub --channel="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096$LP]" --run=1 --count=0 \
         --intervalNs=1000000 --startDelayMs=500 > "$OUT/t5_$1_pub1.log" 2>&1 &
     local p1=$!
     sleep 2.5
@@ -202,15 +228,20 @@ t5() { # tag pub2Props
     local ok=0
     [ -n "$r1" ] && [ "$r1" -gt 0 ] && [ "$r2" = 2000 ] && [ "$(field $f bad)" = 0 ] && [ "$(field $f ooo)" = 0 ] \
         && [ "$(field $f restarts)" -ge 1 ] && ok=1
+    if [ -n "${3:-}" ]; then
+        [ "$(field $f splitLayout)" = "$3" ] && [ "$(field $f reopens)" -ge 1 ] || ok=0
+    fi
     result "5 (publisher SIGKILL+restart, $1)" $ok "$line"
 }
-t5 same_layout "slotSize=1000,slotCount=4096"
-t5 new_layout "slotSize=500,slotCount=1024"
+t5 same_layout "slotSize=1000,slotCount=4096$LP"
+t5 new_layout "slotSize=500,slotCount=1024$LP"
+# same sizes, the other slot layout: the segment is superseded and readers follow the new header
+t5 layout_${LAYOUT}_to_$OTHER "slotSize=1000,slotCount=4096,layout=$OTHER" $((1-EXPECT_SPLIT))
 
 # ---------------------------------------------------------------- test 6
 # oversized message rejected without corruption; a message that exactly fills the slot passes
 seg=${PFX}_t6
-ch="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096]"
+ch="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096$LP]"
 "$BIN" sub --channel="$ch" --count=10000 --payload=997 --timeoutSec=20 > "$OUT/t6_sub.log" 2>&1 &
 ps=$!
 sleep 0.3
@@ -228,7 +259,7 @@ result "6 (oversize rejected, 3+997B fits, 3+998B rejected)" $ok "$(summary $OUT
 # low-CPU wait mode: reader CPU near 0 while messages trickle in
 t7() { # tag pubProps subProps
     local seg=${PFX}_t7_$1
-    "$BIN" pub --channel="shm_seqlock://::::$seg[$2]" --count=0 --intervalNs=200000000 > "$OUT/t7_$1_pub.log" 2>&1 &
+    "$BIN" pub --channel="shm_seqlock://::::$seg[$2$LP]" --count=0 --intervalNs=200000000 > "$OUT/t7_$1_pub.log" 2>&1 &
     local pp=$!
     sleep 0.5
     "$BIN" sub --channel="shm_seqlock://::::$seg[$3]" --timeoutSec=7 > "$OUT/t7_$1_sub.log" 2>&1 &
@@ -266,7 +297,7 @@ waitersOf() {
 "$BIN" sub --channel="shm_seqlock://::::$seg[wait=spin]" --count=600 --timeoutSec=20 > "$OUT/t7b_live.log" 2>&1 &
 pl=$!
 sleep 0.3
-"$BIN" pub --channel="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096,wait=futex]" --count=600 \
+"$BIN" pub --channel="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096,wait=futex$LP]" --count=600 \
     --intervalNs=10000000 --startDelayMs=500 > "$OUT/t7b_pub.log" 2>&1 &
 pp=$!
 sleep 0.8
@@ -300,7 +331,7 @@ ok=0
 [ $FAIL = 0 ] && ok=1
 result "8 (MultiTransport oneByteDataBroadcastPublisher/Listener with channel string)" $ok "covered by tests 1-7 (pub/sub modes use only the channel string)"
 seg=${PFX}_t8
-ch="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096]"
+ch="shm_seqlock://::::$seg[slotSize=1000,slotCount=4096$LP]"
 "$BIN" pub --channel="$ch" --count=0 --intervalNs=1000000 --topics=a.x,a.y,b.x > "$OUT/t8_pub.log" 2>&1 &
 pp=$!
 sleep 0.5
@@ -312,5 +343,5 @@ ok=0
 [ $rc = 0 ] && grep -q 'FETCHRESULT ok=1 topic=b.x' "$OUT/t8_fetch.log" && ok=1
 result "8b (fetchFirstUpdateAndDisconnect)" $ok "$(grep FETCHRESULT $OUT/t8_fetch.log)"
 
-echo "SUMMARY pass=$PASS fail=$FAIL logs=$OUT"
+echo "SUMMARY layout=$LAYOUT pass=$PASS fail=$FAIL logs=$OUT"
 [ $FAIL = 0 ]
