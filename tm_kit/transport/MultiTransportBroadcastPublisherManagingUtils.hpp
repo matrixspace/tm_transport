@@ -9,6 +9,9 @@
 #include <tm_kit/transport/zeromq/ZeroMQImporterExporter.hpp>
 #include <tm_kit/transport/nng/NNGImporterExporter.hpp>
 #include <tm_kit/transport/shared_memory_broadcast/SharedMemoryBroadcastImporterExporter.hpp>
+#ifdef __linux__
+#include <tm_kit/transport/shm_seqlock/ShmSeqlockImporterExporter.hpp>
+#endif
 #include <tm_kit/transport/websocket/WebSocketImporterExporter.hpp>
 #include <tm_kit/transport/singlecast/SinglecastImporterExporter.hpp>
 
@@ -142,6 +145,19 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                         throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneBroadcastPublisher] Trying to create shared memory broadcast publisher with channel spec '"+channelSpec+"', but shared memory broadcast is unsupported in the environment");
                     }
                     break;
+#ifdef __linux__
+                case MultiTransportBroadcastListenerConnectionType::ShmSeqlock:
+                    if constexpr (std::is_convertible_v<Env *, shm_seqlock::ShmSeqlockComponent *>) {
+                        auto pub = shm_seqlock::ShmSeqlockImporterExporter<Env>::template createTypedExporter<OutputType>(
+                            std::get<1>(*parsed), hook, name
+                        );
+                        r.registerExporter(name, pub);
+                        return r.exporterAsSink(pub);
+                    } else {
+                        throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneBroadcastPublisher] Trying to create shm seqlock publisher with channel spec '"+channelSpec+"', but shm seqlock is unsupported in the environment");
+                    }
+                    break;
+#endif
                 case MultiTransportBroadcastListenerConnectionType::WebSocket:
                     if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                         auto pub = web_socket::WebSocketImporterExporter<Env>::template createTypedExporter<OutputType>(
@@ -271,6 +287,19 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                     throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneByteDataBroadcastPublisher] Trying to create shared memory broadcast publisher with channel spec '"+channelSpec+"', but shared memory broadcast is unsupported in the environment");
                 }
                 break;
+#ifdef __linux__
+            case MultiTransportBroadcastListenerConnectionType::ShmSeqlock:
+                if constexpr (std::is_convertible_v<Env *, shm_seqlock::ShmSeqlockComponent *>) {
+                    auto pub = shm_seqlock::ShmSeqlockImporterExporter<Env>::createExporter(
+                        std::get<1>(*parsed), hook, name
+                    );
+                    r.registerExporter(name, pub);
+                    return r.exporterAsSink(pub);
+                } else {
+                    throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneByteDataBroadcastPublisher] Trying to create shm seqlock publisher with channel spec '"+channelSpec+"', but shm seqlock is unsupported in the environment");
+                }
+                break;
+#endif
             case MultiTransportBroadcastListenerConnectionType::WebSocket:
                 if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                     auto pub = web_socket::WebSocketImporterExporter<Env>::createExporter(
