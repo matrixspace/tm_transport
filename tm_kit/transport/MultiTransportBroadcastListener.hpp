@@ -18,6 +18,7 @@
 #ifdef __linux__
 #include <tm_kit/transport/shm_seqlock/ShmSeqlockComponent.hpp>
 #include <tm_kit/transport/shm_cursor/ShmCursorComponent.hpp>
+#include <tm_kit/transport/aeron_ipc/AeronIpcComponent.hpp>
 #endif
 #include <tm_kit/transport/AbstractHookFactoryComponent.hpp>
 #include <tm_kit/transport/grpc_interop/GrpcInteropComponent.hpp>
@@ -86,6 +87,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         if constexpr (std::is_convertible_v<Env *, shm_cursor::ShmCursorComponent *>) {
             retVal["shm_cursor"] = env->shm_cursor_threadHandles();
         }
+        if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+            retVal["aeron_ipc"] = env->aeron_ipc_threadHandles();
+        }
 #endif
         if constexpr (std::is_convertible_v<Env *, zeromq::ZeroMQComponent *>) {
             retVal["zeromq"] = env->zeromq_threadHandles();
@@ -114,8 +118,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         , Singlecast
         , ShmSeqlock
         , ShmCursor
+        , AeronIpc
     };
-    inline const std::array<std::string,11> MULTI_TRANSPORT_SUBSCRIBER_CONNECTION_TYPE_STR = {
+    inline const std::array<std::string,12> MULTI_TRANSPORT_SUBSCRIBER_CONNECTION_TYPE_STR = {
         "multicast"
         , "rabbitmq"
         , "redis"
@@ -127,6 +132,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         , "singlecast"
         , "shm_seqlock"
         , "shm_cursor"
+        , "aeron_ipc"
     };
     inline auto parseMultiTransportBroadcastChannel(std::string const &s) 
         -> std::optional<std::tuple<MultiTransportBroadcastListenerConnectionType, ConnectionLocator>>
@@ -154,6 +160,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         case MultiTransportBroadcastListenerConnectionType::SharedMemoryBroadcast:
         case MultiTransportBroadcastListenerConnectionType::ShmSeqlock:
         case MultiTransportBroadcastListenerConnectionType::ShmCursor:
+        case MultiTransportBroadcastListenerConnectionType::AeronIpc:
             return true;
             break;
         case MultiTransportBroadcastListenerConnectionType::ZeroMQ:
@@ -855,6 +862,56 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             );
                         }
                         break;
+                    case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                        if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                            auto *component = static_cast<aeron_ipc::AeronIpcComponent *>(env);
+                            auto actualHook = wireToUserHook_;
+                            if (!actualHook) {
+                                actualHook = DefaultHookFactory<Env>::template incomingHook<T>(env);
+                            }
+                            auto res = component->aeron_ipc_addSubscriptionClient(
+                                x.connectionLocator
+                                , MultiTransportBroadcastListenerTopicHelper<aeron_ipc::AeronIpcComponent>::parseTopic(x.topicDescription)
+                                , [this,env](basic::ByteDataWithTopic &&d) {
+                                    TM_INFRA_IMPORTER_TRACER_WITH_SUFFIX(env, ":data");
+                                    T t;
+                                    auto tRes = basic::bytedata_utils::RunDeserializer<T>::applyInPlace(t, d.content);
+                                    if (tRes) {
+                                        this->ImporterParent::publish(M::template pureInnerData<basic::TypedDataWithTopic<T>>(env, {std::move(d.topic), std::move(t)}));
+                                    }
+                                }
+                                , actualHook
+                            );
+                            {
+                                std::lock_guard<std::mutex> _(subscriptionsMutex_);
+                                subscriptions_.insert({{x.connectionType, res}, x});
+                            }
+                            this->FacilityParent::publish(
+                                env
+                                , typename M::template Key<MultiTransportBroadcastListenerOutput> {
+                                    id
+                                    , MultiTransportBroadcastListenerOutput { {
+                                        MultiTransportBroadcastListenerAddSubscriptionResponse {res}
+                                    } }
+                                }
+                                , true
+                            );
+                        } else {
+                            std::ostringstream errOss;
+                            errOss << "[MultiTransportBroadcastListner::actuallyHandle] trying to set up aeron ipc channel " << x.connectionLocator << " but aeron ipc is unsupported in the environment";
+                            env->log(infra::LogLevel::Warning, errOss.str());
+                            this->FacilityParent::publish(
+                                env
+                                , typename M::template Key<MultiTransportBroadcastListenerOutput> {
+                                    id
+                                    , MultiTransportBroadcastListenerOutput { {
+                                        MultiTransportBroadcastListenerAddSubscriptionResponse {0}
+                                    } }
+                                }
+                                , true
+                            );
+                        }
+                        break;
 #endif
                     case MultiTransportBroadcastListenerConnectionType::WebSocket:
                         if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
@@ -1074,6 +1131,16 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             }
                         }
                         break;
+                    case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                        if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                            static_cast<aeron_ipc::AeronIpcComponent *>(env)
+                                ->aeron_ipc_removeSubscriptionClient(x.subscriptionID);
+                            {
+                                std::lock_guard<std::mutex> _(subscriptionsMutex_);
+                                subscriptions_.erase({x.connectionType, x.subscriptionID});
+                            }
+                        }
+                        break;
 #endif
                     case MultiTransportBroadcastListenerConnectionType::WebSocket:
                         if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
@@ -1165,6 +1232,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             if constexpr (std::is_convertible_v<Env *, shm_cursor::ShmCursorComponent *>) {
                                 static_cast<shm_cursor::ShmCursorComponent *>(env)
                                     ->shm_cursor_removeSubscriptionClient(std::get<1>(x.first));
+                            }
+                            break;
+                        case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                            if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                                static_cast<aeron_ipc::AeronIpcComponent *>(env)
+                                    ->aeron_ipc_removeSubscriptionClient(std::get<1>(x.first));
                             }
                             break;
 #endif

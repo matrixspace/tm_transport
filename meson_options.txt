@@ -1,0 +1,2 @@
+option('aeron_ipc', type : 'feature', value : 'auto',
+    description : 'Build the separate tm_kit_transport_aeron_ipc library (Linux, needs Aeron from vcpkg)')

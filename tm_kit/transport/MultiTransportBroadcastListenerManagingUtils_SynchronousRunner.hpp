@@ -144,6 +144,17 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                         r.environment()->log(infra::LogLevel::Warning, "[MultiTransportBroadcastListenerManagingUtils (Synchronous Runner)::oneBroadcastListenerWithTopic] Trying to create shm cursor publisher with channel spec '"+spec.channel+"', but shm cursor is unsupported in the environment");
                     }
                     break;
+                case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                    if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                        sub = aeron_ipc::AeronIpcImporterExporter<Env>::template createTypedImporter<DataType>(
+                            std::get<1>(*parsedSpec)
+                            , MultiTransportBroadcastListenerTopicHelper<aeron_ipc::AeronIpcComponent>::parseTopic(getTopic_internal(std::get<0>(*parsedSpec), spec.topicDescription))
+                            , hookFactory(spec.name)
+                        );
+                    } else {
+                        r.environment()->log(infra::LogLevel::Warning, "[MultiTransportBroadcastListenerManagingUtils (Synchronous Runner)::oneBroadcastListenerWithTopic] Trying to create aeron ipc publisher with channel spec '"+spec.channel+"', but aeron ipc is unsupported in the environment");
+                    }
+                    break;
 #endif
                 case MultiTransportBroadcastListenerConnectionType::WebSocket:
                     if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
@@ -385,6 +396,18 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                     return sub;
                 } else {
                     throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils (Synchronous Runner)::oneByteDataBroadcastListener] Trying to create shm cursor publisher with channel spec '"+channelSpec+"', but shm cursor is unsupported in the environment");
+                }
+                break;
+            case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                    auto sub = aeron_ipc::AeronIpcImporterExporter<Env>::createImporter(
+                        std::get<1>(*parsed)
+                        , MultiTransportBroadcastListenerTopicHelper<aeron_ipc::AeronIpcComponent>::parseTopic(getTopic_internal(std::get<0>(*parsed), topicDescription))
+                        , hook
+                    );
+                    return sub;
+                } else {
+                    throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils (Synchronous Runner)::oneByteDataBroadcastListener] Trying to create aeron ipc publisher with channel spec '"+channelSpec+"', but aeron ipc is unsupported in the environment");
                 }
                 break;
 #endif

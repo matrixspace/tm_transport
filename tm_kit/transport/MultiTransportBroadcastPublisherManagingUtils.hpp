@@ -12,6 +12,7 @@
 #ifdef __linux__
 #include <tm_kit/transport/shm_seqlock/ShmSeqlockImporterExporter.hpp>
 #include <tm_kit/transport/shm_cursor/ShmCursorImporterExporter.hpp>
+#include <tm_kit/transport/aeron_ipc/AeronIpcImporterExporter.hpp>
 #endif
 #include <tm_kit/transport/websocket/WebSocketImporterExporter.hpp>
 #include <tm_kit/transport/singlecast/SinglecastImporterExporter.hpp>
@@ -169,6 +170,17 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                         throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneBroadcastPublisher] Trying to create shm cursor publisher with channel spec '"+channelSpec+"', but shm cursor is unsupported in the environment");
                     }
                     break;
+                case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                    if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                        auto pub = aeron_ipc::AeronIpcImporterExporter<Env>::template createTypedExporter<OutputType>(
+                            std::get<1>(*parsed), hook, name
+                        );
+                        r.registerExporter(name, pub);
+                        return r.exporterAsSink(pub);
+                    } else {
+                        throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneBroadcastPublisher] Trying to create aeron ipc publisher with channel spec '"+channelSpec+"', but aeron ipc is unsupported in the environment");
+                    }
+                    break;
 #endif
                 case MultiTransportBroadcastListenerConnectionType::WebSocket:
                     if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
@@ -320,6 +332,17 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                     return r.exporterAsSink(pub);
                 } else {
                     throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneByteDataBroadcastPublisher] Trying to create shm cursor publisher with channel spec '"+channelSpec+"', but shm cursor is unsupported in the environment");
+                }
+                break;
+            case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                    auto pub = aeron_ipc::AeronIpcImporterExporter<Env>::createExporter(
+                        std::get<1>(*parsed), hook, name
+                    );
+                    r.registerExporter(name, pub);
+                    return r.exporterAsSink(pub);
+                } else {
+                    throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneByteDataBroadcastPublisher] Trying to create aeron ipc publisher with channel spec '"+channelSpec+"', but aeron ipc is unsupported in the environment");
                 }
                 break;
 #endif

@@ -26,6 +26,7 @@
 #ifdef __linux__
 #include <tm_kit/transport/shm_seqlock/ShmSeqlockComponent.hpp>
 #include <tm_kit/transport/shm_cursor/ShmCursorComponent.hpp>
+#include <tm_kit/transport/aeron_ipc/AeronIpcComponent.hpp>
 #endif
 #include <tm_kit/transport/websocket/WebSocketComponent.hpp>
 #include <tm_kit/transport/AbstractHookFactoryComponent.hpp>
@@ -242,6 +243,21 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
             });
         }
     };
+    class HeartbeatAndAlertComponentInitializer<Env, aeron_ipc::AeronIpcComponent> {
+    public:
+        void operator()(Env *env, std::string const &identity, ConnectionLocator const &locator, std::optional<UserToWireHook> hook=std::nullopt) {
+            auto realHook = hook;
+            if (!realHook) {
+                realHook = DefaultHookFactory<Env>::template outgoingHook<HeartbeatMessage>(env);
+            }
+            env->HeartbeatAndAlertComponent::assignIdentity(HeartbeatAndAlertComponent {
+                static_cast<basic::real_time_clock::ClockComponent *>(env)
+                , identity
+                , static_cast<aeron_ipc::AeronIpcComponent *>(env)
+                    ->aeron_ipc_getPublisher(locator, realHook)
+            });
+        }
+    };
 #endif
     template <class Env>
     class HeartbeatAndAlertComponentInitializer<Env, web_socket::WebSocketComponent> {
@@ -365,6 +381,15 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                 );
             } else {
                 throw std::runtime_error("initializeHeartbeatAndAlertComponent: connection type ShmCursor not supported in environment");
+            }
+            break;
+        case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+            if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                HeartbeatAndAlertComponentInitializer<Env, aeron_ipc::AeronIpcComponent>()(
+                    env, identity, locator, hook
+                );
+            } else {
+                throw std::runtime_error("initializeHeartbeatAndAlertComponent: connection type AeronIpc not supported in environment");
             }
             break;
 #endif

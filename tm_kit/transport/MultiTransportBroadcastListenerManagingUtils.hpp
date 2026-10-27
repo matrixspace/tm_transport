@@ -13,6 +13,7 @@
 #ifdef __linux__
 #include <tm_kit/transport/shm_seqlock/ShmSeqlockImporterExporter.hpp>
 #include <tm_kit/transport/shm_cursor/ShmCursorImporterExporter.hpp>
+#include <tm_kit/transport/aeron_ipc/AeronIpcImporterExporter.hpp>
 #endif
 #include <tm_kit/transport/websocket/WebSocketImporterExporter.hpp>
 #include <tm_kit/transport/singlecast/SinglecastImporterExporter.hpp>
@@ -239,6 +240,18 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             r.registerImporter(prefix+"/"+spec.name, sub);
                         } else {
                             r.environment()->log(infra::LogLevel::Warning, "[MultiTransportBroadcastListenerManagingUtils::setupBroadcastListeners_internal] Trying to create shm cursor publisher with channel spec '"+spec.channel+"', but shm cursor is unsupported in the environment");
+                        }
+                        break;
+                    case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                        if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                            sub = aeron_ipc::AeronIpcImporterExporter<Env>::template createTypedImporter<FirstInputType>(
+                                std::get<1>(*parsedSpec)
+                                , MultiTransportBroadcastListenerTopicHelper<aeron_ipc::AeronIpcComponent>::parseTopic(getTopic_internal(std::get<0>(*parsedSpec), spec.topicDescription))
+                                , hookFactory(spec.name)
+                            );
+                            r.registerImporter(prefix+"/"+spec.name, sub);
+                        } else {
+                            r.environment()->log(infra::LogLevel::Warning, "[MultiTransportBroadcastListenerManagingUtils::setupBroadcastListeners_internal] Trying to create aeron ipc publisher with channel spec '"+spec.channel+"', but aeron ipc is unsupported in the environment");
                         }
                         break;
 #endif
@@ -643,6 +656,19 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                     throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils::oneByteDataBroadcastListener] Trying to create shm cursor publisher with channel spec '"+channelSpec+"', but shm cursor is unsupported in the environment");
                 }
                 break;
+            case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                    auto sub = aeron_ipc::AeronIpcImporterExporter<Env>::createImporter(
+                        std::get<1>(*parsed)
+                        , MultiTransportBroadcastListenerTopicHelper<aeron_ipc::AeronIpcComponent>::parseTopic(getTopic_internal(std::get<0>(*parsed), topicDescription))
+                        , hook
+                    );
+                    r.registerImporter(name, sub);
+                    return r.importItem(sub);
+                } else {
+                    throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils::oneByteDataBroadcastListener] Trying to create aeron ipc publisher with channel spec '"+channelSpec+"', but aeron ipc is unsupported in the environment");
+                }
+                break;
 #endif
             case MultiTransportBroadcastListenerConnectionType::WebSocket:
                 if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
@@ -970,6 +996,18 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                     throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils::fetchFirstUpdateAndDisconnect] Trying to create shm cursor publisher with channel spec '"+channelSpec+"', but shm cursor is unsupported in the environment");
                 }
                 break;
+            case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                    return aeron_ipc::AeronIpcImporterExporter<Env>::fetchFirstUpdateAndDisconnect(
+                        env
+                        , std::get<1>(*parsed)
+                        , MultiTransportBroadcastListenerTopicHelper<aeron_ipc::AeronIpcComponent>::parseTopic(getTopic_internal(std::get<0>(*parsed), topicDescription))
+                        , hook
+                    );
+                } else {
+                    throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils::fetchFirstUpdateAndDisconnect] Trying to create aeron ipc publisher with channel spec '"+channelSpec+"', but aeron ipc is unsupported in the environment");
+                }
+                break;
 #endif
             case MultiTransportBroadcastListenerConnectionType::WebSocket:
                 if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
@@ -1136,6 +1174,19 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                     );
                 } else {
                     throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils::fetchTypedFirstUpdateAndDisconnect] Trying to create shm cursor publisher with channel spec '"+channelSpec+"', but shm cursor is unsupported in the environment");
+                }
+                break;
+            case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                    return aeron_ipc::AeronIpcImporterExporter<Env>::template fetchTypedFirstUpdateAndDisconnect<T>(
+                        env
+                        , std::get<1>(*parsed)
+                        , MultiTransportBroadcastListenerTopicHelper<aeron_ipc::AeronIpcComponent>::parseTopic(getTopic_internal(std::get<0>(*parsed), topicDescription))
+                        , predicate
+                        , hook
+                    );
+                } else {
+                    throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils::fetchTypedFirstUpdateAndDisconnect] Trying to create aeron ipc publisher with channel spec '"+channelSpec+"', but aeron ipc is unsupported in the environment");
                 }
                 break;
 #endif

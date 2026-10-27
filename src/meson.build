@@ -25,6 +25,7 @@ tm_transport_sources = [
 ]
 if build_machine.system() == 'linux'
       tm_transport_sources += ['shm_seqlock/ShmSeqlockComponent.cpp']
+      tm_transport_sources += ['shm_cursor/ShmCursorComponent.cpp']
 endif
 if get_option('buildtype') == 'debug'
       tm_transport_lib_debug = static_library('tm_kit_transport_debug', tm_transport_sources, include_directories: inc, dependencies: common_deps, install: true)
@@ -32,4 +33,14 @@ if get_option('buildtype') == 'debug'
 else
       tm_transport_lib = static_library('tm_kit_transport', tm_transport_sources, include_directories: inc, dependencies: common_deps, install: true)
       pkg.generate(tm_transport_lib)
+endif
+
+if build_aeron_ipc
+    tm_transport_aeron_ipc_sources = ['aeron_ipc/AeronIpcComponent.cpp']
+    if get_option('buildtype') == 'debug'
+        tm_transport_aeron_ipc_lib = static_library('tm_kit_transport_aeron_ipc_debug', tm_transport_aeron_ipc_sources, include_directories: inc, dependencies: common_deps + aeron_ipc_deps, install: true)
+    else
+        tm_transport_aeron_ipc_lib = static_library('tm_kit_transport_aeron_ipc', tm_transport_aeron_ipc_sources, include_directories: inc, dependencies: common_deps + aeron_ipc_deps, install: true)
+    endif
+    pkg.generate(tm_transport_aeron_ipc_lib)
 endif
