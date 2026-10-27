@@ -32,15 +32,24 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     //  slotSize=<n>      bytes available for topic+payload per slot (default 1000)
     //  slotCount=<n>     number of slots, power of two (default 4096)
     //  stride128=true    pad slot stride to a multiple of 128 bytes (default: 64)
-    //  layout=inline|split inline: seq shares the first slot line with the slot
-    //                    head and the first data bytes (default); split: seq has
-    //                    its own 64B line, and the next slot is pre-marked right
-    //                    after each commit so that line is written once per
-    //                    message. With split a reader can lag at most slotCount-1
-    //                    messages before it is lapped. Readers always follow the
-    //                    layout of the segment header, whatever their locator says.
-    //  testNoPremark=true (tests only) split layout without the pre-mark; this
-    //                    is not a valid seqlock and lets torn reads through
+    //  layout=inline|split|  inline: seq shares the first slot line with the slot
+    //         inline-premark  head and the first data bytes (default); split: seq has
+    //                         its own 64B line, and the next slot is pre-marked right
+    //                         after each commit so that line is written once per
+    //                         message. inline-premark: same slot layout as inline
+    //                         (seq on line 0 with the head and first ~40B of data),
+    //                         but the next slot is pre-marked after each commit AND
+    //                         the write order is reordered: bytes beyond line 0 are
+    //                         written first, then line 0 (lengths + topic prefix +
+    //                         commit seq) is written as one burst. The idea: cold data
+    //                         RFOs happen before the polled line is committed, so the
+    //                         commit arrives as quickly as possible after the reader
+    //                         sees the pre-mark. With split or inline-premark a reader
+    //                         can lag at most slotCount-1 messages before it is lapped.
+    //                         Readers always follow the layout of the segment header,
+    //                         whatever their locator says.
+    //  testNoPremark=true (tests only) split/inline-premark layout without the
+    //                    pre-mark; this is not a valid seqlock and lets torn reads through
     //  wait=spin|futex   futex: publisher wakes futex-waiting readers (default spin)
     //  mlock=true|false  best-effort mlock of the segment (default true)
     //  writerLock=true   serialize publish calls made from several threads of

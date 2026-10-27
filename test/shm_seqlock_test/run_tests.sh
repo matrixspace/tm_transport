@@ -3,7 +3,7 @@
 # Functional tests for the shm_seqlock transport (multi-process, through the
 # MultiTransport channel string). Not a latency measurement.
 #
-# Usage: run_tests.sh [path/to/shm_seqlock_test] [log dir] [inline|split]
+# Usage: run_tests.sh [path/to/shm_seqlock_test] [log dir] [inline|split|inline-premark]
 #
 # The third argument selects the publisher layout. With inline (default) no
 # layout property is passed, so the default layout is what gets tested.
@@ -19,9 +19,11 @@ mkdir -p "$OUT"
 PFX=shmseqlock_t$$
 LAYOUT=${3:-inline}
 if [ "$LAYOUT" = inline ]; then
-    LP=""; SL=""; OTHER=split; EXPECT_SPLIT=0
+    LP=""; SL=""; OTHER=split; OTHER_NAME=split; EXPECT_SPLIT=0
 elif [ "$LAYOUT" = split ]; then
-    LP=",layout=split"; SL="--layout=split"; OTHER=inline; EXPECT_SPLIT=1
+    LP=",layout=split"; SL="--layout=split"; OTHER=inline; OTHER_NAME=inline; EXPECT_SPLIT=1
+elif [ "$LAYOUT" = inline-premark ]; then
+    LP=",layout=inline-premark"; SL="--layout=inline-premark"; OTHER=split; OTHER_NAME=split; EXPECT_SPLIT=0
 else
     echo "unknown layout $LAYOUT"
     exit 2
@@ -72,16 +74,16 @@ for v in "spec spin" "classic spin" "spec futex" "classic futex"; do
     result "stress read=$1 wait=$2 layout=$LAYOUT" $ok "$(grep -E '^  reader' "$log" | sed 's/^ *//' | tr '\n' ';')"
 done
 
-# negative control: split layout without the pre-mark is not a valid seqlock,
-# the checker must see torn reads (bad payload or topic) there
-if [ "$LAYOUT" = split ]; then
+# negative control: split or inline-premark layout without the pre-mark is not a
+# valid seqlock, the checker must see torn reads (bad payload or topic) there
+if [ "$LAYOUT" = split ] || [ "$LAYOUT" = inline-premark ]; then
     for r in classic spec; do
         log=$OUT/stress_nopremark_$r.log
-        "$BIN" stress --segment=${PFX}_stress_nopremark_$r --readers=3 --read=$r --wait=spin --layout=split --noPremark \
+        "$BIN" stress --segment=${PFX}_stress_nopremark_$r --readers=3 --read=$r --wait=spin --layout=$LAYOUT --noPremark \
             --slotCount=64 --slotSize=512 --count=3000000 --readerSlowEvery=1000 > "$log" 2>&1
         torn=$(grep -E '^  reader' "$log" | sed -E 's/.* bad=([0-9]+) .* topicBad=([0-9]+) .*/\1 \2/' | awk '{t+=$1+$2} END {print t+0}')
         ok=0; grep -q '^STRESS FAIL' "$log" && [ "$torn" -gt 0 ] && ok=1
-        result "stress negative control read=$r (split without pre-mark must show torn reads)" $ok "torn=$torn; $(grep -E '^  reader' "$log" | sed 's/^ *//' | tr '\n' ';')"
+        result "stress negative control read=$r ($LAYOUT without pre-mark must show torn reads)" $ok "torn=$torn; $(grep -E '^  reader' "$log" | sed 's/^ *//' | tr '\n' ';')"
     done
 fi
 
@@ -235,8 +237,20 @@ t5() { # tag pub2Props [expected splitLayout at the end]
 }
 t5 same_layout "slotSize=1000,slotCount=4096$LP"
 t5 new_layout "slotSize=500,slotCount=1024$LP"
-# same sizes, the other slot layout: the segment is superseded and readers follow the new header
-t5 layout_${LAYOUT}_to_$OTHER "slotSize=1000,slotCount=4096,layout=$OTHER" $((1-EXPECT_SPLIT))
+# same sizes, switching to a different layout: segment is superseded and readers follow the new header
+t5 layout_${LAYOUT}_to_${OTHER_NAME} "slotSize=1000,slotCount=4096,layout=${OTHER_NAME}" $((1-EXPECT_SPLIT))
+if [ "$LAYOUT" = inline-premark ]; then
+    # inline-premark to inline: readers should follow the new inline header (splitLayout=0, reopen)
+    t5 layout_inline_premark_to_inline "slotSize=1000,slotCount=4096,layout=inline" 0
+fi
+if [ "$LAYOUT" = split ]; then
+    # split to inline-premark: readers should follow the new inline-premark header (splitLayout=0, reopen)
+    t5 layout_split_to_inline_premark "slotSize=1000,slotCount=4096,layout=inline-premark" 0
+fi
+if [ "$LAYOUT" = inline ]; then
+    # inline to inline-premark: readers should follow the new inline-premark header (splitLayout=0, reopen)
+    t5 layout_inline_to_inline_premark "slotSize=1000,slotCount=4096,layout=inline-premark" 0
+fi
 
 # ---------------------------------------------------------------- test 6
 # oversized message rejected without corruption; a message that exactly fills the slot passes

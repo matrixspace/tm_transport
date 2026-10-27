@@ -36,6 +36,18 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     //message gets one writer store (the commit). One slot is always
     //pre-marked, so a reader can lag at most slotCount-1 messages.
     //
+    //With layout=inline-premark (layout version 3) the slot layout is the
+    //same as inline (no extra 64B seq line), but the publisher also pre-marks
+    //the next slot after each commit. Additionally the hot-path write order is
+    //reordered: data bytes beyond line 0 (bytes >= LINE0_DATA_BYTES, i.e. the
+    //portion that cannot fit on the same line as the slot head) are written
+    //first, then lengths/topic-prefix/commit-seq are written to line 0 as one
+    //burst. This means the polled line (line 0 which holds seq) receives two
+    //stores per message in the pre-mark phase (odd pre-mark then even commit),
+    //but the cold data RFOs happen before the line-0 burst, so the commit store
+    //arrives as quickly as possible after the reader sees the pre-mark. One slot
+    //is always pre-marked, so a reader can lag at most slotCount-1 messages.
+    //
     //Message i (global index, monotonic across publisher restarts) lives in
     //slot (i & (slotCount-1)). Its seq is 2i+1 while being written and 2i+2
     //when done. Since indices continue across publisher restarts, readers do
@@ -48,9 +60,15 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         constexpr uint64_t SHM_SEQLOCK_SUPERSEDED = 0x44454445434F4C53ULL;
         //layout version 1 (inline): seq in the slot head, on the same line as the
         //first data bytes; layout version 2 (split): seq alone on the first 64B
-        //line of the slot, slot head and data from the second line on
+        //line of the slot, slot head and data from the second line on;
+        //layout version 3 (inline-premark): same slot layout as inline, but the
+        //publisher pre-marks the next slot after each commit and reorders the
+        //write: data beyond line 0 (bytes >= LINE0_DATA_BYTES) is written before
+        //the line-0 burst (lengths + first LINE0_DATA_BYTES + commit seq), so
+        //cold data RFOs happen before the polled line is committed
         constexpr uint32_t SHM_SEQLOCK_LAYOUT_INLINE = 1;
         constexpr uint32_t SHM_SEQLOCK_LAYOUT_SPLIT = 2;
+        constexpr uint32_t SHM_SEQLOCK_LAYOUT_INLINE_PREMARK = 3;
         constexpr std::size_t SHM_SEQLOCK_SPLIT_HEAD_OFFSET = 64;
         constexpr uint32_t SHM_SEQLOCK_FLAG_FUTEX = 1;
 
@@ -77,6 +95,10 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         };
         static_assert(sizeof(ShmSeqlockSlotHead) == 24, "unexpected shm_seqlock slot head size");
         static_assert(std::atomic<uint64_t>::is_always_lock_free && std::atomic<uint32_t>::is_always_lock_free, "shm_seqlock requires lock-free atomics");
+        //number of data bytes that fit on line 0 of an inline/inline-premark slot
+        //(64B line, 24B slot head => 40B data on line 0). Used by inline-premark to
+        //split the write: bytes >= this are written first, then line 0 is burst.
+        constexpr std::size_t SHM_SEQLOCK_LINE0_DATA_BYTES = 64 - sizeof(ShmSeqlockSlotHead);
 
         inline uint32_t topicHash(char const *p, std::size_t n) {
             uint32_t h = 2166136261u;
@@ -87,6 +109,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             return h;
         }
         inline std::size_t slotStrideFor(std::size_t capacity, bool stride128, bool split) {
+            //inline-premark uses the same stride as inline (no extra seq line)
             std::size_t unit = (stride128 ? 128 : 64);
             return ((split ? SHM_SEQLOCK_SPLIT_HEAD_OFFSET : 0)+sizeof(ShmSeqlockSlotHead)+capacity+unit-1)/unit*unit;
         }
@@ -147,13 +170,15 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             uint64_t slotMask = 0;
             std::size_t slotCapacity = 0;
             bool split = false;
+            bool inlinePremark = false;
 
             template <bool Split>
             ShmSeqlockSlotHead *headAt(uint64_t idx) const {
                 return reinterpret_cast<ShmSeqlockSlotHead *>(slots+(idx & slotMask)*slotStride+(Split ? SHM_SEQLOCK_SPLIT_HEAD_OFFSET : 0));
             }
-            //the polled sequence word: in the slot head (inline) or alone on
-            //the first line of the slot (split)
+            //the polled sequence word: in the slot head (inline/inline-premark) or
+            //alone on the first line of the slot (split). inline-premark uses the
+            //same offset as inline, since its slot layout is identical.
             template <bool Split>
             std::atomic<uint64_t> *seqAt(uint64_t idx) const {
                 if constexpr (Split) {
@@ -194,6 +219,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 slotMask = static_cast<uint64_t>(header->slotCount)-1;
                 slotCapacity = header->slotCapacity;
                 split = (header->layoutVersion == SHM_SEQLOCK_LAYOUT_SPLIT);
+                inlinePremark = (header->layoutVersion == SHM_SEQLOCK_LAYOUT_INLINE_PREMARK);
             }
         };
     }
@@ -211,8 +237,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             bool writerLock_;
             uint32_t layout_;
             bool noPremark_;
-            std::atomic_flag writing_ = ATOMIC_FLAG_INIT;
-            uint64_t next_;
+            std::atomic_flag writing_ = ATOMIC_FLAG_INIT;            uint64_t next_;
             std::string lastTopic_;
             uint32_t lastTopicHash_;
             std::atomic<uint64_t> rejected_;
@@ -254,8 +279,10 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 auto layoutName = locator.query("layout", "inline");
                 if (layoutName == "split") {
                     layout_ = SHM_SEQLOCK_LAYOUT_SPLIT;
+                } else if (layoutName == "inline-premark") {
+                    layout_ = SHM_SEQLOCK_LAYOUT_INLINE_PREMARK;
                 } else if (layoutName != "inline") {
-                    throw std::runtime_error("[ShmSeqlockComponent] layout must be inline or split");
+                    throw std::runtime_error("[ShmSeqlockComponent] layout must be inline, split, or inline-premark");
                 }
                 if (count < 2 || count > (std::size_t(1) << 24) || (count & (count-1)) != 0) {
                     throw std::runtime_error("[ShmSeqlockComponent] slotCount must be a power of two between 2 and 2^24");
@@ -321,8 +348,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     //crashed publisher may have completed a slot without updating
                     //"published", and readers may already have delivered it.
                     //A slot left odd (crash during write, or the next slot pre-marked
-                    //by a split layout publisher) is reset; its index is
-                    //rewritten by this publisher.
+                    //by a split/inline-premark layout publisher) is reset; its index
+                    //is rewritten by this publisher.
                     uint64_t resume = map_.header->published.load(std::memory_order_acquire);
                     for (uint64_t ii=0; ii<count; ++ii) {
                         auto *sq = (layout_ == SHM_SEQLOCK_LAYOUT_SPLIT ? map_.seqAt<true>(ii) : map_.seqAt<false>(ii));
@@ -388,6 +415,13 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     map_.seqAt<true>(next_)->store(2*next_+1, std::memory_order_relaxed);
                     std::atomic_thread_fence(std::memory_order_release);
                 }
+                if (layout_ == SHM_SEQLOCK_LAYOUT_INLINE_PREMARK && !noPremark_) {
+                    //inline-premark layout: same as split, the next slot is pre-marked
+                    //odd so a polling reader sees the pre-mark immediately; the polled
+                    //line is line 0 (shared with the slot head and first data bytes)
+                    map_.seqAt<false>(next_)->store(2*next_+1, std::memory_order_relaxed);
+                    std::atomic_thread_fence(std::memory_order_release);
+                }
             }
             ~OneShmSeqlockSender() {
                 //The segment is left in place so that a restarted publisher continues it
@@ -406,10 +440,13 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             bool split() const {
                 return layout_ == SHM_SEQLOCK_LAYOUT_SPLIT;
             }
+            bool inlinePremark() const {
+                return layout_ == SHM_SEQLOCK_LAYOUT_INLINE_PREMARK;
+            }
             bool noPremark() const {
                 return noPremark_;
             }
-            template <bool Futex, bool Lock, bool Split, bool Premark>
+            template <bool Futex, bool Lock, bool Split, bool InlinePremark, bool Premark>
             void publish(std::string const &topic, std::string const &content) {
                 std::size_t tl = topic.size();
                 std::size_t pl = content.size();
@@ -429,25 +466,70 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 uint64_t i = next_;
                 auto *s = map_.headAt<Split>(i);
                 auto *sq = map_.seqAt<Split>(i);
-                if constexpr (!Split) {
+                char *d = ShmSeqlockMapping::dataOf(s);
+                if constexpr (!Split && !InlinePremark) {
+                    //inline: odd mark first, then write everything, then commit
                     sq->store(2*i+1, std::memory_order_relaxed);
                     std::atomic_thread_fence(std::memory_order_release);
+                    s->payloadLen.store(static_cast<uint32_t>(pl), std::memory_order_relaxed);
+                    s->topicLen.store(static_cast<uint32_t>(tl), std::memory_order_relaxed);
+                    s->topicHash.store(lastTopicHash_, std::memory_order_relaxed);
+                    std::memcpy(d, topic.data(), tl);
+                    std::memcpy(d+tl, content.data(), pl);
+                    sq->store(2*i+2, std::memory_order_release);
+                } else if constexpr (InlinePremark) {
+                    //inline-premark: slot was pre-marked odd after the previous commit.
+                    //Write data beyond line 0 first (bytes >= LINE0_DATA_BYTES from the
+                    //start of the data region), so the cold RFOs happen before the
+                    //line-0 burst. Then write lengths + topic + first LINE0_DATA_BYTES
+                    //+ even commit seq to line 0 in one burst.
+                    //Data layout: d[0..tl) = topic, d[tl..tl+pl) = content.
+                    constexpr std::size_t L0 = SHM_SEQLOCK_LINE0_DATA_BYTES;
+                    std::size_t total = tl+pl;
+                    if (total > L0) {
+                        //write d[L0..total) now: may span topic and/or content
+                        std::size_t tail = total-L0;
+                        if (L0 >= tl) {
+                            //L0 falls inside content
+                            std::memcpy(d+L0, content.data()+(L0-tl), tail);
+                        } else {
+                            //L0 falls inside topic; tail = topic[L0..tl) + content[0..pl)
+                            std::size_t topicTail = tl-L0;
+                            std::memcpy(d+L0, topic.data()+L0, topicTail);
+                            if (pl > 0) {
+                                std::memcpy(d+tl, content.data(), pl);
+                            }
+                        }
+                        std::atomic_thread_fence(std::memory_order_release);
+                    }
+                    //burst line 0: lengths, topicHash, then topic+content prefix
+                    s->payloadLen.store(static_cast<uint32_t>(pl), std::memory_order_relaxed);
+                    s->topicLen.store(static_cast<uint32_t>(tl), std::memory_order_relaxed);
+                    s->topicHash.store(lastTopicHash_, std::memory_order_relaxed);
+                    std::size_t l0copy = (total < L0 ? total : L0);
+                    if (l0copy <= tl) {
+                        std::memcpy(d, topic.data(), l0copy);
+                    } else {
+                        std::memcpy(d, topic.data(), tl);
+                        std::memcpy(d+tl, content.data(), l0copy-tl);
+                    }
+                    sq->store(2*i+2, std::memory_order_release);
+                } else {
+                    //split: the slot was already pre-marked odd after the previous commit
+                    //(or when this publisher started), the commit is its only store here
+                    s->payloadLen.store(static_cast<uint32_t>(pl), std::memory_order_relaxed);
+                    s->topicLen.store(static_cast<uint32_t>(tl), std::memory_order_relaxed);
+                    s->topicHash.store(lastTopicHash_, std::memory_order_relaxed);
+                    std::memcpy(d, topic.data(), tl);
+                    std::memcpy(d+tl, content.data(), pl);
+                    sq->store(2*i+2, std::memory_order_release);
                 }
-                //split: the slot was already pre-marked odd after the previous commit
-                //(or when this publisher started), the commit is its only store here
-                s->payloadLen.store(static_cast<uint32_t>(pl), std::memory_order_relaxed);
-                s->topicLen.store(static_cast<uint32_t>(tl), std::memory_order_relaxed);
-                s->topicHash.store(lastTopicHash_, std::memory_order_relaxed);
-                char *d = ShmSeqlockMapping::dataOf(s);
-                std::memcpy(d, topic.data(), tl);
-                std::memcpy(d+tl, content.data(), pl);
-                sq->store(2*i+2, std::memory_order_release);
                 next_ = i+1;
                 map_.header->published.store(i+1, std::memory_order_release);
-                if constexpr (Split && Premark) {
+                if constexpr ((Split || InlinePremark) && Premark) {
                     //pre-mark the next slot while readers are still busy with this message;
                     //the fence orders it before any data store of the next message
-                    map_.seqAt<true>(i+1)->store(2*i+3, std::memory_order_relaxed);
+                    map_.seqAt<Split>(i+1)->store(2*i+3, std::memory_order_relaxed);
                     std::atomic_thread_fence(std::memory_order_release);
                 }
                 if constexpr (Lock) {
@@ -573,7 +655,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     && map_.map(fd, static_cast<std::size_t>(st.st_size), doMlock_)) {
                     auto *h = map_.header;
                     if (h->magic.load(std::memory_order_acquire) == SHM_SEQLOCK_MAGIC
-                        && (h->layoutVersion == SHM_SEQLOCK_LAYOUT_INLINE || h->layoutVersion == SHM_SEQLOCK_LAYOUT_SPLIT)) {
+                        && (h->layoutVersion == SHM_SEQLOCK_LAYOUT_INLINE
+                            || h->layoutVersion == SHM_SEQLOCK_LAYOUT_SPLIT
+                            || h->layoutVersion == SHM_SEQLOCK_LAYOUT_INLINE_PREMARK)) {
                         std::size_t count = h->slotCount;
                         std::size_t capacity = h->slotCapacity;
                         std::size_t stride = h->slotStride;
@@ -691,7 +775,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     }
                 }
             }
-            template <bool Split>
+            template <bool Split, bool InlinePremark>
             void futexSleep(std::atomic<uint64_t> *sq, uint64_t want) {
                 auto *h = map_.header;
                 long timeout = futexTimeoutUs_;
@@ -700,10 +784,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
                 uint32_t fw = h->futexWord.load(std::memory_order_acquire);
                 h->waiters.fetch_add(1, std::memory_order_seq_cst);
-                //pairs with the publisher's seq_cst fence before it reads waiters
-                //split: a pre-marked slot (want-1) is the normal idle state, so sleep
-                //until the commit; inline: want-1 means a write is in progress
-                if (sq->load(std::memory_order_seq_cst) < (Split ? want : want-1) && running_.load(std::memory_order_relaxed)) {
+                //pairs with the publisher's seq_cst fence before it reads waiters.
+                //split and inline-premark: a pre-marked slot (want-1) is the normal
+                //idle state, so sleep until the commit.
+                //inline: want-1 means a write is in progress.
+                if (sq->load(std::memory_order_seq_cst) < ((Split || InlinePremark) ? want : want-1) && running_.load(std::memory_order_relaxed)) {
                     futexWait(&(h->futexWord), fw, timeout);
                 }
                 //saturating: the publisher may have reset the count meanwhile
@@ -712,7 +797,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
             }
 
-            template <bool Spec, bool Futex, bool Split>
+            template <bool Spec, bool Futex, bool Split, bool InlinePremark>
             void runLoop() {
                 uint64_t empty = 0;
                 while (running_.load(std::memory_order_relaxed)) {
@@ -779,7 +864,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     ++empty;
                     if constexpr (Futex) {
                         if (empty >= spinCount_) {
-                            futexSleep<Split>(sq, want);
+                            futexSleep<Split, InlinePremark>(sq, want);
                             //sleep again on the next empty poll; a delivery resets it
                             empty = spinCount_-1;
                             if (!idleCheck((++idleChecks_ & 15) == 0)) {
@@ -804,9 +889,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             template <bool Spec, bool Futex>
             void runWithLayout() {
                 if (map_.split) {
-                    runLoop<Spec, Futex, true>();
+                    runLoop<Spec, Futex, true, false>();
+                } else if (map_.inlinePremark) {
+                    runLoop<Spec, Futex, false, true>();
                 } else {
-                    runLoop<Spec, Futex, false>();
+                    runLoop<Spec, Futex, false, false>();
                 }
             }
             void run() {
@@ -1001,30 +1088,40 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             }
             return iter->second.get();
         }
-        template <bool Futex, bool Lock, bool Split, bool Premark>
+        template <bool Futex, bool Lock, bool Split, bool InlinePremark, bool Premark>
         static std::function<void(basic::ByteDataWithTopic &&)> makePublisher(OneShmSeqlockSender *p, std::optional<UserToWireHook> const &userToWireHook) {
             if (userToWireHook) {
                 auto hook = userToWireHook->hook;
                 return [p,hook](basic::ByteDataWithTopic &&data) {
                     auto w = hook(basic::ByteData {std::move(data.content)});
-                    p->template publish<Futex,Lock,Split,Premark>(data.topic, w.content);
+                    p->template publish<Futex,Lock,Split,InlinePremark,Premark>(data.topic, w.content);
                 };
             } else {
                 return [p](basic::ByteDataWithTopic &&data) {
-                    p->template publish<Futex,Lock,Split,Premark>(data.topic, data.content);
+                    p->template publish<Futex,Lock,Split,InlinePremark,Premark>(data.topic, data.content);
                 };
             }
         }
         template <bool Futex, bool Lock>
         static std::function<void(basic::ByteDataWithTopic &&)> makePublisherForLayout(OneShmSeqlockSender *p, std::optional<UserToWireHook> const &userToWireHook) {
-            if (!p->split()) {
-                return makePublisher<Futex,Lock,false,true>(p, userToWireHook);
-            } else if (!p->noPremark()) {
-                return makePublisher<Futex,Lock,true,true>(p, userToWireHook);
+            if (p->split()) {
+                if (!p->noPremark()) {
+                    return makePublisher<Futex,Lock,true,false,true>(p, userToWireHook);
+                } else {
+                    //test control only: split layout without the pre-mark, which is
+                    //not a valid seqlock (torn reads are not detected)
+                    return makePublisher<Futex,Lock,true,false,false>(p, userToWireHook);
+                }
+            } else if (p->inlinePremark()) {
+                if (!p->noPremark()) {
+                    return makePublisher<Futex,Lock,false,true,true>(p, userToWireHook);
+                } else {
+                    //test control only: inline-premark without the pre-mark
+                    return makePublisher<Futex,Lock,false,true,false>(p, userToWireHook);
+                }
             } else {
-                //test control only: split layout without the pre-mark, which is
-                //not a valid seqlock (torn reads are not detected)
-                return makePublisher<Futex,Lock,true,false>(p, userToWireHook);
+                //plain inline: no pre-mark template parameter needed (always no premark)
+                return makePublisher<Futex,Lock,false,false,true>(p, userToWireHook);
             }
         }
     public:
