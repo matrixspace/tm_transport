@@ -228,6 +228,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
             });
         }
     };
+    template <class Env>
     class HeartbeatAndAlertComponentInitializer<Env, shm_cursor::ShmCursorComponent> {
     public:
         void operator()(Env *env, std::string const &identity, ConnectionLocator const &locator, std::optional<UserToWireHook> hook=std::nullopt) {
@@ -243,6 +244,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
             });
         }
     };
+    template <class Env>
     class HeartbeatAndAlertComponentInitializer<Env, aeron_ipc::AeronIpcComponent> {
     public:
         void operator()(Env *env, std::string const &identity, ConnectionLocator const &locator, std::optional<UserToWireHook> hook=std::nullopt) {
