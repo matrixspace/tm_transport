@@ -121,6 +121,17 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                         r.environment()->log(infra::LogLevel::Warning, "[MultiTransportBroadcastListenerManagingUtils (Synchronous Runner)::oneBroadcastListenerWithTopic] Trying to create shared memory broadcast publisher with channel spec '"+spec.channel+"', but shared memory broadcast is unsupported in the environment");
                     }
                     break;
+                case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                    if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                        sub = aeron_ipc::AeronIpcImporterExporter<Env>::template createTypedImporter<DataType>(
+                            std::get<1>(*parsedSpec)
+                            , MultiTransportBroadcastListenerTopicHelper<aeron_ipc::AeronIpcComponent>::parseTopic(getTopic_internal(std::get<0>(*parsedSpec), spec.topicDescription))
+                            , hookFactory(spec.name)
+                        );
+                    } else {
+                        r.environment()->log(infra::LogLevel::Warning, "[MultiTransportBroadcastListenerManagingUtils (Synchronous Runner)::oneBroadcastListenerWithTopic] Trying to create shared memory broadcast publisher with channel spec '"+spec.channel+"', but shared memory broadcast is unsupported in the environment");
+                    }
+                    break;
                 case MultiTransportBroadcastListenerConnectionType::WebSocket:
                     if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                         sub = web_socket::WebSocketImporterExporter<Env>::template createTypedImporter<DataType>(
@@ -331,6 +342,18 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                     auto sub = shared_memory_broadcast::SharedMemoryBroadcastImporterExporter<Env>::createImporter(
                         std::get<1>(*parsed)
                         , MultiTransportBroadcastListenerTopicHelper<shared_memory_broadcast::SharedMemoryBroadcastComponent>::parseTopic(getTopic_internal(std::get<0>(*parsed), topicDescription))
+                        , hook
+                    );
+                    return sub;
+                } else {
+                    throw std::runtime_error("[MultiTransportBroadcastListenerManagingUtils (Synchronous Runner)::oneByteDataBroadcastListener] Trying to create shared memory broadcast publisher with channel spec '"+channelSpec+"', but shared memory broadcast is unsupported in the environment");
+                }
+                break;
+            case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                    auto sub = aeron_ipc::AeronIpcImporterExporter<Env>::createImporter(
+                        std::get<1>(*parsed)
+                        , MultiTransportBroadcastListenerTopicHelper<aeron_ipc::AeronIpcComponent>::parseTopic(getTopic_internal(std::get<0>(*parsed), topicDescription))
                         , hook
                     );
                     return sub;

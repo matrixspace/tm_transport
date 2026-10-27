@@ -15,6 +15,7 @@
 #include <tm_kit/transport/nng/NNGComponent.hpp>
 #include <tm_kit/transport/socket_rpc/SocketRPCComponent.hpp>
 #include <tm_kit/transport/shared_memory_broadcast/SharedMemoryBroadcastComponent.hpp>
+#include <tm_kit/transport/aeron_ipc/AeronIpcComponent.hpp>
 #include <tm_kit/transport/AbstractHookFactoryComponent.hpp>
 #include <tm_kit/transport/grpc_interop/GrpcInteropComponent.hpp>
 #include <tm_kit/transport/json_rest/JsonRESTComponent.hpp>
@@ -71,6 +72,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         if constexpr (std::is_convertible_v<Env *, shared_memory_broadcast::SharedMemoryBroadcastComponent *>) {
             retVal["shared_memory_broadcast"] = env->shared_memory_broadcast_threadHandles();
         }
+        if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+            retVal["aeron_ipc"] = env->aeron_ipc_threadHandles();
+        }
         if constexpr (std::is_convertible_v<Env *, zeromq::ZeroMQComponent *>) {
             retVal["zeromq"] = env->zeromq_threadHandles();
         }
@@ -96,8 +100,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         , SharedMemoryBroadcast
         , WebSocket
         , Singlecast
+        , AeronIpc
     };
-    inline const std::array<std::string,9> MULTI_TRANSPORT_SUBSCRIBER_CONNECTION_TYPE_STR = {
+    inline const std::array<std::string,10> MULTI_TRANSPORT_SUBSCRIBER_CONNECTION_TYPE_STR = {
         "multicast"
         , "rabbitmq"
         , "redis"
@@ -107,6 +112,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         , "shared_memory_broadcast"
         , "websocket"
         , "singlecast"
+        , "aeron_ipc"
     };
     inline auto parseMultiTransportBroadcastChannel(std::string const &s) 
         -> std::optional<std::tuple<MultiTransportBroadcastListenerConnectionType, ConnectionLocator>>
@@ -132,6 +138,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         switch (std::get<0>(c)) {
         case MultiTransportBroadcastListenerConnectionType::Multicast:
         case MultiTransportBroadcastListenerConnectionType::SharedMemoryBroadcast:
+        case MultiTransportBroadcastListenerConnectionType::AeronIpc:
             return true;
             break;
         case MultiTransportBroadcastListenerConnectionType::ZeroMQ:
@@ -732,6 +739,56 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             );
                         }
                         break;
+                    case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                        if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                            auto *component = static_cast<aeron_ipc::AeronIpcComponent *>(env);
+                            auto actualHook = wireToUserHook_;
+                            if (!actualHook) {
+                                actualHook = DefaultHookFactory<Env>::template incomingHook<T>(env);
+                            }
+                            auto res = component->aeron_ipc_addSubscriptionClient(
+                                x.connectionLocator
+                                , MultiTransportBroadcastListenerTopicHelper<aeron_ipc::AeronIpcComponent>::parseTopic(x.topicDescription)
+                                , [this,env](basic::ByteDataWithTopic &&d) {
+                                    TM_INFRA_IMPORTER_TRACER_WITH_SUFFIX(env, ":data");
+                                    T t;
+                                    auto tRes = basic::bytedata_utils::RunDeserializer<T>::applyInPlace(t, d.content);
+                                    if (tRes) {
+                                        this->ImporterParent::publish(M::template pureInnerData<basic::TypedDataWithTopic<T>>(env, {std::move(d.topic), std::move(t)}));
+                                    }
+                                }
+                                , actualHook
+                            );
+                            {
+                                std::lock_guard<std::mutex> _(subscriptionsMutex_);
+                                subscriptions_.insert({{x.connectionType, res}, x});
+                            }
+                            this->FacilityParent::publish(
+                                env
+                                , typename M::template Key<MultiTransportBroadcastListenerOutput> {
+                                    id
+                                    , MultiTransportBroadcastListenerOutput { {
+                                        MultiTransportBroadcastListenerAddSubscriptionResponse {res}
+                                    } }
+                                }
+                                , true
+                            );
+                        } else {
+                            std::ostringstream errOss;
+                            errOss << "[MultiTransportBroadcastListner::actuallyHandle] trying to set up shared memory broadcast channel " << x.connectionLocator << " but shared memory broadcast is unsupported in the environment";
+                            env->log(infra::LogLevel::Warning, errOss.str());
+                            this->FacilityParent::publish(
+                                env
+                                , typename M::template Key<MultiTransportBroadcastListenerOutput> {
+                                    id
+                                    , MultiTransportBroadcastListenerOutput { {
+                                        MultiTransportBroadcastListenerAddSubscriptionResponse {0}
+                                    } }
+                                }
+                                , true
+                            );
+                        }
+                        break;
                     case MultiTransportBroadcastListenerConnectionType::WebSocket:
                         if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                             auto *component = static_cast<web_socket::WebSocketComponent *>(env);
@@ -929,6 +986,16 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             }
                         }
                         break;
+                    case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                        if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                            static_cast<aeron_ipc::AeronIpcComponent *>(env)
+                                ->aeron_ipc_removeSubscriptionClient(x.subscriptionID);
+                            {
+                                std::lock_guard<std::mutex> _(subscriptionsMutex_);
+                                subscriptions_.erase({x.connectionType, x.subscriptionID});
+                            }
+                        }
+                        break;
                     case MultiTransportBroadcastListenerConnectionType::WebSocket:
                         if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                             static_cast<web_socket::WebSocketComponent *>(env)
@@ -1006,6 +1073,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                             if constexpr (std::is_convertible_v<Env *, shared_memory_broadcast::SharedMemoryBroadcastComponent *>) {
                                 static_cast<shared_memory_broadcast::SharedMemoryBroadcastComponent *>(env)
                                     ->shared_memory_broadcast_removeSubscriptionClient(std::get<1>(x.first));
+                            }
+                            break;
+                        case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                            if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                                static_cast<aeron_ipc::AeronIpcComponent *>(env)
+                                    ->aeron_ipc_removeSubscriptionClient(std::get<1>(x.first));
                             }
                             break;
                         case MultiTransportBroadcastListenerConnectionType::WebSocket:

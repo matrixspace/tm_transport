@@ -9,6 +9,7 @@
 #include <tm_kit/transport/zeromq/ZeroMQImporterExporter.hpp>
 #include <tm_kit/transport/nng/NNGImporterExporter.hpp>
 #include <tm_kit/transport/shared_memory_broadcast/SharedMemoryBroadcastImporterExporter.hpp>
+#include <tm_kit/transport/aeron_ipc/AeronIpcImporterExporter.hpp>
 #include <tm_kit/transport/websocket/WebSocketImporterExporter.hpp>
 #include <tm_kit/transport/singlecast/SinglecastImporterExporter.hpp>
 
@@ -142,6 +143,17 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
                         throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneBroadcastPublisher] Trying to create shared memory broadcast publisher with channel spec '"+channelSpec+"', but shared memory broadcast is unsupported in the environment");
                     }
                     break;
+                case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                    if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                        auto pub = aeron_ipc::AeronIpcImporterExporter<Env>::template createTypedExporter<OutputType>(
+                            std::get<1>(*parsed), hook, name
+                        );
+                        r.registerExporter(name, pub);
+                        return r.exporterAsSink(pub);
+                    } else {
+                        throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneBroadcastPublisher] Trying to create shared memory broadcast publisher with channel spec '"+channelSpec+"', but shared memory broadcast is unsupported in the environment");
+                    }
+                    break;
                 case MultiTransportBroadcastListenerConnectionType::WebSocket:
                     if constexpr (std::is_convertible_v<Env *, web_socket::WebSocketComponent *>) {
                         auto pub = web_socket::WebSocketImporterExporter<Env>::template createTypedExporter<OutputType>(
@@ -263,6 +275,17 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
             case MultiTransportBroadcastListenerConnectionType::SharedMemoryBroadcast:
                 if constexpr (std::is_convertible_v<Env *, shared_memory_broadcast::SharedMemoryBroadcastComponent *>) {
                     auto pub = shared_memory_broadcast::SharedMemoryBroadcastImporterExporter<Env>::createExporter(
+                        std::get<1>(*parsed), hook, name
+                    );
+                    r.registerExporter(name, pub);
+                    return r.exporterAsSink(pub);
+                } else {
+                    throw std::runtime_error("[MultiTransportBroadcastPublisherManagingUtils::oneByteDataBroadcastPublisher] Trying to create shared memory broadcast publisher with channel spec '"+channelSpec+"', but shared memory broadcast is unsupported in the environment");
+                }
+                break;
+            case MultiTransportBroadcastListenerConnectionType::AeronIpc:
+                if constexpr (std::is_convertible_v<Env *, aeron_ipc::AeronIpcComponent *>) {
+                    auto pub = aeron_ipc::AeronIpcImporterExporter<Env>::createExporter(
                         std::get<1>(*parsed), hook, name
                     );
                     r.registerExporter(name, pub);

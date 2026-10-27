@@ -30,3 +30,13 @@ else
       tm_transport_lib = static_library('tm_kit_transport', tm_transport_sources, include_directories: inc, dependencies: common_deps, install: true)
       pkg.generate(tm_transport_lib)
 endif
+
+if build_aeron_ipc
+    tm_transport_aeron_ipc_sources = ['aeron_ipc/AeronIpcComponent.cpp']
+    if get_option('buildtype') == 'debug'
+        tm_transport_aeron_ipc_lib = static_library('tm_kit_transport_aeron_ipc_debug', tm_transport_aeron_ipc_sources, include_directories: inc, dependencies: common_deps + aeron_ipc_deps, install: true)
+    else
+        tm_transport_aeron_ipc_lib = static_library('tm_kit_transport_aeron_ipc', tm_transport_aeron_ipc_sources, include_directories: inc, dependencies: common_deps + aeron_ipc_deps, install: true)
+    endif
+    pkg.generate(tm_transport_aeron_ipc_lib)
+endif
