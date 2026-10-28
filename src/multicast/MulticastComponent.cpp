@@ -1,5 +1,6 @@
 #include <thread>
 #include <mutex>
+#include <iostream>
 #include <cstring>
 #include <unordered_map>
 #include <cstdlib>
@@ -37,9 +38,17 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         private:
             MulticastComponentTopicEncodingChoice encodingChoice_;
             ConnectionLocator locator_;
+#if BOOST_VERSION >= 108700
+            boost::asio::io_context service_;
+#else
+            boost::asio::io_service service_;
+#endif
             boost::asio::ip::udp::socket sock_;
             boost::asio::ip::udp::endpoint senderPoint_;
             boost::asio::ip::address mcastAddr_;
+            //the exact address passed to join_group, if any: leave_group has to
+            //use the same one or the kernel answers EADDRNOTAVAIL
+            std::optional<boost::asio::ip::address_v4> joinInterface_;
             std::array<char, 16*1024*1024> buffer_;
             struct ClientCB {
                 uint32_t id;
@@ -50,6 +59,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::vector<std::tuple<std::string, ClientCB>> stringMatchClients_;
             std::vector<std::tuple<std::regex, ClientCB>> regexMatchClients_;
             std::optional<std::thread::native_handle_type> thHandle_;
+            //the receive thread is owned and joined at teardown: a detached
+            //thread could still be inside handleReceive while this object is freed
+            std::thread thread_;
             std::mutex mutex_;
 
             std::atomic<bool> running_;
@@ -155,17 +167,14 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
             }
         public:
-#if BOOST_VERSION >= 108700        
-            OneMulticastSubscription(MulticastComponentTopicEncodingChoice encodingChoice, boost::asio::io_context *service, ConnectionLocator const &locator, std::string const &interface) 
-#else
-            OneMulticastSubscription(MulticastComponentTopicEncodingChoice encodingChoice, boost::asio::io_service *service, ConnectionLocator const &locator, std::string const &interface) 
-#endif            
-                : encodingChoice_(encodingChoice), locator_(locator), sock_(*service), senderPoint_(), mcastAddr_(), buffer_()
+            OneMulticastSubscription(MulticastComponentTopicEncodingChoice encodingChoice, ConnectionLocator const &locator, std::string const &interface)
+                : encodingChoice_(encodingChoice), locator_(locator), service_(), sock_(service_), senderPoint_(), mcastAddr_(), joinInterface_(), buffer_()
                 , noFilterClients_(), stringMatchClients_(), regexMatchClients_()
                 , thHandle_()
+                , thread_()
                 , mutex_(), running_(true)
             {
-                boost::asio::ip::udp::resolver resolver(*service);
+                boost::asio::ip::udp::resolver resolver(service_);
 
                 {
 #if BOOST_VERSION >= 108700     
@@ -191,13 +200,14 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     if (interface != "") {
                         auto interfaceAddr = getAddressForInterface(interface);
                         if (interfaceAddr != "") {
+#if BOOST_VERSION >= 108700
+                            joinInterface_ = boost::asio::ip::make_address(interfaceAddr).to_v4();
+#else
+                            joinInterface_ = boost::asio::ip::address::from_string(interfaceAddr).to_v4();
+#endif
                             sock_.set_option(boost::asio::ip::multicast::join_group(
                                 mcastAddr_.to_v4()
-#if BOOST_VERSION >= 108700   
-                                , boost::asio::ip::make_address(interfaceAddr).to_v4()                             
-#else
-                                , boost::asio::ip::address::from_string(interfaceAddr).to_v4()
-#endif                                
+                                , *joinInterface_
                             ));
                         } else {
                             sock_.set_option(boost::asio::ip::multicast::join_group(
@@ -219,10 +229,56 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                                 , boost::asio::placeholders::error
                                 , boost::asio::placeholders::bytes_transferred)
                 );
+
+                thread_ = std::thread([this]() {
+#if BOOST_VERSION >= 108700
+                    auto work_guard = boost::asio::make_work_guard(service_);
+#else
+                    boost::asio::io_service::work work(service_);
+#endif
+                    service_.run();
+                });
+                thHandle_ = thread_.native_handle();
             }
             ~OneMulticastSubscription() {
+                stop();
+            }
+            //Stops the receive thread and then releases the group. The socket
+            //must not be touched while the io thread is still in charge of it,
+            //so leave_group/close run only after the join.
+            void stop() {
                 running_ = false;
-                sock_.close();
+                service_.stop();
+                if (thread_.joinable()) {
+                    if (std::this_thread::get_id() == thread_.get_id()) {
+                        //Destroying a subscription from inside its own receive
+                        //callback: joining ourselves is impossible. Detaching
+                        //keeps the process alive, but the callback must not use
+                        //the component after this point.
+                        thread_.detach();
+                        return;
+                    }
+                    thread_.join();
+                }
+                boost::system::error_code ec;
+                if (joinInterface_) {
+                    sock_.set_option(boost::asio::ip::multicast::leave_group(
+                        mcastAddr_.to_v4()
+                        , *joinInterface_
+                    ), ec);
+                } else {
+                    sock_.set_option(boost::asio::ip::multicast::leave_group(
+                        mcastAddr_.to_v4()
+                    ), ec);
+                }
+                if (ec) {
+                    //Teardown must not throw, but a failed leave is worth
+                    //knowing about: the membership may outlive this socket.
+                    std::cerr << "multicast: leave_group failed: "
+                        << ec.message() << std::endl;
+                }
+                boost::system::error_code closeEc;
+                sock_.close(closeEc);
             }
             ConnectionLocator const &locator() const {
                 return locator_;
@@ -282,17 +338,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 std::lock_guard<std::mutex> _(mutex_);
                 if (noFilterClients_.empty() && stringMatchClients_.empty() && regexMatchClients_.empty()) {
                     running_ = false;
-                    sock_.set_option(boost::asio::ip::multicast::leave_group(
-                        mcastAddr_
-                    ));
+                    //The group is left and the socket closed by stop(), after
+                    //the receive thread has been joined; see ~OneMulticastSubscription.
                     return true;
                 } else {
                     return false;
                 }
-            }
-            void setThreadHandle(std::thread::native_handle_type h) {
-                std::lock_guard<std::mutex> _(mutex_);
-                thHandle_ = h;
             }
             std::optional<std::thread::native_handle_type> getThreadHandle() {
                 std::lock_guard<std::mutex> _(mutex_);
@@ -539,30 +590,26 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     choice = MulticastComponentTopicEncodingChoice::Binary;
                 }
                 auto interface = d.query("interface", "");
-#if BOOST_VERSION >= 108700    
-                std::unique_ptr<boost::asio::io_context> svc = std::make_unique<boost::asio::io_context>();            
-#else
-                std::unique_ptr<boost::asio::io_service> svc = std::make_unique<boost::asio::io_service>();
-#endif                
-                iter = subscriptions_.insert({hostAndPort, std::make_unique<OneMulticastSubscription>(choice, svc.get(), hostAndPort, interface)}).first;
-                std::thread th([svc=std::move(svc)] {
-#if BOOST_VERSION >= 108700 
-                    auto work_guard = boost::asio::make_work_guard(*svc);
-#else
-                    boost::asio::io_service::work work(*svc);
-#endif
-                    svc->run();
-                });
-                th.detach();
-                iter->second->setThreadHandle(th.native_handle());
+                iter = subscriptions_.insert({hostAndPort, std::make_unique<OneMulticastSubscription>(choice, hostAndPort, interface)}).first;
             }
             return iter->second.get();
         }
         void potentiallyStopSubscription(OneMulticastSubscription *p) {
-            std::lock_guard<std::mutex> _(mutex_);
-            if (p->checkWhetherNeedsToStop()) {
-                subscriptions_.erase(p->locator());
+            std::unique_ptr<OneMulticastSubscription> toDestroy;
+            {
+                std::lock_guard<std::mutex> _(mutex_);
+                if (p->checkWhetherNeedsToStop()) {
+                    auto iter = subscriptions_.find(p->locator());
+                    if (iter != subscriptions_.end() && iter->second.get() == p) {
+                        toDestroy = std::move(iter->second);
+                        subscriptions_.erase(iter);
+                    }
+                }
             }
+            //toDestroy is destroyed here, outside mutex_: its destructor stops
+            //and joins the receive thread, and a join under the component lock
+            //would keep every other component operation waiting for the io
+            //thread to unwind.
         }
         OneMulticastSender *getOrStartSender(ConnectionLocator const &d) {
             ConnectionLocator hostAndPort {d.host(), d.port()};
@@ -596,13 +643,20 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         {            
         }
         ~MulticastComponentImpl() {
+            decltype(subscriptions_) subscriptions;
+            decltype(senders_) senders;
             bool b;
             {
                 std::lock_guard<std::mutex> _(mutex_);
-                subscriptions_.clear();
-                senders_.clear();
+                subscriptions.swap(subscriptions_);
+                senders.swap(senders_);
                 b = senderThreadStarted_;
             }
+            //the receive threads are stopped and joined here, outside mutex_
+            subscriptions.clear();
+            //Stop the sender thread before the sender sockets are destroyed:
+            //closing a socket while its completion handlers are running is not
+            //thread-safe.
             if (b) {
                 senderService_.stop();
                 try {
@@ -610,6 +664,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 } catch (std::system_error const &) {
                 }
             }
+            senders.clear();
         }
         uint32_t addSubscriptionClient(ConnectionLocator const &locator,
             std::variant<MulticastComponent::NoTopicSelection, std::string, std::regex> const &topic,
