@@ -20,6 +20,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         private:
             ConnectionLocator locator_;
             std::array<char, 16*1024*1024> buffer_;
+            basic::ByteDataWithTopic decoded_;
             struct ClientCB {
                 uint32_t id;
                 std::function<void(basic::ByteDataWithTopic &&)> cb;
@@ -46,6 +47,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             void run(ConnectionLocator const &locator, zmq::context_t *p_ctx) {
                 zmq::socket_t sock(*p_ctx, zmq::socket_type::sub);
                 sock.set(zmq::sockopt::rcvtimeo, 1000);
+                //linger only affects shutdown: do not block the destructor on undelivered data
+                sock.set(zmq::sockopt::linger, 0);
 
                 std::ostringstream oss;
                 if (locator.host() == "inproc" || locator.host() == "ipc") {
@@ -76,33 +79,42 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                         break;
                     }
                     
-                    auto parseRes = basic::bytedata_utils::RunCBORDeserializer<basic::ByteDataWithTopic>::apply(std::string_view {buffer_.data(), res->size}, 0);
-                    if (parseRes && std::get<1>(*parseRes) == res->size) {
-                        basic::ByteDataWithTopic data = std::move(std::get<0>(*parseRes));
-
+                    auto decodedLen = basic::bytedata_utils::RunCBORDeserializer<basic::ByteDataWithTopic>::applyInPlace(decoded_, std::string_view {buffer_.data(), res->size}, 0);
+                    if (decodedLen && *decodedLen == res->size) {
                         std::lock_guard<std::mutex> _(mutex_);
-                        
+
+                        //when there is only one client, no other client can observe this message,
+                        //so it can be moved out instead of copied
+                        bool singleClient = (noFilterClients_.size()+stringMatchClients_.size()+regexMatchClients_.size() == 1);
+                        auto dispatch = [this, singleClient](ClientCB const &c) {
+                            if (singleClient) {
+                                callClient(c, std::move(decoded_));
+                            } else {
+                                callClient(c, basic::ByteDataWithTopic {decoded_});
+                            }
+                        };
+
                         for (auto const &f : noFilterClients_) {
-                            callClient(f, basic::ByteDataWithTopic {data});
+                            dispatch(f);
                         }
                         for (auto const &f : stringMatchClients_) {
-                            if (data.topic == std::get<0>(f)) {
-                                callClient(std::get<1>(f), basic::ByteDataWithTopic {data});
+                            if (decoded_.topic == std::get<0>(f)) {
+                                dispatch(std::get<1>(f));
                             }
                         }
                         for (auto const &f : regexMatchClients_) {
-                            if (std::regex_match(data.topic, std::get<0>(f))) {
-                                callClient(std::get<1>(f), basic::ByteDataWithTopic {data});
+                            if (std::regex_match(decoded_.topic, std::get<0>(f))) {
+                                dispatch(std::get<1>(f));
                             }
                         }
-                    }  
+                    }
                 }
 
                 sock.close();
             }
         public:
             OneZeroMQSubscription(ConnectionLocator const &locator, zmq::context_t *p_ctx) 
-                : locator_(locator), buffer_()
+                : locator_(locator), buffer_(), decoded_()
                 , noFilterClients_(), stringMatchClients_(), regexMatchClients_()
                 , mutex_(), th_(), running_(true)
             {
@@ -188,9 +200,10 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         private:
             std::mutex mutex_;
             zmq::socket_t sock_;
+            std::string sendBuf_;
         public:
             OneZeroMQSender(ConnectionLocator const &locator, zmq::context_t *p_ctx)
-                : mutex_(), sock_(*p_ctx, zmq::socket_type::pub)
+                : mutex_(), sock_(*p_ctx, zmq::socket_type::pub), sendBuf_()
             {
                 std::ostringstream oss;
                 if (locator.host() == "inproc" || locator.host() == "ipc") {
@@ -198,6 +211,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 } else {
                     oss << "tcp://*:" << locator.port();
                 }
+                //linger only affects shutdown: do not block the destructor on undelivered data
+                sock_.set(zmq::sockopt::linger, 0);
                 sock_.bind(oss.str());
             }
             ~OneZeroMQSender() {
@@ -206,16 +221,17 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     sock_.close();
                 }
             }
-            void publish(basic::ByteDataWithTopic &&data) {    
-                auto v = basic::bytedata_utils::RunCBORSerializer<basic::ByteDataWithTopic>::apply(data);
-
-                {
-                    std::lock_guard<std::mutex> _(mutex_);
-                    sock_.send(
-                        zmq::const_buffer(reinterpret_cast<char const *>(v.data()), v.size())
-                        , zmq::send_flags::dontwait
-                    );
-                } 
+            void publish(basic::ByteDataWithTopic &&data) {
+                std::lock_guard<std::mutex> _(mutex_);
+                auto n = basic::bytedata_utils::RunCBORSerializer<basic::ByteDataWithTopic>::calculateSize(data);
+                if (sendBuf_.size() < n) {
+                    sendBuf_.resize(n);
+                }
+                basic::bytedata_utils::RunCBORSerializer<basic::ByteDataWithTopic>::apply(data, sendBuf_.data());
+                sock_.send(
+                    zmq::const_buffer(reinterpret_cast<char const *>(sendBuf_.data()), n)
+                    , zmq::send_flags::dontwait
+                );
             }
         };
 
