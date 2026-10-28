@@ -197,7 +197,7 @@ namespace ipc_latency_profiler {
             << "e2e:\n"
             << "  --channel SPEC           MultiTransport channel, e.g. shared_memory_broadcast://:::name[busyLoop=true]\n"
             << "  --topic S                topic (default ipc.profile)\n"
-            << "  --clock default|simplified\n"
+            << "  --clock default|simplified|tsc\n"
             << "  --sink simple|custom\n"
             << "  --end-markers N --end-marker-spacing-ms N --start-delay-ms N\n"
             << "  --idle-timeout-s X       subscriber stops this long after the last message (default 5)\n"
@@ -322,8 +322,8 @@ namespace ipc_latency_profiler {
             if (opt.channel.empty()) {
                 return "--channel is required for e2e";
             }
-            if (opt.clock != "default" && opt.clock != "simplified") {
-                return "--clock must be default or simplified";
+            if (opt.clock != "default" && opt.clock != "simplified" && opt.clock != "tsc") {
+                return "--clock must be default, simplified or tsc";
             }
             if (opt.sink != "simple" && opt.sink != "custom") {
                 return "--sink must be simple or custom";

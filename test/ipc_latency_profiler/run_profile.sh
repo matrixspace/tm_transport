@@ -12,7 +12,7 @@
 #                           e.g. 'shared_memory_broadcast://::::ipcprof_{run_id}[size=268435456,busyLoop=true]'
 #                           (identifier is the 5th ":" field; all properties go in ONE [..] separated by ",")
 #   --readers 1|2|4         number of reader processes (default 1)
-#   --clock default|simplified    (default default)
+#   --clock default|simplified|tsc (default default)
 #   --sink simple|custom          (default simple)
 #   --payload N             bytes (default 256)
 #   --interval-us X         (default 20)
@@ -134,7 +134,7 @@ done
 # ------------------------------------------------------------- validation ---
 case "${MODE}" in e2e|floor) ;; *) die "--mode must be e2e or floor" ;; esac
 case "${READERS}" in 1|2|4) ;; *) die "--readers must be 1, 2 or 4" ;; esac
-case "${CLOCK}" in default|simplified) ;; *) die "--clock must be default or simplified" ;; esac
+case "${CLOCK}" in default|simplified|tsc) ;; *) die "--clock must be default, simplified or tsc" ;; esac
 case "${SINK}" in simple|custom) ;; *) die "--sink must be simple or custom" ;; esac
 for v in PAYLOAD COUNT WARMUP FLOOR_COUNT FLOOR_WARMUP PUB_CPU HOUSEKEEPING_CPU LOAD_WAIT_S SETUP_WAIT_SEC READER_READY_DELAY_MS; do
   [[ "${!v}" =~ ^[0-9]+$ ]] || die "${v} must be a non-negative integer, got '${!v}'"
@@ -327,7 +327,13 @@ COMMON_ARGS=(
 launch() {
   local log="$1" cpu="$2"
   shift 2
-  env ${EXTRA_ENV[@]+"${EXTRA_ENV[@]}"} ${NUMA_PREFIX[@]+"${NUMA_PREFIX[@]}"} taskset -c "${cpu}" "${BIN}" --cpu "${cpu}" "$@" > "${log}" 2>&1 &
+  # TM_PUB_EXTRA_CPU: give the publisher process one more core so transport
+  # background threads are not starved by the busy-wait pacing thread.
+  local cpu_list="${cpu}"
+  if [ -n "${TM_PUB_EXTRA_CPU:-}" ] && [ "${cpu}" = "${PUB_CPU}" ]; then
+    cpu_list="${cpu},${TM_PUB_EXTRA_CPU}"
+  fi
+  env ${EXTRA_ENV[@]+"${EXTRA_ENV[@]}"} ${NUMA_PREFIX[@]+"${NUMA_PREFIX[@]}"} taskset -c "${cpu_list}" "${BIN}" --cpu "${cpu}" "$@" > "${log}" 2>&1 &
   LAUNCHED_PID=$!
   CHILD_PIDS+=("${LAUNCHED_PID}")
 }

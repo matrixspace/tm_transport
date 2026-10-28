@@ -7,6 +7,9 @@
 
 #include <tm_kit/transport/MultiTransportBroadcastListenerManagingUtils.hpp>
 #include <tm_kit/transport/MultiTransportBroadcastPublisherManagingUtils.hpp>
+#ifdef TM_KIT_TRANSPORT_AERON_IPC
+#include <tm_kit/transport/aeron_ipc/AeronIpcComponent.hpp>
+#endif
 
 #include "ProfilerCommon.hpp"
 
@@ -44,9 +47,13 @@ namespace {
     template <class ClockComponent>
     using ProfilerEnvironment = infra::Environment<
         infra::CheckTimeComponent<false>
+        , infra::LockFreeTimeCheckerComponent
         , infra::TrivialExitControlComponent
         , basic::TimeComponentEnhancedWithSpdLogging<ClockComponent, false>
         , transport::AllNetworkTransportComponents
+#ifdef TM_KIT_TRANSPORT_AERON_IPC
+        , transport::aeron_ipc::AeronIpcComponent
+#endif
     >;
     // clang-format on
 
@@ -457,6 +464,12 @@ int main(int argc, char **argv) {
                 return runE2E<basic::real_time_clock::ClockComponent, false>(opt);
             }
             return runE2E<basic::real_time_clock::ClockComponent, true>(opt);
+        }
+        if (opt.clock == "tsc") {
+            if (opt.sink == "simple") {
+                return runE2E<basic::real_time_clock::TscClockComponent, false>(opt);
+            }
+            return runE2E<basic::real_time_clock::TscClockComponent, true>(opt);
         }
         if (opt.sink == "simple") {
             return runE2E<basic::real_time_clock::SimplifiedClockComponent, false>(opt);
