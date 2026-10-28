@@ -6,6 +6,9 @@
 //
 //Each case uses its own ipc:// path under /dev/shm, so the cases do not
 //interfere with each other and repeated runs do not inherit a stale socket.
+//Each case also removes its socket file when it finishes: zeroMQ does not
+//unlink the ipc file on close, so without PathCleanup every run would leave
+//files behind.
 
 #include <chrono>
 #include <condition_variable>
@@ -111,6 +114,22 @@ std::string nextPath(std::string const &tag) {
     return p;
 }
 
+//Removes the ipc file when the case ends. Declare it before the components:
+//destruction runs in reverse order, so the file goes away only after both
+//ends of the socket have been closed.
+struct PathCleanup {
+    std::string path;
+
+    explicit PathCleanup(std::string const &p) : path(p) {}
+
+    ~PathCleanup() {
+        ::unlink(path.c_str());
+    }
+
+    PathCleanup(PathCleanup const &) = delete;
+    PathCleanup &operator=(PathCleanup const &) = delete;
+};
+
 transport::ConnectionLocator makeLocator(std::string const &path) {
     return transport::ConnectionLocator {"ipc", 0, "", "", path};
 }
@@ -160,6 +179,7 @@ void publishPaced(Publisher const &pub, std::string const &topic,
 //1: one NoTopicSelection client, 10000 messages, order and content
 void testSingleClient() {
     std::string path = nextPath("single");
+    PathCleanup cleanup {path};
     zeromq::ZeroMQComponent pubComponent;
     zeromq::ZeroMQComponent subComponent;
     auto locator = makeLocator(path);
@@ -201,6 +221,7 @@ void testSingleClient() {
 //2: string topic filtering, match and no-match
 void testStringTopics() {
     std::string path = nextPath("string");
+    PathCleanup cleanup {path};
     zeromq::ZeroMQComponent pubComponent;
     zeromq::ZeroMQComponent subComponent;
     auto locator = makeLocator(path);
@@ -259,6 +280,7 @@ void testStringTopics() {
 //3: two NoTopicSelection clients on one locator (the copy path, not the move path)
 void testTwoNoFilterClients() {
     std::string path = nextPath("two");
+    PathCleanup cleanup {path};
     zeromq::ZeroMQComponent pubComponent;
     zeromq::ZeroMQComponent subComponent;
     auto locator = makeLocator(path);
@@ -304,6 +326,7 @@ void testTwoNoFilterClients() {
 //4: one no-filter client and one string-filter client sharing the subscription
 void testNoFilterPlusFilter() {
     std::string path = nextPath("mixed");
+    PathCleanup cleanup {path};
     zeromq::ZeroMQComponent pubComponent;
     zeromq::ZeroMQComponent subComponent;
     auto locator = makeLocator(path);
@@ -366,6 +389,7 @@ void testNoFilterPlusFilter() {
 //5: wire hooks on both sides
 void testHooks() {
     std::string path = nextPath("hooks");
+    PathCleanup cleanup {path};
     zeromq::ZeroMQComponent pubComponent;
     zeromq::ZeroMQComponent subComponent;
     auto locator = makeLocator(path);
@@ -428,6 +452,7 @@ void testHooks() {
 //6: payload sizes that cross the CBOR length encodings, plus long topics
 void testPayloadSizes() {
     std::string path = nextPath("sizes");
+    PathCleanup cleanup {path};
     zeromq::ZeroMQComponent pubComponent;
     zeromq::ZeroMQComponent subComponent;
     auto locator = makeLocator(path);
@@ -486,6 +511,7 @@ void testPayloadSizes() {
 //importer's stop and restart control commands
 void testStartStop() {
     std::string path = nextPath("stop");
+    PathCleanup cleanup {path};
     zeromq::ZeroMQComponent pubComponent;
     zeromq::ZeroMQComponent subComponent;
     auto locator = makeLocator(path);
@@ -547,6 +573,7 @@ void testShutdown() {
     //publisher with no subscriber at all: 5000 messages are queued nowhere
     {
         std::string path = nextPath("shutdown_pub");
+        PathCleanup cleanup {path};
         zeromq::ZeroMQComponent pubComponent;
         auto locator = makeLocator(path);
         auto pub = pubComponent.zeroMQ_getPublisher(locator);
@@ -558,6 +585,7 @@ void testShutdown() {
     //publisher and subscriber destroyed while messages are still queued
     {
         std::string path = nextPath("shutdown_pair");
+        PathCleanup cleanup {path};
         zeromq::ZeroMQComponent pubComponent;
         zeromq::ZeroMQComponent subComponent;
         auto locator = makeLocator(path);
