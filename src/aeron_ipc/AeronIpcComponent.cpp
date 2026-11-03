@@ -10,6 +10,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string_view>
+#include <limits>
 
 #include <pthread.h>
 #include <sched.h>
@@ -44,9 +45,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         inline std::size_t align32(std::size_t x) {
             return (x+31) & ~static_cast<std::size_t>(31);
         }
-        inline std::size_t nextPow2(std::size_t x) {
+        inline std::size_t nextPow2Checked(std::size_t x) {
             std::size_t p = 1;
             while (p < x) {
+                if (p > std::numeric_limits<std::size_t>::max()/2) {
+                    throw std::invalid_argument("aeron_ipc: value is too large");
+                }
                 p <<= 1;
             }
             return p;
@@ -138,6 +142,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         ChannelLayout layoutFor(ConnectionLocator const &l) {
             ChannelLayout r;
             r.slotSize = queryU64(l, "slotSize", 1024);
+            if (r.slotSize > kAeronMaxMtu-kTopicLengthBytes-kAeronHeaderLength) {
+                throw std::invalid_argument(
+                    "aeron_ipc: slotSize "+std::to_string(r.slotSize)+" too large, max is "
+                    +std::to_string(kAeronMaxMtu-kAeronHeaderLength-kTopicLengthBytes)
+                );
+            }
             r.mtu = align32(r.slotSize+kTopicLengthBytes+kAeronHeaderLength);
             if (r.mtu > kAeronMaxMtu) {
                 throw std::invalid_argument(
@@ -147,14 +157,21 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             }
             auto explicitTerm = queryU64(l, "termLength", 0);
             if (explicitTerm != 0) {
+                if (explicitTerm < kAeronMinTermLength || explicitTerm > kAeronMaxTermLength
+                    || (explicitTerm & (explicitTerm-1)) != 0) {
+                    throw std::invalid_argument("aeron_ipc: bad term length "+std::to_string(explicitTerm));
+                }
                 r.termLength = explicitTerm;
             } else {
                 auto slotCount = queryU64(l, "slotCount", 8192);
-                r.termLength = nextPow2(std::max<std::size_t>(kAeronMinTermLength, r.mtu*slotCount));
+                if (slotCount != 0 && slotCount > kAeronMaxTermLength/r.mtu) {
+                    throw std::invalid_argument("aeron_ipc: slotCount is too large for the term length limit");
+                }
+                r.termLength = nextPow2Checked(std::max<std::size_t>(kAeronMinTermLength, r.mtu*slotCount));
             }
             //Aeron caps the message length at termLength/8
-            r.termLength = std::max(r.termLength, nextPow2(r.mtu*8));
-            if (r.termLength > kAeronMaxTermLength || nextPow2(r.termLength) != r.termLength) {
+            r.termLength = std::max(r.termLength, nextPow2Checked(r.mtu*8));
+            if (r.termLength > kAeronMaxTermLength || (r.termLength & (r.termLength-1)) != 0) {
                 throw std::invalid_argument("aeron_ipc: bad term length "+std::to_string(r.termLength));
             }
             return r;
