@@ -46,8 +46,13 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         char id[37];
         std::atomic<bool> active;
         std::atomic<std::ptrdiff_t> next;
+        // Guards publisher-side list traversal against concurrent subscriber
+        // teardown (latestHeartbeat write + destroy_ptr).  Held by publish()
+        // while it walks the list, and by the subscriber destructor before it
+        // marks latestHeartbeat=0 and before any destroy_ptr call.
+        boost::interprocess::interprocess_mutex listMutex;
 
-        SharedMemoryBroadcastClientListItem() : active(true), next(0) {
+        SharedMemoryBroadcastClientListItem() : active(true), next(0), listMutex() {
             std::memset(id, 0, 37);
         }
     };
@@ -279,6 +284,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     th_.join();
                 } catch (std::system_error const &) {
                 }
+                // Hold the list mutex before touching latestHeartbeat and
+                // destroy_ptr: publish() traverses the list under this same
+                // mutex, so without it the publisher may dereference nodes we
+                // are about to free (SIGSEGV).
+                boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex>
+                    listLock(clientListHead_->listMutex);
                 recordInSharedMem_->latestHeartbeat.store(0);
                 mem_.destroy_ptr(recordInSharedMem_);
                 for (int ii=0; ii<2; ++ii) {
@@ -447,6 +458,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 std::size_t vSize = v.length();
 
                 bool hasInactive = false;
+
+                // Hold listMutex across the full traversal.  The subscriber
+                // destructor also takes this mutex before destroy_ptr, so the
+                // publisher can never dereference a node that is being freed.
+                boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex>
+                    listLock(clientListHead_->listMutex);
 
                 while (true) {
                     auto n = p->next.load();

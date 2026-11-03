@@ -241,12 +241,13 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::string lastTopic_;
             uint32_t lastTopicHash_;
             std::atomic<uint64_t> rejected_;
-            uint32_t emptyWakes_;
+            std::atomic<uint32_t> emptyWakes_;
             std::atomic<uint64_t> waiterResets_;
 
             void reject(std::size_t topicLen, std::size_t payloadLen) {
-                auto r = rejected_.load(std::memory_order_relaxed)+1;
-                rejected_.store(r, std::memory_order_relaxed);
+                // fetch_add: concurrent callers must not lose counts (non-atomic
+                // load+store would race when writerLock is off or between processes)
+                auto r = rejected_.fetch_add(1, std::memory_order_relaxed)+1;
                 if (r == 1 || r % 10000 == 0) {
                     std::cerr << "[ShmSeqlockComponent] segment '" << locator_.identifier()
                         << "': rejected message with topic length " << topicLen
@@ -540,13 +541,13 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     if (map_.header->waiters.load(std::memory_order_relaxed) != 0) {
                         map_.header->futexWord.fetch_add(1, std::memory_order_release);
                         if (futexWakeAll(&(map_.header->futexWord)) > 0) {
-                            emptyWakes_ = 0;
-                        } else if (++emptyWakes_ >= SHM_SEQLOCK_EMPTY_WAKES_BEFORE_RESET) {
+                            emptyWakes_.store(0, std::memory_order_relaxed);
+                        } else if (emptyWakes_.fetch_add(1, std::memory_order_relaxed)+1 >= SHM_SEQLOCK_EMPTY_WAKES_BEFORE_RESET) {
                             //registrations leaked by killed readers; a live reader
                             //caught by the reset is woken by its futex timeout
                             map_.header->waiters.store(0, std::memory_order_relaxed);
-                            emptyWakes_ = 0;
-                            waiterResets_.store(waiterResets_.load(std::memory_order_relaxed)+1, std::memory_order_relaxed);
+                            emptyWakes_.store(0, std::memory_order_relaxed);
+                            waiterResets_.fetch_add(1, std::memory_order_relaxed);
                         }
                     }
                 }
