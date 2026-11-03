@@ -52,29 +52,41 @@ static int pub(std::string const &channel, std::string const &ready, uint64_t co
 {
     Env env;
     R r(&env);
+    std::atomic<bool> done{false};
     struct Source : M::AbstractImporter<basic::ByteDataWithTopic> {
         uint64_t count;
-        Source(uint64_t n)
-            : count(n)
+        std::string ready;
+        std::atomic<bool> *done;
+        Source(uint64_t n, std::string r, std::atomic<bool> *d)
+            : count(n), ready(std::move(r)), done(d)
         {
         }
         void start(Env *e) override
         {
             std::thread([this, e] {
+                //send only once the reader is up, and give subscription-based
+                //transports (zeromq) time to connect before the first message
+                while (access((ready + ".ready").c_str(), F_OK) != 0)
+                    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                std::this_thread::sleep_for(std::chrono::milliseconds(300));
                 for (uint64_t i = 0; i < count; ++i) {
                     basic::ByteDataWithTopic d{"p." + std::to_string(i), body(i, msgSize(i))};
                     this->publish(M::pureInnerData<basic::ByteDataWithTopic>(e, std::move(d)));
                     std::this_thread::sleep_for(std::chrono::microseconds(200));
                 }
+                done->store(true, std::memory_order_release);
             }).detach();
         }
     };
-    auto src = M::importer(new Source(count));
+    auto src = M::importer(new Source(count, ready, &done));
     auto p = transport::MultiTransportBroadcastPublisherManagingUtils<R>::oneByteDataBroadcastPublisher(r, "pub", channel);
     r.connect(r.importItem("source", src), p);
     r.finalize();
-    while (access((ready + ".ready").c_str(), F_OK) != 0)
+    //exit only after every message was handed to the transport, then let the
+    //transport drain before the process goes away
+    while (!done.load(std::memory_order_acquire))
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     std::fflush(nullptr);
     _Exit(0);
 }
