@@ -9,6 +9,11 @@ if build_aeron_ipc
         , link_with: aeron_ipc_test_link
         , dependencies: common_deps + [dependency('protobuf')]
         , install: false)
+    executable('aeron_ipc_overrun_test', 'aeron_ipc_overrun_test.cpp'
+        , include_directories: inc
+        , link_with: aeron_ipc_test_link
+        , dependencies: common_deps + [dependency('protobuf')]
+        , install: false)
     executable('aeron_ipc_graph_test', 'aeron_ipc_graph_test.cpp'
         , include_directories: inc
         , link_with: aeron_ipc_test_link
