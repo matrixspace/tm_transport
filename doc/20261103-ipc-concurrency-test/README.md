@@ -61,12 +61,46 @@ untethered 读端（默认配置）在读端滞后时，publisher 可能已回�
 导致读端拷贝到损坏数据（`corrupt` 计数非零）。与多线程写无关。  
 **规避：** 测试 1 和 7 对 aeron_ipc 使用 `tether=true`；7b 单独 probe 此行为。
 
-### shared_memory_broadcast — 多读端组件时 publisher 侧崩溃（测试 1、7）
+## 本任务修复的并发 bug
 
-`OneSharedMemoryBroadcastSender::publish` 遍历 clientListHead_ 链表时无跨进程锁，
-多个 subscriber 组件（各自 Env，各自 shared memory record）并发 open/close 会触发
-publisher 侧 use-after-free，SIGSEGV。  
-**规避：** 测试 1 对 shared_memory_broadcast 标记为 RISK；测试 7 使用单 reader comp（1×2）。
+测试过程中发现 `shm_seqlock` 和 `shared_memory_broadcast` 各自存在并发访问缺陷，
+在本次提交中一并修复（提交 `bc21d29`，分支 `feature/ipc-concurrency-bugfix`）。
+
+### `shm_seqlock` — 计数器数据竞争
+
+`OneShmSeqlockSender` 的三个发布统计计数器在并发发布时会丢计数，严重程度有限但属于数据竞争：
+
+- `rejected_`：`reject()` 用 `load()+1; store()` 而非 `fetch_add`，两个线程同时 reject
+  会丢失一次计数。已改为 `fetch_add(1, std::memory_order_relaxed)+1`。
+- `emptyWakes_`：原为 `uint32_t`，在 futex 唤醒段 `writing_.clear()` 之后（锁外）读写，
+  并发发布时是数据竞争。已改为 `std::atomic<uint32_t>`，改用 `store` / `fetch_add`。
+- `waiterResets_`：原用 `load+store` 在锁外自增，已改为 `fetch_add`。
+
+### `shared_memory_broadcast` — publisher 侧 SIGSEGV
+
+`OneSharedMemoryBroadcastSender::publish` 遍历 `clientListHead_` 链表时无跨进程锁，
+subscriber reader 线程（在 `~OneSharedMemoryBroadcastSubscription` 中）会并发调用
+`destroy_ptr` 释放链表节点，publisher 侧解引用到已释放的共享内存对象即 SIGSEGV。
+单写者、3 comp × 3 client 无 churn 也会偶发崩溃。
+
+修复：在 `SharedMemoryBroadcastClientListItem`（共享内存的头节点）中加入
+`boost::interprocess::interprocess_mutex listMutex`。
+
+- `publish()` 在遍历 `clientListHead_` 期间持有 `listMutex`。
+- `~OneSharedMemoryBroadcastSubscription()` 在写 `latestHeartbeat=0` 和
+  任何 `destroy_ptr` 之前先获取 `listMutex`。
+
+这样 publisher 遍历链表时，subscriber 的节点释放被阻塞，不会解引用到已释放对象。
+`SharedMemoryBroadcastClientRecord` 本身的 `cond` 已经是进程间同步原语，
+新增的 `listMutex` 与之同处共享内存，跨进程可见。
+
+### 测试脚本相应调整
+
+- 测试 1 对 `shared_memory_broadcast` 从 `probe` 提升为 `expect_no_crash`：
+  订阅 churn 期间的 `ooo`/`dup` 是 per-subscriber-queue 设计固有属性（新订阅者会收到
+  注册前瞬间的消息），不是正确性故障；但 `corrupt` 和崩溃仍是失败。
+- 测试 7 对 `shared_memory_broadcast` 取消了单 reader comp 的规避写法，
+  恢复为和其他 transport 一致的多 reader comp 配置。
 
 ## 构建
 
