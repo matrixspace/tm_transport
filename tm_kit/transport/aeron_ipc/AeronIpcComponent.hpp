@@ -71,6 +71,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         uint64_t skippedOnJoin = 0;   //backlog fragments discarded by joinLatest
         uint64_t clientRebuilds = 0;  //aeron client recreated after the driver went away
         uint64_t malformed = 0;
+        uint64_t overrun = 0;         //fragments dropped because term was reused while reading
     };
 
     class AeronIpcComponent {

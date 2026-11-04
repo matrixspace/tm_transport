@@ -394,8 +394,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
 
             std::string uri = "aeron:ipc?term-length="+std::to_string(layout.termLength)
                 +"|mtu="+std::to_string(layout.mtu)
-                +"|untethered-window-limit-timeout="+durationMs(queryU64(locator_, "untetheredWindowLimitTimeoutMs", 10))
-                +"|untethered-linger-timeout="+durationMs(queryU64(locator_, "untetheredLingerTimeoutMs", 10))
+                // Aeron's own defaults are 5 s / 5 s / 5 s; we use 2 s so that a
+                // genuinely stalled reader is ejected before it accumulates very large
+                // back-pressure, while still giving slow callbacks time to finish.
+                +"|untethered-window-limit-timeout="+durationMs(queryU64(locator_, "untetheredWindowLimitTimeoutMs", 2000))
+                +"|untethered-linger-timeout="+durationMs(queryU64(locator_, "untetheredLingerTimeoutMs", 2000))
                 +"|untethered-resting-timeout="+durationMs(queryU64(locator_, "untetheredRestingTimeoutMs", 100));
             aeron_async_add_exclusive_publication_t *async = nullptr;
             if (aeron_async_add_exclusive_publication(&async, client_, uri.c_str(), streamIdFor(locator_)) < 0) {
@@ -547,6 +550,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         std::atomic<uint64_t> skippedOnJoin_ {0};
         std::atomic<uint64_t> clientRebuilds_ {0};
         std::atomic<uint64_t> malformed_ {0};
+        std::atomic<uint64_t> overrun_ {0};
+
+        //scratch buffer owned by the polling thread: each fragment is copied here
+        //before the term buffer can be cleaned/reused underneath a slow reader
+        std::vector<uint8_t> fragScratch_;
 
         std::thread th_;
 
@@ -621,29 +629,48 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 bump(skippedOnJoin_);
                 return;
             }
-            aeron_header_values_t values;
-            if (aeron_header_values(header, &values) == 0) {
-                int32_t sid = values.frame.session_id;
-                if (!haveLastSession_ || sid != lastSession_) {
-                    if (!contains(knownSessions_, sid)) {
-                        if (knownSessions_.size() >= kMaxKnownSessions) {
-                            knownSessions_.erase(knownSessions_.begin());
-                        }
-                        knownSessions_.push_back(sid);
-                        bump(imagesJoined_);
-                        if (joinLatest_) {
-                            pendingJoins_.push_back(sid);
-                        }
-                    }
-                    if (contains(pendingJoins_, sid)) {
-                        bump(skippedOnJoin_);
-                        return;
-                    }
-                    lastSession_ = sid;
-                    haveLastSession_ = true;
-                }
+            //Snapshot the frame header, copy the payload out of the shared term
+            //buffer, then re-read the header.  If the term was cleaned or reused
+            //under a slow untethered reader, the second header differs (frame_length
+            //is zeroed by clean_buffer, term_id advances on rotation); drop the
+            //fragment and count it as overrun.  Delivery always uses the local
+            //copy so clients never read the shared term buffer after the handler
+            //returns.
+            aeron_header_values_t before;
+            if (aeron_header_values(header, &before) != 0) {
+                bump(malformed_);
+                return;
             }
-            deliver(buffer, length);
+            if (fragScratch_.size() < length) {
+                fragScratch_.resize(length);
+            }
+            std::memcpy(fragScratch_.data(), buffer, length);
+            aeron_header_values_t after;
+            if (aeron_header_values(header, &after) != 0
+                || std::memcmp(&before.frame, &after.frame, sizeof(before.frame)) != 0) {
+                bump(overrun_);
+                return;
+            }
+            int32_t sid = before.frame.session_id;
+            if (!haveLastSession_ || sid != lastSession_) {
+                if (!contains(knownSessions_, sid)) {
+                    if (knownSessions_.size() >= kMaxKnownSessions) {
+                        knownSessions_.erase(knownSessions_.begin());
+                    }
+                    knownSessions_.push_back(sid);
+                    bump(imagesJoined_);
+                    if (joinLatest_) {
+                        pendingJoins_.push_back(sid);
+                    }
+                }
+                if (contains(pendingJoins_, sid)) {
+                    bump(skippedOnJoin_);
+                    return;
+                }
+                lastSession_ = sid;
+                haveLastSession_ = true;
+            }
+            deliver(fragScratch_.data(), length);
         }
         void deliver(const uint8_t *buffer, size_t length) {
             if (length < kTopicLengthBytes) {
@@ -873,6 +900,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             s.skippedOnJoin = skippedOnJoin_.load(std::memory_order_relaxed);
             s.clientRebuilds = clientRebuilds_.load(std::memory_order_relaxed);
             s.malformed = malformed_.load(std::memory_order_relaxed);
+            s.overrun = overrun_.load(std::memory_order_relaxed);
             return s;
         }
     };

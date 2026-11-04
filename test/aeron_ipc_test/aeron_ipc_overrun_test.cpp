@@ -135,6 +135,7 @@ int main(int argc, char **argv) {
     std::cout << "RESULT tether=" << tether << " stallMs=" << stallMs << " termLength=" << termLength
         << " stalls=" << stalls << " changed=" << changed << " received=" << received
         << " badContent=" << badContent
+        << " overrun=" << (ss ? ss->overrun : 0)
         << " malformed=" << (ss ? ss->malformed : 0)
         << " imagesJoined=" << (ss ? ss->imagesJoined : 0)
         << " published=" << (ps ? ps->published : 0)
