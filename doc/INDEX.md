@@ -6,6 +6,8 @@
 
 - [IPC Transport 并发 Bug 修复](20261103-ipc-concurrency-bugfix/README.md) — 2026-11-03 至 2026-11-04，基于并发测试结果修复三类 bug：shm_seqlock 计数器数据竞争、shared_memory_broadcast publisher 侧 SIGSEGV、aeron_ipc untethered 读端 term 重用导致数据损坏。
 
+- [ZeroMQ 通过 ConnectionLocator 配置 HWM](20261105-zeromq-hwm-locator/README.md) — 2026-11-05，ZeroMQ 传输支持通过 locator 属性 `hwm`/`sndhwm`/`rcvhwm` 配置高水位，非法值抛 `std::invalid_argument`。
+
 ## 任务关系
 
 并发测试任务（20261103-ipc-concurrency-test）发现了并发 Bug，由并发 Bug 修复任务（20261103-ipc-concurrency-bugfix）解决。两个任务文档互相关联。
