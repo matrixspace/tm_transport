@@ -18,6 +18,7 @@
 #include <iostream>
 #include <mutex>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <unistd.h>
@@ -654,6 +655,80 @@ void testCborEquivalence() {
     check(ok, "9 CBOR allocating and in-place paths are equivalent", detail);
 }
 
+//10: hwm/sndhwm/rcvhwm locator properties are accepted and data still flows
+void testHwmProperties() {
+    bool ok = true;
+    std::string detail;
+    std::vector<std::vector<std::pair<std::string, std::string>>> cases {
+        {{"hwm", "50000"}}
+        , {{"sndhwm", "0"}, {"rcvhwm", "0"}}
+        , {{"hwm", "10"}, {"sndhwm", "20000"}, {"rcvhwm", "20000"}}
+    };
+    for (std::size_t ci=0; ci<cases.size() && ok; ++ci) {
+        std::string path = nextPath("hwm");
+        PathCleanup cleanup {path};
+        zeromq::ZeroMQComponent pubComponent;
+        zeromq::ZeroMQComponent subComponent;
+        auto locator = makeLocator(path);
+        for (auto const &kv : cases[ci]) {
+            locator = locator.addProperty(kv.first, kv.second);
+        }
+        auto pub = pubComponent.zeroMQ_getPublisher(locator);
+        Collector c;
+        auto id = subComponent.zeroMQ_addSubscriptionClient(
+            locator, zeromq::ZeroMQComponent::NoTopicSelection {}
+            , [&c](basic::ByteDataWithTopic &&d) { c.onData(std::move(d)); });
+        if (!warmup(pub, {{&c, "t.hwm"}})) {
+            ok = false;
+            detail = "warmup failed case="+std::to_string(ci);
+        } else {
+            //a burst larger than the libzmq default hwm (1000), unpaced
+            const std::size_t n = 5000;
+            for (std::size_t ii=0; ii<n; ++ii) {
+                pub({"t.hwm", makeContent(static_cast<uint32_t>(ii), 64)});
+            }
+            if (!c.waitFor(n, 5000)) {
+                ok = false;
+                detail = "case="+std::to_string(ci)+" got="+std::to_string(c.size())+"/"+std::to_string(n);
+            }
+        }
+        subComponent.zeroMQ_removeSubscriptionClient(id);
+    }
+    check(ok, "10 hwm locator properties", detail);
+}
+
+//11: invalid hwm values are rejected with std::invalid_argument
+void testHwmInvalid() {
+    bool ok = true;
+    std::string detail;
+    std::vector<std::pair<std::string, std::string>> bad {
+        {"hwm", "abc"}, {"hwm", "-1"}, {"sndhwm", "12x"}, {"rcvhwm", "99999999999"}
+    };
+    for (auto const &kv : bad) {
+        std::string path = nextPath("hwm_bad");
+        PathCleanup cleanup {path};
+        zeromq::ZeroMQComponent comp;
+        auto locator = makeLocator(path).addProperty(kv.first, kv.second);
+        bool threw = false;
+        try {
+            if (kv.first == "rcvhwm") {
+                comp.zeroMQ_addSubscriptionClient(locator, zeromq::ZeroMQComponent::NoTopicSelection {}
+                    , [](basic::ByteDataWithTopic &&) {});
+            } else {
+                comp.zeroMQ_getPublisher(locator);
+            }
+        } catch (std::invalid_argument const &) {
+            threw = true;
+        }
+        if (!threw) {
+            ok = false;
+            detail = kv.first+"="+kv.second+" did not throw";
+            break;
+        }
+    }
+    check(ok, "11 invalid hwm values throw", detail);
+}
+
 } //namespace
 
 int main() {
@@ -666,6 +741,8 @@ int main() {
     testPayloadSizes();
     testStartStop();
     testShutdown();
+    testHwmProperties();
+    testHwmInvalid();
 
     std::cout << "SUMMARY pass=" << g_pass << " fail=" << g_fail << std::endl;
     return g_fail == 0 ? 0 : 1;

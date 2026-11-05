@@ -25,7 +25,14 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     public:
         ZeroMQComponent();
         ~ZeroMQComponent();
-        //only host and port are needed in the locators
+        //only host and port (or identifier for inproc/ipc) are needed in the locators.
+        //Optional locator properties:
+        //  hwm=<n>    high water mark for both publisher and subscriber sockets
+        //  sndhwm=<n> publisher send hwm, overrides hwm
+        //  rcvhwm=<n> subscriber receive hwm, overrides hwm
+        //n is a non-negative integer, 0 means unlimited; unset keeps libzmq's default (1000).
+        //Sockets are shared per host/port/identifier, so these only apply when the
+        //socket is first created. An invalid value throws std::invalid_argument.
         struct NoTopicSelection {};
         uint32_t zeroMQ_addSubscriptionClient(ConnectionLocator const &locator,
                         std::variant<NoTopicSelection, std::string, std::regex> const &topic,
