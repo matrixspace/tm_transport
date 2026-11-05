@@ -40,6 +40,7 @@ zeromq://ipc:0:::/tmp/feed[sndhwm=0,rcvhwm=20000]
 - debug、release 构建均成功，日志中无 `FAILED:` / `error:`。
 - 两种构建下 `zeromq_test` 11 个用例全部通过。
 - 已安装到开发环境 `install/`（头文件、`libtm_kit_transport.a`、`libtm_kit_transport_debug.a`）。
+- 下游 tm_examples 用 `ASSUME_YES=1 ./build.sh ../tm_examples`（debug）清理重建：编译链接成功，`build_debug.log` 中无 `FAILED:` / `error:`。`build.sh` 最后的安装校验报错（找不到 `tm_kit_examples_debug.pc`），原因是 tm_examples 本来就没有安装目标（`Nothing to install.`），与本次改动无关。
 
 ## 相关文档
 
