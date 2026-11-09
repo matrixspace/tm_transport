@@ -7,5 +7,6 @@ if build_machine.system() == 'linux'
     subdir('transport_payload_test')
     subdir('multitransport_lifecycle_test')
     subdir('ipc_concurrency_test')
+    subdir('threaded_handler_transport_test')
 endif
 subdir('aeron_ipc_test')

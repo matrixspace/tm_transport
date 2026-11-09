@@ -11,3 +11,8 @@
 ## 任务关系
 
 并发测试任务（20261103-ipc-concurrency-test）发现了并发 Bug，由并发 Bug 修复任务（20261103-ipc-concurrency-bugfix）解决。两个任务文档互相关联。
+
+- [RealTimeApp threaded handler 执行器优化（主记录在 tm_infra）](../../tm_infra/doc/20261105-realtime-threaded-executor/README.md) — 2026-11-05 起，进行中：第二阶段执行器抽象重构。tm_infra 的 ThreadedHandlerBase 改为可替换执行器；本仓库新增 `test/threaded_handler_transport_test`，以 JsonRESTClientFacility（直接继承 ThreadedHandler）在默认执行器与共享线程池执行器下做端到端回归。
+
+
+- 2026-11-09：[执行器实现分层](../../tm_infra/doc/20261105-realtime-threaded-executor/executor-layering.md)：共享池接入测试切换到basic头文件和命名空间。
