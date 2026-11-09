@@ -1,6 +1,6 @@
 #include <tm_kit/infra/Environments.hpp>
 #include <tm_kit/infra/RealTimeApp.hpp>
-#include <tm_kit/infra/RealTimeSharedPoolExecutor.hpp>
+#include <tm_kit/basic/RealTimeSharedPoolExecutor.hpp>
 
 #include <tm_kit/basic/SerializationHelperMacros.hpp>
 #include <tm_kit/basic/TrivialBoostLoggingComponent.hpp>
@@ -70,7 +70,7 @@ namespace {
             , basic::real_time_clock::ClockComponent
             , transport::CrossGuidComponent
             , transport::AllNetworkTransportComponents
-            , infra::RealTimeSharedPoolExecutorComponent
+            , basic::RealTimeSharedPoolExecutorComponent
         >;
     };
 
