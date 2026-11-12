@@ -1,9 +1,9 @@
 # IPC Transport 内部线程通过 ConnectionLocator 绑核
 
 **任务开始时间：** 2026-11-12  
-**任务结束时间：** 2026-11-12  
+**任务结束时间：** 2026-11-13  
 **状态：** 完成  
-**分支：** `feature/ipc-thread-affinity`（worktree `worktrees/tm_transport-ipc-thread-affinity`，起点 `e22df3c`，commit 见文末）
+**分支：** `feature/ipc-thread-affinity`（worktree `worktrees/tm_transport-ipc-thread-affinity`，起点 `e22df3c`，实现 commit `ccc0a58`）
 
 ## 背景
 
@@ -160,10 +160,14 @@ multicast / singlecast / aeron_ipc；aeron driver 与 hwloc 按构建条件追�
 | `zeromq_test` | pass=11 fail=0 |
 | `transport_payload_test` | failures=0 |
 | `threaded_handler_transport_test` | ALL PASSED |
+| `tm_examples` debug（清理重建） | 291/291 目标构建/链接成功，下游头文件兼容 |
 
 debug 构建下 `shm_seqlock_test`（零 gap 断言）和 `shm_cursor_test`（限速时间断言）有既有的时序失败，
 用基点 `e22df3c` 的 debug 二进制跑同样的用例得到同样的失败，确认与本次改动无关；这两个用例只适合
 release/空闲机器上做验收。
+
+PLAN 中的性能参考项（`ipc_latency_profiler` 内部 `cpu=` 绑核与外部 `taskset` 对比）未执行：
+该项本来就不作为验收条件，且当前机器为共享环境，延迟数字不可比。
 
 ## 兼容性与注意事项
 
