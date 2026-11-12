@@ -57,14 +57,28 @@ namespace dev::cd606::tm::transport {
 
 组件接口（每个纳入范围的组件各加一个，命名沿用前缀风格）：
 ```cpp
-// 安装/替换 provider。replaceExisting=false 时已有 provider 则不动（供模板的幂等安装使用）。
-// 只影响之后创建的线程；已在运行的线程不受影响。线程安全（组件 mutex 保护）。
-void shm_seqlock_setThreadCpuLease(ThreadCpuLeaseProvider provider, bool replaceExisting = true);
+// 设置 provider，只能设置一次。已设置时抛 std::logic_error（不支持更换 provider，
+// 也不提供清除接口）。只影响之后创建的线程；已在运行的线程不受影响。
+// 线程安全（组件 mutex 保护）。
+void shm_seqlock_setThreadCpuLease(ThreadCpuLeaseProvider provider);
 ```
+因为 provider 不可更换，**用户自定义 provider 必须在图启动前设置**（即在 `AppRunner` 运行、任何 importer/exporter
+`start(env)` 之前）。否则框架自动安装的默认 provider 已经占位，后续调用抛 `std::logic_error`。
+
+框架内部的自动安装走组件的私有入口，语义是“没装才装”，不报错、可被重复调用：
+```cpp
+private:
+    // 由 installThreadCpuLeaseProviders<Env> 调用；已有 provider 时保持原样。
+    void shm_seqlock_setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider);
+    template <class E> friend void installThreadCpuLeaseProviders(E *);
+```
+这样两类语义分开，公开 API 上不出现 bool：手工设置是“一次且唯一”，自动安装是幂等的。
+
 `installThreadCpuLeaseProviders<Env>` 的调用点：上面列出的所有知道 Env 的地方，在调用 `xxx_addSubscriptionClient` /
 `xxx_getPublisher` 之前调用一次（幂等，开销是一次组件 mutex + 判空）。直接调组件 API 的代码自己调
 `env->xxx_setThreadCpuLease(threadCpuLeaseProviderFor<Env>())` 或传自定义 lambda（例如绑到测试用 Fake 分配器：
-`[&](auto const &who, auto const &spec){ return infra::ThreadCpuLease::bindCurrentThreadBy(fakeAllocator, spec, who); }`）。
+`[&](auto const &who, auto const &spec){ return infra::ThreadCpuLease::bindCurrentThreadBy(fakeAllocator, spec, who); }`），
+且必须在第一个订阅/发布建立之前完成。
 
 ## 二、transport 内部统一流程（放在 `src/ThreadCpuLeaseSupport.hpp`，src 内部头，不安装）
 
@@ -160,7 +174,7 @@ AddSubscription 分支对 11 种 transport 各一次 `static_cast<XxxComponent *
 （:420-980），RemoveAllSubscriptions 分支各一次 remove（:1186-1273）。改动：
 
 1. 在节点的 `start(Env *env)`（`AbstractIntegratedOnOrderFacilityWithExternalEffects` 的生命周期入口）里调用一次
-   `installThreadCpuLeaseProviders<Env>(env)`；幂等（`replaceExisting=false`），重复 start 无副作用。
+   `installThreadCpuLeaseProviders<Env>(env)`；走 `IfUnset` 语义，重复 start 无副作用，也不会覆盖用户预先设置的 provider。
 2. `restart` 流程（`restartInfo_` 在重新 start 后重放 AddSubscription）复用 `actuallyHandle` 的同一路径，自动带上 provider。
 3. remove 路径不涉及 provider：订阅线程 join 后租约在线程函数退出时析构归还；`RemoveAllSubscriptions` 清空 `subscriptions_`
    之后线程已 join，不会出现“线程还活着但租约已归还”。
@@ -224,8 +238,9 @@ tm_examples debug 清理重建一次确认下游编译。tm_infra / tm_basic 不
 - 提交：`feat(transport): ...`、`test:`、`doc:`，结尾 Co-Authored-By 行。
 
 ## 需要用户确认的点
-1. provider 由各 `XxxImporterExporter` / `MultiTransportBroadcastListener` / `HeartbeatAndAlertComponent` 幂等自动安装
-   （`replaceExisting=false`，用户手工安装的自定义 provider 优先）；直接调组件 API 的代码需自行安装。
+1. ~~provider 是否自动安装、能否更换~~ **已确认（2026-11-12）**：不支持重新设置 provider。公开接口
+   `xxx_setThreadCpuLease(provider)` 只能设置一次，已设置时抛 `std::logic_error`；框架自带的自动安装走私有
+   `IfUnset` 语义，重复调用无副作用。因此用户自定义 provider 必须在图启动前设置。
 2. **没有 provider 却写了 `cpu=`**：抛 `std::invalid_argument` 提示安装接口（推荐，错误不静默）。备选：显式列表退化为直接 pin 不走分配器。
 3. provider 在工作线程里调用，失败通过启动握手**同步**抛回 `addSubscriptionClient` / `getPublisher`；aeron driver agent 线程例外（C 回调，只打 stderr + 统计字段）。
 4. 第 3 档 multicast / singlecast 纳入；属性名 `cpu` / `senderCpu` / `driverCpu`。

@@ -17,13 +17,13 @@
 
 ## 目标
 
-1. 每个有内部线程的 IPC transport 组件新增一个注入接口
-   `xxx_setThreadCpuLease(ThreadCpuLeaseProvider, bool replaceExisting = true)`，
+1. 每个有内部线程的 IPC transport 组件新增一个注入接口 `xxx_setThreadCpuLease(ThreadCpuLeaseProvider)`，
    provider 签名为 `(who, spec) -> infra::ThreadCpuLease`，与 `ThreadCpuLease::bindCurrentThreadBy` 一致。
+   **provider 只能设置一次，不支持更换**：已设置时抛 `std::logic_error`；自定义 provider 必须在图启动前设置。
 2. ConnectionLocator 新增属性 `cpu`（接收/轮询线程）、`senderCpu`（multicast/singlecast 共享发送线程）、
    `driverCpu`（aeron 内嵌 driver，语法升级但保持旧写法兼容）。属性值使用 `CpuBindingSpec` 语法。
 3. 各 `XxxImporterExporter` 模板、`MultiTransportBroadcastListener` 节点、`fetchFirstUpdateAndDisconnect` 等
-   知道 `Env` 的入口，幂等安装默认 provider（`threadCpuLeaseProviderFor<Env>()`）。
+   知道 `Env` 的入口，以“没装才装”的方式安装默认 provider（`threadCpuLeaseProviderFor<Env>()`），重复调用无副作用。
 4. tm_infra / tm_basic **不改动**；不设置 provider 时行为与现在完全一致（向后兼容）。
 
 ## 方案
