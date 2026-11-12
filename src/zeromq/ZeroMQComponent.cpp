@@ -16,6 +16,8 @@
 
 #include <tm_kit/transport/zeromq/ZeroMQComponent.hpp>
 
+#include "../ThreadCpuLeaseSupport.hpp"
+
 namespace dev { namespace cd606 { namespace tm { namespace transport { namespace zeromq {
     namespace {
         //Reads a high water mark from the locator properties. The socket-specific
@@ -68,6 +70,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::thread th_;
             std::atomic<bool> running_;
             std::optional<int> rcvHwm_;
+            std::optional<thread_cpu_lease_detail::BindRequest> bindRequest_;
+            bool warnedCpuMismatch_ = false;
 
             inline void callClient(ClientCB const &c, basic::ByteDataWithTopic &&d) {
                 if (c.hook) {
@@ -80,7 +84,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
             }
 
-            void run(ConnectionLocator const &locator, zmq::context_t *p_ctx) {
+            void run(ConnectionLocator const &locator, zmq::context_t *p_ctx, thread_cpu_lease_detail::BindHandshake *handshake) {
+                //first action: pin this thread, reports the result to the caller
+                auto lease = thread_cpu_lease_detail::bindWorkerThread(bindRequest_ ? &*bindRequest_ : nullptr, handshake);
+                if (!lease) {
+                    return;
+                }
                 zmq::socket_t sock(*p_ctx, zmq::socket_type::sub);
                 sock.set(zmq::sockopt::rcvtimeo, 1000);
                 //linger only affects shutdown: do not block the destructor on undelivered data
@@ -153,12 +162,25 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 sock.close();
             }
         public:
-            OneZeroMQSubscription(ConnectionLocator const &locator, zmq::context_t *p_ctx, std::optional<int> rcvHwm)
+            OneZeroMQSubscription(ConnectionLocator const &locator, zmq::context_t *p_ctx, std::optional<int> rcvHwm
+                , std::optional<thread_cpu_lease_detail::BindRequest> bindRequest)
                 : locator_(locator), buffer_(), decoded_()
                 , noFilterClients_(), stringMatchClients_(), regexMatchClients_()
-                , mutex_(), th_(), running_(true), rcvHwm_(rcvHwm)
+                , mutex_(), th_(), running_(true), rcvHwm_(rcvHwm), bindRequest_(std::move(bindRequest))
             {
-                th_ = std::thread(&OneZeroMQSubscription::run, this, locator, p_ctx);
+                std::optional<thread_cpu_lease_detail::BindHandshake> handshake;
+                if (bindRequest_ && bindRequest_->needed) {
+                    handshake.emplace();
+                }
+                th_ = std::thread(&OneZeroMQSubscription::run, this, locator, p_ctx, handshake ? &*handshake : nullptr);
+                if (handshake) {
+                    try {
+                        handshake->future.get();
+                    } catch (...) {
+                        th_.join();
+                        throw;
+                    }
+                }
             }
             ~OneZeroMQSubscription() {
                 running_ = false;
@@ -233,6 +255,21 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::thread::native_handle_type getThreadHandle() {
                 return th_.native_handle();
             }
+            std::optional<thread_cpu_lease_detail::BindRequest> const &bindRequest() const {
+                return bindRequest_;
+            }
+            //The receive thread is shared per host/port/identifier: the first
+            //locator decides the binding, later different values only warn once.
+            void warnCpuMismatch(ConnectionLocator const &locator, thread_cpu_lease_detail::BindRequest const &request) {
+                if (warnedCpuMismatch_) {
+                    return;
+                }
+                warnedCpuMismatch_ = true;
+                std::cerr << "zeromq: receive thread for " << locator_.toPrintFormat()
+                    << " already uses cpu='" << (bindRequest_ ? bindRequest_->spec : "")
+                    << "', ignoring cpu='" << request.spec << "' requested by "
+                    << locator.toPrintFormat() << std::endl;
+            }
         };
         std::unordered_map<ConnectionLocator, std::unique_ptr<OneZeroMQSubscription>> subscriptions_;
         
@@ -284,6 +321,16 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         std::mutex mutex_;
         zmq::context_t ctx_;
 
+        //the binding provider, settable once before the graph starts
+        std::mutex providerMutex_;
+        ThreadCpuLeaseProvider provider_;
+        bool providerSet_ = false;
+
+        ThreadCpuLeaseProvider getThreadCpuLeaseProvider() {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            return provider_;
+        }
+
         uint32_t counter_;
         std::unordered_map<uint32_t, OneZeroMQSubscription *> idToSubscriptionMap_;
         std::mutex idMutex_;
@@ -293,11 +340,16 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         //map to the same socket reuse it as is.
         OneZeroMQSubscription *getOrStartSubscription(ConnectionLocator const &d) {
             auto rcvHwm = parseHwm(d, "rcvhwm");
+            auto bindRequest = thread_cpu_lease_detail::makeThreadCpuBindRequest(
+                d, "cpu", "zeromq receiver "+d.toPrintFormat(), getThreadCpuLeaseProvider()
+                , "zeromq", "zeroMQ_setThreadCpuLease");
             ConnectionLocator hostAndPortAndIdentifier {d.host(), d.port(), "", "", d.identifier()};
             std::lock_guard<std::mutex> _(mutex_);
             auto iter = subscriptions_.find(hostAndPortAndIdentifier);
             if (iter == subscriptions_.end()) {
-                iter = subscriptions_.insert({hostAndPortAndIdentifier, std::make_unique<OneZeroMQSubscription>(hostAndPortAndIdentifier, &ctx_, rcvHwm)}).first;
+                iter = subscriptions_.insert({hostAndPortAndIdentifier, std::make_unique<OneZeroMQSubscription>(hostAndPortAndIdentifier, &ctx_, rcvHwm, std::move(bindRequest))}).first;
+            } else if (!thread_cpu_lease_detail::sameCpuBinding(*iter->second->bindRequest(), bindRequest)) {
+                iter->second->warnCpuMismatch(d, bindRequest);
             }
             return iter->second.get();
         }
@@ -327,6 +379,22 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::lock_guard<std::mutex> _(mutex_);
             subscriptions_.clear();
             senders_.clear();
+        }
+        void setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                throw std::logic_error("zeromq: thread CPU lease provider is already set");
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
+        }
+        void setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                return;
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
         }
         uint32_t addSubscriptionClient(ConnectionLocator const &locator,
             std::variant<ZeroMQComponent::NoTopicSelection, std::string, std::regex> const &topic,
@@ -397,5 +465,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     }
     std::unordered_map<ConnectionLocator, std::thread::native_handle_type> ZeroMQComponent::zeromq_threadHandles() {
         return impl_->threadHandles();
+    }
+    void ZeroMQComponent::zeroMQ_setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLease(std::move(provider));
+    }
+    void ZeroMQComponent::zeroMQ_setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLeaseIfUnset(std::move(provider));
     }
 } } } } }

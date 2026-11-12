@@ -20,6 +20,8 @@
 
 #include <tm_kit/transport/shm_seqlock/ShmSeqlockComponent.hpp>
 
+#include "../ThreadCpuLeaseSupport.hpp"
+
 namespace dev { namespace cd606 { namespace tm { namespace transport { namespace shm_seqlock {
 
     //Shared memory layout
@@ -624,6 +626,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             alignas(64) std::atomic<bool> running_;
             std::thread th_;
             std::thread::id thId_;
+            thread_cpu_lease_detail::BindRequest bindRequest_;
+            bool warnedCpuMismatch_ = false;
 
             static void bump(std::atomic<uint64_t> &x, uint64_t d=1) {
                 //single writer (the reader thread)
@@ -897,7 +901,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     runLoop<Spec, Futex, false, false>();
                 }
             }
-            void run() {
+            void run(thread_cpu_lease_detail::BindHandshake *handshake) {
+                //first action: pin this thread, reports the result to the caller
+                auto lease = thread_cpu_lease_detail::bindWorkerThread(&bindRequest_, handshake);
+                if (!lease) {
+                    return;
+                }
                 //the layout comes from the segment header and may change when the
                 //publisher replaces the segment, so it is dispatched on every (re)open
                 while (running_.load(std::memory_order_relaxed)) {
@@ -920,7 +929,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
             }
         public:
-            OneShmSeqlockSubscription(ConnectionLocator const &locator)
+            OneShmSeqlockSubscription(ConnectionLocator const &locator, thread_cpu_lease_detail::BindRequest bindRequest)
                 : locator_(locator), shmName_(shmNameFor(locator)), lockPath_()
                 //read=classic is the default: in the pinned IPC profiling matrix
                 //(2026-10-26) it beat read=spec on every tail metric, more so with
@@ -942,6 +951,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 , mutex_(), pending_(), version_(0), ackVersion_(0)
                 , received_(0), lost_(0), lapResyncs_(0), publisherRestarts_(0), corrupt_(0), reopens_(0), splitLayout_(0)
                 , running_(true), th_(), thId_()
+                , bindRequest_(std::move(bindRequest))
             {
                 lockPath_ = "/dev/shm"+shmName_+".lock";
             }
@@ -989,8 +999,22 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 //started only once there is a client, so the first (latest) message
                 //is never dispatched to an empty client set
                 if (!th_.joinable()) {
-                    th_ = std::thread(&OneShmSeqlockSubscription::run, this);
+                    std::optional<thread_cpu_lease_detail::BindHandshake> handshake;
+                    if (bindRequest_.needed) {
+                        handshake.emplace();
+                    }
+                    th_ = std::thread(&OneShmSeqlockSubscription::run, this, handshake ? &*handshake : nullptr);
                     thId_ = th_.get_id();
+                    if (handshake) {
+                        try {
+                            handshake->future.get();
+                        } catch (...) {
+                            //the reader thread has already returned
+                            th_.join();
+                            thId_ = std::thread::id();
+                            throw;
+                        }
+                    }
                 }
             }
             //The reader thread picks up the change before its next delivery, so a
@@ -1018,6 +1042,21 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::thread::native_handle_type getThreadHandle() {
                 return th_.native_handle();
             }
+            thread_cpu_lease_detail::BindRequest const &bindRequest() const {
+                return bindRequest_;
+            }
+            //There is one reader thread per segment: the first locator decides
+            //the binding, later different values only warn once.
+            void warnCpuMismatch(ConnectionLocator const &locator, thread_cpu_lease_detail::BindRequest const &request) {
+                if (warnedCpuMismatch_) {
+                    return;
+                }
+                warnedCpuMismatch_ = true;
+                std::cerr << "shm_seqlock: reader thread for " << locator_.toPrintFormat()
+                    << " already uses cpu='" << bindRequest_.spec
+                    << "', ignoring cpu='" << request.spec << "' requested by "
+                    << locator.toPrintFormat() << std::endl;
+            }
             ShmSeqlockReaderStats stats() const {
                 return {
                     received_.load(std::memory_order_relaxed)
@@ -1037,6 +1076,15 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         std::vector<std::unique_ptr<OneShmSeqlockSubscription>> stoppedSubscriptions_;
         std::mutex mutex_;
 
+        //the binding provider, settable once before the graph starts
+        std::mutex providerMutex_;
+        ThreadCpuLeaseProvider provider_;
+        bool providerSet_ = false;
+
+        ThreadCpuLeaseProvider getThreadCpuLeaseProvider() {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            return provider_;
+        }
         uint32_t counter_;
         std::unordered_map<uint32_t, OneShmSeqlockSubscription *> idToSubscriptionMap_;
         std::mutex idMutex_;
@@ -1045,11 +1093,16 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             return ConnectionLocator {"", 0, "", "", d.identifier()};
         }
         //caller holds mutex_
-        OneShmSeqlockSubscription *getOrStartSubscription_locked(ConnectionLocator const &d) {
+        OneShmSeqlockSubscription *getOrStartSubscription_locked(ConnectionLocator const &d
+            , thread_cpu_lease_detail::BindRequest const &bindRequest, bool &created) {
+            created = false;
             auto idOnly = idOnlyLocator(d);
             auto iter = subscriptions_.find(idOnly);
             if (iter == subscriptions_.end()) {
-                iter = subscriptions_.insert({idOnly, std::make_unique<OneShmSeqlockSubscription>(d)}).first;
+                iter = subscriptions_.insert({idOnly, std::make_unique<OneShmSeqlockSubscription>(d, bindRequest)}).first;
+                created = true;
+            } else if (!thread_cpu_lease_detail::sameCpuBinding(iter->second->bindRequest(), bindRequest)) {
+                iter->second->warnCpuMismatch(d, bindRequest);
             }
             return iter->second.get();
         }
@@ -1145,17 +1198,50 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::lock_guard<std::mutex> _(mutex_);
             senders_.clear();
         }
+        void setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                throw std::logic_error("shm_seqlock: thread CPU lease provider is already set");
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
+        }
+        void setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                return;
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
+        }
         uint32_t addSubscriptionClient(ConnectionLocator const &locator,
             std::variant<ShmSeqlockComponent::NoTopicSelection, std::string, std::regex> const &topic,
             std::function<void(basic::ByteDataWithTopic &&)> client,
             std::optional<WireToUserHook> wireToUserHook) {
+            auto bindRequest = thread_cpu_lease_detail::makeThreadCpuBindRequest(
+                locator, "cpu", "shm_seqlock reader "+locator.identifier(), getThreadCpuLeaseProvider()
+                , "shm_seqlock", "shm_seqlock_setThreadCpuLease");
             //mutex_ is held until the client is registered, so that a concurrent
             //potentiallyStopSubscription cannot destroy the subscription in between
             std::lock_guard<std::mutex> _(mutex_);
-            auto *p = getOrStartSubscription_locked(locator);
+            bool created = false;
+            auto *p = getOrStartSubscription_locked(locator, bindRequest, created);
             std::lock_guard<std::mutex> _id(idMutex_);
             ++counter_;
-            p->addSubscription(counter_, topic, client, wireToUserHook);
+            try {
+                p->addSubscription(counter_, topic, client, wireToUserHook);
+            } catch (...) {
+                //the reader thread failed to start (e.g. CPU binding failed):
+                //drop the subscription we just created so no half-started object
+                //is left in the cache
+                if (created) {
+                    auto iter = subscriptions_.find(idOnlyLocator(locator));
+                    if (iter != subscriptions_.end() && iter->second.get() == p) {
+                        subscriptions_.erase(iter);
+                    }
+                }
+                throw;
+            }
             idToSubscriptionMap_[counter_] = p;
             return counter_;
         }
@@ -1239,6 +1325,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     }
     std::unordered_map<ConnectionLocator, ShmSeqlockPublisherStats> ShmSeqlockComponent::shm_seqlock_publisherStats() {
         return impl_->publisherStats();
+    }
+    void ShmSeqlockComponent::shm_seqlock_setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLease(std::move(provider));
+    }
+    void ShmSeqlockComponent::shm_seqlock_setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLeaseIfUnset(std::move(provider));
     }
 
 } } } } }

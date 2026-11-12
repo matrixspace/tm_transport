@@ -12,6 +12,8 @@
 
 #include <tm_kit/transport/nng/NNGComponent.hpp>
 
+#include "../ThreadCpuLeaseSupport.hpp"
+
 namespace dev { namespace cd606 { namespace tm { namespace transport { namespace nng {
     class NNGComponentImpl {
     private:
@@ -29,6 +31,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::mutex mutex_;
             std::thread th_;
             std::atomic<bool> running_;
+            std::optional<thread_cpu_lease_detail::BindRequest> bindRequest_;
+            bool warnedCpuMismatch_ = false;
 
             inline void callClient(ClientCB const &c, basic::ByteDataWithTopic &&d) {
                 if (c.hook) {
@@ -41,7 +45,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
             }
 
-            void run(ConnectionLocator const &locator) {
+            void run(ConnectionLocator const &locator, thread_cpu_lease_detail::BindHandshake *handshake) {
+                //first action: pin this thread, reports the result to the caller
+                auto lease = thread_cpu_lease_detail::bindWorkerThread(bindRequest_ ? &*bindRequest_ : nullptr, handshake);
+                if (!lease) {
+                    return;
+                }
                 auto sock = ::nng::sub::open();
                 nng_setopt(sock.get(), NNG_OPT_SUB_SUBSCRIBE, "", 0);
                 sock.set_opt_ms(NNG_OPT_RECVTIMEO, 1000);
@@ -122,12 +131,25 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 sock.~socket();
             }
         public:
-            OneNNGSubscription(ConnectionLocator const &locator) 
+            OneNNGSubscription(ConnectionLocator const &locator
+                , std::optional<thread_cpu_lease_detail::BindRequest> bindRequest)
                 : locator_(locator)
                 , noFilterClients_(), stringMatchClients_(), regexMatchClients_()
-                , mutex_(), th_(), running_(true)
+                , mutex_(), th_(), running_(true), bindRequest_(std::move(bindRequest))
             {
-                th_ = std::thread(&OneNNGSubscription::run, this, locator);
+                std::optional<thread_cpu_lease_detail::BindHandshake> handshake;
+                if (bindRequest_ && bindRequest_->needed) {
+                    handshake.emplace();
+                }
+                th_ = std::thread(&OneNNGSubscription::run, this, locator, handshake ? &*handshake : nullptr);
+                if (handshake) {
+                    try {
+                        handshake->future.get();
+                    } catch (...) {
+                        th_.join();
+                        throw;
+                    }
+                }
             }
             ~OneNNGSubscription() {
                 running_ = false;
@@ -202,6 +224,21 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::thread::native_handle_type getThreadHandle() {
                 return th_.native_handle();
             }
+            std::optional<thread_cpu_lease_detail::BindRequest> const &bindRequest() const {
+                return bindRequest_;
+            }
+            //The receive thread is shared per host/port/identifier: the first
+            //locator decides the binding, later different values only warn once.
+            void warnCpuMismatch(ConnectionLocator const &locator, thread_cpu_lease_detail::BindRequest const &request) {
+                if (warnedCpuMismatch_) {
+                    return;
+                }
+                warnedCpuMismatch_ = true;
+                std::cerr << "nng: receive thread for " << locator_.toPrintFormat()
+                    << " already uses cpu='" << (bindRequest_ ? bindRequest_->spec : "")
+                    << "', ignoring cpu='" << request.spec << "' requested by "
+                    << locator.toPrintFormat() << std::endl;
+            }
         };
         std::unordered_map<ConnectionLocator, std::unique_ptr<OneNNGSubscription>> subscriptions_;
         
@@ -244,16 +281,31 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
 
         std::mutex mutex_;
 
+        //the binding provider, settable once before the graph starts
+        std::mutex providerMutex_;
+        ThreadCpuLeaseProvider provider_;
+        bool providerSet_ = false;
+
+        ThreadCpuLeaseProvider getThreadCpuLeaseProvider() {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            return provider_;
+        }
+
         uint32_t counter_;
         std::unordered_map<uint32_t, OneNNGSubscription *> idToSubscriptionMap_;
         std::mutex idMutex_;
 
         OneNNGSubscription *getOrStartSubscription(ConnectionLocator const &d) {
+            auto bindRequest = thread_cpu_lease_detail::makeThreadCpuBindRequest(
+                d, "cpu", "nng receiver "+d.toPrintFormat(), getThreadCpuLeaseProvider()
+                , "nng", "nng_setThreadCpuLease");
             ConnectionLocator hostAndPortAndIdentifier {d.host(), d.port(), "", "", d.identifier()};
             std::lock_guard<std::mutex> _(mutex_);
             auto iter = subscriptions_.find(hostAndPortAndIdentifier);
             if (iter == subscriptions_.end()) {
-                iter = subscriptions_.insert({hostAndPortAndIdentifier, std::make_unique<OneNNGSubscription>(hostAndPortAndIdentifier)}).first;
+                iter = subscriptions_.insert({hostAndPortAndIdentifier, std::make_unique<OneNNGSubscription>(hostAndPortAndIdentifier, std::move(bindRequest))}).first;
+            } else if (!thread_cpu_lease_detail::sameCpuBinding(*iter->second->bindRequest(), bindRequest)) {
+                iter->second->warnCpuMismatch(d, bindRequest);
             }
             return iter->second.get();
         }
@@ -282,6 +334,22 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::lock_guard<std::mutex> _(mutex_);
             subscriptions_.clear();
             senders_.clear();
+        }
+        void setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                throw std::logic_error("nng: thread CPU lease provider is already set");
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
+        }
+        void setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                return;
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
         }
         uint32_t addSubscriptionClient(ConnectionLocator const &locator,
             std::variant<NNGComponent::NoTopicSelection, std::string, std::regex> const &topic,
@@ -352,5 +420,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     }
     std::unordered_map<ConnectionLocator, std::thread::native_handle_type> NNGComponent::nng_threadHandles() {
         return impl_->threadHandles();
+    }
+    void NNGComponent::nng_setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLease(std::move(provider));
+    }
+    void NNGComponent::nng_setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLeaseIfUnset(std::move(provider));
     }
 } } } } }

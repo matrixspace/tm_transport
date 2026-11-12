@@ -20,6 +20,8 @@
 
 #include <tm_kit/transport/shared_memory_broadcast/SharedMemoryBroadcastComponent.hpp>
 
+#include "../ThreadCpuLeaseSupport.hpp"
+
 namespace dev { namespace cd606 { namespace tm { namespace transport { namespace shared_memory_broadcast {
         
     struct SharedMemoryItem {
@@ -86,6 +88,10 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
 
             std::thread th_;
             std::atomic<bool> running_;
+            //cached before detach: native_handle() is cleared by std::thread::detach()
+            std::optional<std::thread::native_handle_type> thHandle_;
+            thread_cpu_lease_detail::BindRequest bindRequest_;
+            bool warnedCpuMismatch_ = false;
 
             inline void callClient(ClientCB const &c, basic::ByteDataWithTopic &&d) {
                 if (c.hook) {
@@ -132,7 +138,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     }
                 }
             }
-            void run() {
+            void run(thread_cpu_lease_detail::BindHandshake *handshake) {
+                //first action: pin this thread, reports the result to the caller
+                auto lease = thread_cpu_lease_detail::bindWorkerThread(&bindRequest_, handshake);
+                if (!lease) {
+                    return;
+                }
                 std::size_t dataSize = 0;
                 char *data = nullptr;
                 boost::interprocess::interprocess_mutex m;
@@ -214,7 +225,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
             }
         public:
-            OneSharedMemoryBroadcastSubscription(ConnectionLocator const &locator, std::size_t memSize, bool busyLoop) 
+            OneSharedMemoryBroadcastSubscription(ConnectionLocator const &locator, std::size_t memSize, bool busyLoop
+                , thread_cpu_lease_detail::BindRequest bindRequest)
                 : 
                     mem_(
                         boost::interprocess::open_or_create
@@ -243,10 +255,29 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     , mutex_()
                     , th_()
                     , running_(true)
+                    , bindRequest_(std::move(bindRequest))
             {
                 for (auto ii=0; ii<2; ++ii) {
                     headOffsets_[ii] = reinterpret_cast<char *>(&heads_[ii])-reinterpret_cast<char *>(clientListHead_);
                 }
+
+                //Bind before registering this client in the shared list, so a
+                //failed binding leaves no half-set-up client entry behind.
+                std::optional<thread_cpu_lease_detail::BindHandshake> handshake;
+                if (bindRequest_.needed) {
+                    handshake.emplace();
+                }
+                th_ = std::thread(&OneSharedMemoryBroadcastSubscription::run, this, handshake ? &*handshake : nullptr);
+                if (handshake) {
+                    try {
+                        handshake->future.get();
+                    } catch (...) {
+                        //the receive thread has already returned
+                        th_.join();
+                        throw;
+                    }
+                }
+
                 recordInSharedMem_->tailOffsetFromClientList = headOffsets_[0];
 
                 recordInSharedMem_->busyLoop = busyLoop_;
@@ -274,15 +305,23 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     )) {
                         break;
                     }
-                }    
-                th_ = std::thread(&OneSharedMemoryBroadcastSubscription::run, this);
-                th_.detach();  
+                }
+                //detach() clears std::thread's native handle, so cache it first
+                //detach() clears std::thread's native handle, so cache it first
+                thHandle_ = th_.native_handle();
             }
             ~OneSharedMemoryBroadcastSubscription() {
                 running_ = false;
-                try {
-                    th_.join();
-                } catch (std::system_error const &) {
+                //The receive thread owns the shared-memory structures below, so
+                //it must have stopped. It is joined rather than detached; only a
+                //subscription destroyed from inside its own callback cannot wait
+                //for itself.
+                if (th_.joinable()) {
+                    if (th_.get_id() == std::this_thread::get_id()) {
+                        th_.detach();
+                    } else {
+                        th_.join();
+                    }
                 }
                 // Hold the list mutex before touching latestHeartbeat and
                 // destroy_ptr: publish() traverses the list under this same
@@ -383,7 +422,22 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
             }
             std::thread::native_handle_type getThreadHandle() {
-                return th_.native_handle();
+                return thHandle_.value_or(std::thread::native_handle_type{});
+            }
+            thread_cpu_lease_detail::BindRequest const &bindRequest() const {
+                return bindRequest_;
+            }
+            //There is one receive thread per identifier: the first locator
+            //decides the binding, later different values only warn once.
+            void warnCpuMismatch(ConnectionLocator const &locator, thread_cpu_lease_detail::BindRequest const &request) {
+                if (warnedCpuMismatch_) {
+                    return;
+                }
+                warnedCpuMismatch_ = true;
+                std::cerr << "shared_memory_broadcast: receive thread for " << locator_.identifier()
+                    << " already uses cpu='" << bindRequest_.spec
+                    << "', ignoring cpu='" << request.spec << "' requested by "
+                    << locator.toPrintFormat() << std::endl;
             }
         };
         std::unordered_map<ConnectionLocator, std::unique_ptr<OneSharedMemoryBroadcastSubscription>> subscriptions_;
@@ -581,25 +635,50 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         std::unordered_map<ConnectionLocator, std::unique_ptr<OneSharedMemoryBroadcastSender>> senders_;
         std::mutex mutex_;
 
+        //the binding provider, settable once before the graph starts
+        std::mutex providerMutex_;
+        ThreadCpuLeaseProvider provider_;
+        bool providerSet_ = false;
+
+        ThreadCpuLeaseProvider getThreadCpuLeaseProvider() {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            return provider_;
+        }
+
         uint32_t counter_;
         std::unordered_map<uint32_t, OneSharedMemoryBroadcastSubscription *> idToSubscriptionMap_;
         std::mutex idMutex_;
 
         OneSharedMemoryBroadcastSubscription *getOrStartSubscription(ConnectionLocator const &d) {
+            auto bindRequest = thread_cpu_lease_detail::makeThreadCpuBindRequest(
+                d, "cpu", "shared_memory_broadcast receiver "+d.identifier(), getThreadCpuLeaseProvider()
+                , "shared_memory_broadcast", "shared_memory_broadcast_setThreadCpuLease");
             ConnectionLocator idOnly {"", 0, "", "", d.identifier()};
             std::lock_guard<std::mutex> _(mutex_);
             auto iter = subscriptions_.find(idOnly);
             if (iter == subscriptions_.end()) {
                 auto memSize = std::stoul(d.query("size", std::to_string(4*1024*1024*1024UL)));
                 bool busyLoop = (d.query("busyLoop", "false") == "true");
-                iter = subscriptions_.insert({idOnly, std::make_unique<OneSharedMemoryBroadcastSubscription>(idOnly, memSize, busyLoop)}).first;
+                iter = subscriptions_.insert({idOnly, std::make_unique<OneSharedMemoryBroadcastSubscription>(idOnly, memSize, busyLoop, std::move(bindRequest))}).first;
+            } else if (!thread_cpu_lease_detail::sameCpuBinding(iter->second->bindRequest(), bindRequest)) {
+                iter->second->warnCpuMismatch(d, bindRequest);
             }
             return iter->second.get();
         }
         void potentiallyStopSubscription(OneSharedMemoryBroadcastSubscription *p) {
-            std::lock_guard<std::mutex> _(mutex_);
-            if (p->checkWhetherNeedsToStop()) {
-                subscriptions_.erase(p->locator());
+            //The receive thread is stopped and joined outside mutex_, since a
+            //client callback running on that thread may call back into the
+            //component and take mutex_ itself.
+            std::unique_ptr<OneSharedMemoryBroadcastSubscription> toDestroy;
+            {
+                std::lock_guard<std::mutex> _(mutex_);
+                if (p->checkWhetherNeedsToStop()) {
+                    auto iter = subscriptions_.find(p->locator());
+                    if (iter != subscriptions_.end() && iter->second.get() == p) {
+                        toDestroy = std::move(iter->second);
+                        subscriptions_.erase(iter);
+                    }
+                }
             }
         }
         OneSharedMemoryBroadcastSender *getOrStartSender(ConnectionLocator const &d) {
@@ -619,9 +698,32 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         {            
         }
         ~SharedMemoryBroadcastComponentImpl() {
-            std::lock_guard<std::mutex> _(mutex_);
-            subscriptions_.clear();
-            senders_.clear();
+            decltype(subscriptions_) subscriptions;
+            decltype(senders_) senders;
+            {
+                std::lock_guard<std::mutex> _(mutex_);
+                subscriptions.swap(subscriptions_);
+                senders.swap(senders_);
+            }
+            //receive threads are joined outside mutex_
+            subscriptions.clear();
+            senders.clear();
+        }
+        void setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                throw std::logic_error("shared_memory_broadcast: thread CPU lease provider is already set");
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
+        }
+        void setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                return;
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
         }
         uint32_t addSubscriptionClient(ConnectionLocator const &locator,
             std::variant<SharedMemoryBroadcastComponent::NoTopicSelection, std::string, std::regex> const &topic,
@@ -698,5 +800,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     }
     std::unordered_map<ConnectionLocator, std::thread::native_handle_type> SharedMemoryBroadcastComponent::shared_memory_broadcast_threadHandles() {
         return impl_->threadHandles();
+    }
+    void SharedMemoryBroadcastComponent::shared_memory_broadcast_setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLease(std::move(provider));
+    }
+    void SharedMemoryBroadcastComponent::shared_memory_broadcast_setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLeaseIfUnset(std::move(provider));
     }
 } } } } }

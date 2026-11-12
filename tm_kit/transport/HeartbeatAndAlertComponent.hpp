@@ -33,6 +33,7 @@
 #include <tm_kit/transport/websocket/WebSocketComponent.hpp>
 #include <tm_kit/transport/AbstractHookFactoryComponent.hpp>
 #include <tm_kit/transport/MultiTransportBroadcastListener.hpp>
+#include <tm_kit/transport/ThreadCpuLeaseProviderInstall.hpp>
 
 namespace dev { namespace cd606 { namespace tm { namespace transport {
 
@@ -306,6 +307,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         , ConnectionLocator const &locator 
         , std::optional<UserToWireHook> hook = std::nullopt
     ) {
+        //This path creates the heartbeat publisher directly through the transport
+        //component API, without any ImporterExporter or listener node start(),
+        //so install the default thread CPU binding provider here as well (no-op
+        //if one is already set).
+        installThreadCpuLeaseProviders<Env>(env);
         switch (connType) {
         case MultiTransportBroadcastListenerConnectionType::Multicast:
             if constexpr (std::is_convertible_v<Env *, multicast::MulticastComponent *>) {

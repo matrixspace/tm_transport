@@ -8,7 +8,7 @@
 
 - [ZeroMQ 通过 ConnectionLocator 配置 HWM](20261105-zeromq-hwm-locator/README.md) — 2026-11-05，ZeroMQ 传输支持通过 locator 属性 `hwm`/`sndhwm`/`rcvhwm` 配置高水位，非法值抛 `std::invalid_argument`。
 
-- [IPC Transport 内部线程绑核](20261112-ipc-thread-affinity/README.md) — 2026-11-12 起，进行中：各 IPC transport 组件新增 `xxx_setThreadCpuLease` 注入接口，locator 属性 `cpu`/`senderCpu`/`driverCpu` 经 provider 复用 infra 的 `ThreadCpuLease` 绑核。
+- [IPC Transport 内部线程绑核](20261112-ipc-thread-affinity/README.md) — 2026-11-12 完成：各 IPC transport 组件新增 `xxx_setThreadCpuLease` 注入接口，locator 属性 `cpu`/`senderCpu`/`driverCpu` 经 provider 复用 infra 的 `ThreadCpuLease` 绑核；新增 `test/ipc_thread_affinity_test`（287 项检查全通过），并顺带修复 singlecast/smb detach 后句柄失效与 smb 取消订阅的 use-after-free。
 
 ## 任务关系
 

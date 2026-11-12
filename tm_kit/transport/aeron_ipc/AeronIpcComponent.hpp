@@ -14,6 +14,7 @@
 #include <tm_kit/basic/ByteData.hpp>
 #include <tm_kit/transport/ConnectionLocator.hpp>
 #include <tm_kit/transport/ByteDataHook.hpp>
+#include <tm_kit/transport/ThreadCpuLeaseProvider.hpp>
 
 namespace dev { namespace cd606 { namespace tm { namespace transport { namespace aeron_ipc {
 
@@ -48,9 +49,21 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     //  driverIdle    spin (default) | noop | yield | backoff | sleeping (embedded driver only)
     //  driverTimerIntervalUs  embedded driver timer interval (default 1000, Aeron's own default is 1s);
     //                untethered readers are only checked on this timer
-    //  driverCpu     cpu list for all embedded driver threads, e.g. 3 or 2:3 or 2-3
-    //                (env TM_AERON_IPC_DRIVER_CPU is used when absent; otherwise the standard
-    //                AERON_*_CPU_AFFINITY variables apply)
+    //  driverCpu     CPU binding for the embedded driver's agent threads, in
+    //                CpuBindingSpec syntax (e.g. 3, 2:3, 2-3, auto, numa:0).
+    //                (env TM_AERON_IPC_DRIVER_CPU is used when absent; otherwise the
+    //                standard AERON_*_CPU_AFFINITY variables apply.) Needs a provider
+    //                installed through aeron_ipc_setThreadCpuLease (or
+    //                installThreadCpuLeaseProviders<Env>); a failed binding is
+    //                counted in AeronIpcPublisherStats::driverBindFailed and the
+    //                driver keeps running. In dedicated threading mode each of the
+    //                3 agent threads takes its own lease, so "auto" occupies 3
+    //                CPUs; an explicit list is the same one for every agent, and a
+    //                strict allocator (hwloc) refuses the second reservation
+    //                (driverBindFailed counts it), so prefer "auto" there.
+    //  cpu           CPU binding for this locator's subscription poll thread, same
+    //                syntax. There is one poll thread per complete locator, so this
+    //                is never shared with another locator.
     //  AERON_THREADING_MODE / AERON_SHARED_IDLE_STRATEGY are honoured when the props are absent.
     //A reader keeps retrying until a driver is live, and rebuilds its client when the driver
     //goes away (publisher restart with an embedded driver).
@@ -64,6 +77,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         uint64_t adminAction = 0;     //term rotation, retried immediately
         uint64_t oversized = 0;       //larger than slotSize, dropped
         uint64_t failed = 0;          //publication closed or other error
+        uint64_t driverBindFailed = 0; //an embedded driver agent thread could not bind
     };
     struct AeronIpcSubscriberStats {
         uint64_t delivered = 0;       //fragments decoded and handed to clients
@@ -91,6 +105,16 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         //Counters are written with relaxed atomics by the publishing / polling thread.
         std::optional<AeronIpcPublisherStats> aeron_ipc_publisherStats(ConnectionLocator const &locator);
         std::optional<AeronIpcSubscriberStats> aeron_ipc_subscriberStats(ConnectionLocator const &locator);
+        //Installs the CPU binding provider used by the "cpu"/"driverCpu" locator
+        //properties. It is invoked on the subscription poll thread and on each
+        //embedded driver agent thread. It can be set only once; a second call
+        //throws std::logic_error.
+        void aeron_ipc_setThreadCpuLease(ThreadCpuLeaseProvider provider);
+    private:
+        template <class Env>
+        friend void ::dev::cd606::tm::transport::installThreadCpuLeaseProviders(Env *);
+        //Framework entry point: installs the default provider unless one is set.
+        void aeron_ipc_setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider);
     };
 
 } } } } }

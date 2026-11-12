@@ -1,5 +1,7 @@
 #include <tm_kit/transport/aeron_ipc/AeronIpcComponent.hpp>
 
+#include "../ThreadCpuLeaseSupport.hpp"
+
 #include <atomic>
 #include <mutex>
 #include <vector>
@@ -177,49 +179,6 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             return r;
         }
 
-        std::vector<int> parseCpuList(std::string const &s) {
-            //"3", "2,3", "2-3", "2:3"
-            std::vector<int> ret;
-            std::size_t pos = 0;
-            while (pos < s.size()) {
-                auto end = s.find_first_of(",:", pos);
-                if (end == std::string::npos) {
-                    end = s.size();
-                }
-                auto item = s.substr(pos, end-pos);
-                if (!item.empty()) {
-                    auto dash = item.find('-');
-                    if (dash == std::string::npos) {
-                        ret.push_back(std::stoi(item));
-                    } else {
-                        int lo = std::stoi(item.substr(0, dash));
-                        int hi = std::stoi(item.substr(dash+1));
-                        for (int c=lo; c<=hi; ++c) {
-                            ret.push_back(c);
-                        }
-                    }
-                }
-                pos = end+1;
-            }
-            return ret;
-        }
-        void bindCurrentThread(std::vector<int> const &cpus, char const *who) {
-            if (cpus.empty()) {
-                return;
-            }
-            cpu_set_t set;
-            CPU_ZERO(&set);
-            for (auto c : cpus) {
-                CPU_SET(c, &set);
-            }
-            int rc = pthread_setaffinity_np(pthread_self(), sizeof(set), &set);
-            if (rc != 0) {
-                std::cerr << "aeron_ipc: cannot bind " << (who?who:"thread") << " (error " << rc << ")\n";
-            }
-        }
-        void onDriverAgentStart(void *state, const char *roleName) {
-            bindCurrentThread(*static_cast<std::vector<int> *>(state), roleName);
-        }
         bool envSet(char const *name) {
             char const *e = std::getenv(name);
             return (e != nullptr && *e != '\0');
@@ -230,7 +189,13 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     private:
         ConnectionLocator locator_;
         std::string dir_;
-        std::vector<int> driverCpus_;
+        //driver thread binding: provider from the component plus the spec chosen
+        //in startEmbeddedDriver. Leases stay here for the driver's lifetime.
+        ThreadCpuLeaseProvider provider_;
+        std::string driverCpuSpec_;
+        bool driverCpuConfigured_ = false;
+        std::mutex driverLeasesMutex_;
+        std::vector<infra::ThreadCpuLease> driverLeases_;
         aeron_driver_context_t *driverContext_ = nullptr;
         aeron_driver_t *driver_ = nullptr;
         aeron_context_t *context_ = nullptr;
@@ -246,11 +211,39 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         std::atomic<uint64_t> adminAction_ {0};
         std::atomic<uint64_t> oversized_ {0};
         std::atomic<uint64_t> failed_ {0};
+        std::atomic<uint64_t> driverBindFailed_ {0};
 
         static void onError(void *clientd, int errcode, const char *message) {
             auto *self = static_cast<AeronIpcPublisher *>(clientd);
             std::cerr << "aeron_ipc[" << self->locator_.identifier() << "] publisher: aeron error "
                 << errcode << ": " << message << '\n';
+        }
+
+        //Aeron starts the embedded driver's agent threads through this C
+        //callback, which cannot throw: a failed binding is reported and counted,
+        //and the driver keeps running.
+        static void onDriverAgentStart(void *state, const char *roleName) {
+            static_cast<AeronIpcPublisher *>(state)->bindDriverAgent(roleName);
+        }
+        void bindDriverAgent(char const *roleName) {
+            if (!driverCpuConfigured_) {
+                return;
+            }
+            std::string who = std::string("aeron_ipc driver ")
+                +((roleName != nullptr && *roleName != '\0') ? roleName : "agent");
+            try {
+                auto lease = provider_(who, driverCpuSpec_);
+                std::lock_guard<std::mutex> _(driverLeasesMutex_);
+                driverLeases_.push_back(std::move(lease));
+            } catch (std::exception const &e) {
+                driverBindFailed_.fetch_add(1, std::memory_order_relaxed);
+                std::cerr << "aeron_ipc[" << locator_.identifier() << "] driver: cannot bind "
+                    << who << ": " << e.what() << '\n';
+            } catch (...) {
+                driverBindFailed_.fetch_add(1, std::memory_order_relaxed);
+                std::cerr << "aeron_ipc[" << locator_.identifier() << "] driver: cannot bind "
+                    << who << '\n';
+            }
         }
 
         void startEmbeddedDriver(uint64_t driverTimeoutMs, bool ownerIsDead) {
@@ -310,9 +303,27 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
             }
             if (!cpuStr.empty()) {
-                driverCpus_ = parseCpuList(cpuStr);
+                //validate in the calling thread before any agent thread exists
+                try {
+                    infra::CpuBindingSpec::parse(cpuStr);
+                } catch (std::invalid_argument const &e) {
+                    throw std::invalid_argument(
+                        "aeron_ipc: invalid 'driverCpu' value '"+cpuStr+"' in locator '"
+                        +locator_.toPrintFormat()+"': "+e.what()
+                    );
+                }
+                if (!provider_) {
+                    throw std::invalid_argument(
+                        "aeron_ipc: locator '"+locator_.toPrintFormat()+"' sets 'driverCpu="+cpuStr
+                        +"' but no thread CPU lease provider is installed for this component; call "
+                        "aeron_ipc_setThreadCpuLease() or installThreadCpuLeaseProviders<Env>(env) "
+                        "before starting the graph"
+                    );
+                }
+                driverCpuSpec_ = cpuStr;
+                driverCpuConfigured_ = true;
                 //replaces Aeron's own AERON_*_CPU_AFFINITY handling
-                aeron_driver_context_set_agent_on_start_function(driverContext_, &onDriverAgentStart, &driverCpus_);
+                aeron_driver_context_set_agent_on_start_function(driverContext_, &onDriverAgentStart, this);
             }
 
             if (aeron_driver_init(&driver_, driverContext_) < 0) {
@@ -326,6 +337,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             if (driver_ != nullptr) {
                 aeron_driver_close(driver_);
                 driver_ = nullptr;
+            }
+            //the agent threads are gone now; return their CPUs. Leases may be
+            //released from any thread.
+            {
+                std::lock_guard<std::mutex> _(driverLeasesMutex_);
+                driverLeases_.clear();
             }
             if (driverContext_ != nullptr) {
                 aeron_driver_context_close(driverContext_);
@@ -431,7 +448,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             }
         }
     public:
-        AeronIpcPublisher(ConnectionLocator const &locator) : locator_(locator) {
+        AeronIpcPublisher(ConnectionLocator const &locator, ThreadCpuLeaseProvider provider)
+            : locator_(locator), dir_(), provider_(std::move(provider)) {
             try {
                 setup();
             } catch (...) {
@@ -493,6 +511,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             s.adminAction = adminAction_.load(std::memory_order_relaxed);
             s.oversized = oversized_.load(std::memory_order_relaxed);
             s.failed = failed_.load(std::memory_order_relaxed);
+            s.driverBindFailed = driverBindFailed_.load(std::memory_order_relaxed);
             return s;
         }
     };
@@ -557,6 +576,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         std::vector<uint8_t> fragScratch_;
 
         std::thread th_;
+        thread_cpu_lease_detail::BindRequest bindRequest_;
 
         static void onError(void *clientd, int errcode, const char *message) {
             auto *self = static_cast<AeronIpcSubscriber *>(clientd);
@@ -830,7 +850,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
             }
         }
-        void run() {
+        void run(thread_cpu_lease_detail::BindHandshake *handshake) {
+            //first action: pin this thread, reports the result to the caller
+            auto lease = thread_cpu_lease_detail::bindWorkerThread(&bindRequest_, handshake);
+            if (!lease) {
+                return;
+            }
             while (running_.load(std::memory_order_relaxed)) {
                 if (!connect()) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -841,7 +866,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             }
         }
     public:
-        AeronIpcSubscriber(ConnectionLocator const &locator)
+        AeronIpcSubscriber(ConnectionLocator const &locator, thread_cpu_lease_detail::BindRequest bindRequest)
             : locator_(locator)
             , dir_(aeronDirFor(locator))
             , streamId_(streamIdFor(locator))
@@ -862,7 +887,21 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             if (maxSleepUs_ == 0) {
                 maxSleepUs_ = 1;
             }
-            th_ = std::thread(&AeronIpcSubscriber::run, this);
+            bindRequest_ = std::move(bindRequest);
+            std::optional<thread_cpu_lease_detail::BindHandshake> handshake;
+            if (bindRequest_.needed) {
+                handshake.emplace();
+            }
+            th_ = std::thread(&AeronIpcSubscriber::run, this, handshake ? &*handshake : nullptr);
+            if (handshake) {
+                try {
+                    handshake->future.get();
+                } catch (...) {
+                    //the poll thread has already returned
+                    th_.join();
+                    throw;
+                }
+            }
         }
         ~AeronIpcSubscriber() {
             running_.store(false, std::memory_order_relaxed);
@@ -912,6 +951,16 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         std::unordered_map<ConnectionLocator, std::shared_ptr<AeronIpcPublisher>> publishers_;
         std::unordered_map<uint32_t, ConnectionLocator> idToLocator_;
         uint32_t counter_ = 0;
+
+        //the binding provider, settable once before the graph starts
+        std::mutex providerMutex_;
+        ThreadCpuLeaseProvider provider_;
+        bool providerSet_ = false;
+
+        ThreadCpuLeaseProvider getThreadCpuLeaseProvider() {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            return provider_;
+        }
     public:
         AeronIpcComponentImpl() = default;
         ~AeronIpcComponentImpl() {
@@ -919,14 +968,33 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             subscribers_.clear();
             publishers_.clear();
         }
+        void setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                throw std::logic_error("aeron_ipc: thread CPU lease provider is already set");
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
+        }
+        void setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                return;
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
+        }
         uint32_t addSubscriptionClient(ConnectionLocator const &locator,
                         std::variant<AeronIpcComponent::NoTopicSelection, std::string, std::regex> const &topic,
                         std::function<void(basic::ByteDataWithTopic &&)> client,
                         std::optional<WireToUserHook> wireToUserHook) {
+            auto bindRequest = thread_cpu_lease_detail::makeThreadCpuBindRequest(
+                locator, "cpu", "aeron_ipc subscriber "+locator.toPrintFormat(), getThreadCpuLeaseProvider()
+                , "aeron_ipc", "aeron_ipc_setThreadCpuLease");
             std::lock_guard<std::mutex> _(mutex_);
             auto iter = subscribers_.find(locator);
             if (iter == subscribers_.end()) {
-                iter = subscribers_.emplace(locator, std::make_unique<AeronIpcSubscriber>(locator)).first;
+                iter = subscribers_.emplace(locator, std::make_unique<AeronIpcSubscriber>(locator, std::move(bindRequest))).first;
             }
             uint32_t id = ++counter_;
             iter->second->addClient(id, topic, std::move(client), std::move(wireToUserHook));
@@ -951,7 +1019,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 std::lock_guard<std::mutex> _(mutex_);
                 auto iter = publishers_.find(locator);
                 if (iter == publishers_.end()) {
-                    iter = publishers_.emplace(locator, std::make_shared<AeronIpcPublisher>(locator)).first;
+                    iter = publishers_.emplace(locator, std::make_shared<AeronIpcPublisher>(locator, getThreadCpuLeaseProvider())).first;
                 }
                 publisher = iter->second;
             }
@@ -1009,6 +1077,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     }
     std::unordered_map<ConnectionLocator, std::thread::native_handle_type> AeronIpcComponent::aeron_ipc_threadHandles() {
         return impl_->threadHandles();
+    }
+    void AeronIpcComponent::aeron_ipc_setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLease(std::move(provider));
+    }
+    void AeronIpcComponent::aeron_ipc_setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLeaseIfUnset(std::move(provider));
     }
     std::optional<AeronIpcPublisherStats> AeronIpcComponent::aeron_ipc_publisherStats(ConnectionLocator const &locator) {
         return impl_->publisherStats(locator);

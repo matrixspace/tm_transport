@@ -28,6 +28,8 @@
 
 #include <tm_kit/transport/shm_cursor/ShmCursorComponent.hpp>
 
+#include "../ThreadCpuLeaseSupport.hpp"
+
 namespace dev { namespace cd606 { namespace tm { namespace transport { namespace shm_cursor {
 
     namespace {
@@ -468,6 +470,10 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         std::atomic<bool> running_;
         std::atomic<bool> exited_;
         std::thread th_;
+        //built in ShmCursorComponentImpl::addSubscriptionClient (which also
+        //validates it in the caller's thread); the reader thread binds itself
+        thread_cpu_lease_detail::BindRequest bindRequest_;
+        bool warnedCpuMismatch_ = false;
 
         void refreshClients() {
             std::lock_guard<std::mutex> _(clientsMutex_);
@@ -728,7 +734,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             next_ = j;
         }
 
-        void run() {
+        void run(thread_cpu_lease_detail::BindHandshake *handshake) {
+            //first action: pin this thread, reports the result to the caller
+            auto lease = thread_cpu_lease_detail::bindWorkerThread(&bindRequest_, handshake);
+            if (!lease) {
+                return;
+            }
             try {
                 while (running_.load(std::memory_order_acquire)) {
                     if (version_.load(std::memory_order_relaxed) != localVersion_) {
@@ -756,7 +767,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         }
 
     public:
-        ShmCursorSubscription(std::string const &id, ShmCursorOptions const &opt)
+        ShmCursorSubscription(std::string const &id, ShmCursorOptions const &opt
+            , thread_cpu_lease_detail::BindRequest bindRequest)
             : id_(id)
             , shmName_(shmNameFor(id))
             , shmPath_(shmPathFor(id))
@@ -791,9 +803,23 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             , exited_(false)
             , th_() {
             validateIdentifier(id);
-            th_ = std::thread([this]() {
-                run();
+            bindRequest_ = std::move(bindRequest);
+            std::optional<thread_cpu_lease_detail::BindHandshake> handshake;
+            if (bindRequest_.needed) {
+                handshake.emplace();
+            }
+            th_ = std::thread([this, hs = handshake ? &*handshake : nullptr]() {
+                run(hs);
             });
+            if (handshake) {
+                try {
+                    handshake->future.get();
+                } catch (...) {
+                    //the reader thread has already returned
+                    th_.join();
+                    throw;
+                }
+            }
         }
         ~ShmCursorSubscription() {
             running_.store(false, std::memory_order_release);
@@ -869,11 +895,36 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         std::thread::native_handle_type getThreadHandle() {
             return th_.native_handle();
         }
+        thread_cpu_lease_detail::BindRequest const &bindRequest() const {
+            return bindRequest_;
+        }
+        //There is one reader thread per segment: the first locator decides the
+        //binding, later different values only warn once.
+        void warnCpuMismatch(ConnectionLocator const &locator, thread_cpu_lease_detail::BindRequest const &request) {
+            if (warnedCpuMismatch_) {
+                return;
+            }
+            warnedCpuMismatch_ = true;
+            std::cerr << "shm_cursor: reader thread for " << locator.identifier()
+                << " already uses cpu='" << bindRequest_.spec
+                << "', ignoring cpu='" << request.spec << "' requested by "
+                << locator.toPrintFormat() << std::endl;
+        }
     };
 
     class ShmCursorComponentImpl {
     private:
         std::mutex mutex_;
+
+        //the binding provider, settable once before the graph starts
+        std::mutex providerMutex_;
+        ThreadCpuLeaseProvider provider_;
+        bool providerSet_ = false;
+
+        ThreadCpuLeaseProvider getThreadCpuLeaseProvider() {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            return provider_;
+        }
         std::unordered_map<std::string, std::shared_ptr<ShmCursorSubscription>> subscriptions_;
         // stopped subscriptions whose reader thread may still be winding down,
         // or which another removeSubscriptionClient call still references
@@ -909,16 +960,38 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             stopped_.clear();
             senders_.clear();
         }
+        void setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                throw std::logic_error("shm_cursor: thread CPU lease provider is already set");
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
+        }
+        void setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                return;
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
+        }
         uint32_t addSubscriptionClient(ConnectionLocator const &locator,
             std::variant<ShmCursorComponent::NoTopicSelection, std::string, std::regex> const &topic,
             std::function<void(basic::ByteDataWithTopic &&)> client,
             std::optional<WireToUserHook> wireToUserHook) {
+            auto bindRequest = thread_cpu_lease_detail::makeThreadCpuBindRequest(
+                locator, "cpu", "shm_cursor reader "+locator.identifier(), getThreadCpuLeaseProvider()
+                , "shm_cursor", "shm_cursor_setThreadCpuLease");
             std::lock_guard<std::mutex> _(mutex_);
             reapStopped();
             auto iter = subscriptions_.find(locator.identifier());
             if (iter == subscriptions_.end()) {
                 auto opt = ShmCursorOptions::fromLocator(locator);
-                iter = subscriptions_.insert({locator.identifier(), std::make_shared<ShmCursorSubscription>(locator.identifier(), opt)}).first;
+                iter = subscriptions_.insert({locator.identifier(), std::make_shared<ShmCursorSubscription>(
+                    locator.identifier(), opt, std::move(bindRequest))}).first;
+            } else if (!thread_cpu_lease_detail::sameCpuBinding(iter->second->bindRequest(), bindRequest)) {
+                iter->second->warnCpuMismatch(locator, bindRequest);
             }
             auto p = iter->second;
             std::lock_guard<std::mutex> _2(idMutex_);
@@ -1037,6 +1110,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     }
     uint64_t ShmCursorComponent::shm_cursor_publisherRejectedCount(ConnectionLocator const &locator) {
         return impl_->publisherRejectedCount(locator);
+    }
+    void ShmCursorComponent::shm_cursor_setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLease(std::move(provider));
+    }
+    void ShmCursorComponent::shm_cursor_setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLeaseIfUnset(std::move(provider));
     }
 
 }}}}}
