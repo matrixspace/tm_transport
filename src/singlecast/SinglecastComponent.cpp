@@ -29,10 +29,19 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
 
     class SinglecastComponentImpl {
     private:
+#if BOOST_VERSION >= 108700
+        using IoService = boost::asio::io_context;
+#else
+        using IoService = boost::asio::io_service;
+#endif
         class OneSinglecastSubscription {
         private:
             SinglecastComponentTopicEncodingChoice encodingChoice_;
             ConnectionLocator locator_;
+            //Shared with the receive thread. Declared before sock_ so that the
+            //socket is closed and destroyed while its io_context is still alive,
+            //whichever of this object and the thread finishes last.
+            std::shared_ptr<IoService> service_;
             boost::asio::ip::udp::socket sock_;
             boost::asio::ip::udp::endpoint senderPoint_;
             std::array<char, 16*1024*1024> buffer_;
@@ -154,19 +163,14 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
             }
         public:
-#if BOOST_VERSION >= 108700        
-            OneSinglecastSubscription(SinglecastComponentTopicEncodingChoice encodingChoice, boost::asio::io_context *service, ConnectionLocator const &locator
+            OneSinglecastSubscription(SinglecastComponentTopicEncodingChoice encodingChoice, std::shared_ptr<IoService> service, ConnectionLocator const &locator
                 , thread_cpu_lease_detail::BindRequest bindRequest)
-#else
-            OneSinglecastSubscription(SinglecastComponentTopicEncodingChoice encodingChoice, boost::asio::io_service *service, ConnectionLocator const &locator
-                , thread_cpu_lease_detail::BindRequest bindRequest)
-#endif
-                : encodingChoice_(encodingChoice), locator_(locator), sock_(*service), senderPoint_(), buffer_()
+                : encodingChoice_(encodingChoice), locator_(locator), service_(std::move(service)), sock_(*service_), senderPoint_(), buffer_()
                 , noFilterClients_(), stringMatchClients_(), regexMatchClients_()
                 , thHandle_()
                 , mutex_(), running_(true), bindRequest_(std::move(bindRequest))
             {
-                boost::asio::ip::udp::resolver resolver(*service);
+                boost::asio::ip::udp::resolver resolver(*service_);
 
                 {
 #if BOOST_VERSION >= 108700                    
@@ -381,12 +385,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 if (d.query("ignoreTopic", "false") == "true") {
                     choice = SinglecastComponentTopicEncodingChoice::Binary;
                 }
-#if BOOST_VERSION >= 108700
-                std::unique_ptr<boost::asio::io_context> svc = std::make_unique<boost::asio::io_context>();
-#else
-                std::unique_ptr<boost::asio::io_service> svc = std::make_unique<boost::asio::io_service>();
-#endif
-                iter = subscriptions_.insert({hostAndPort, std::make_unique<OneSinglecastSubscription>(choice, svc.get(), hostAndPort, std::move(bindRequest))}).first;
+                //owned jointly by the subscription (its socket) and the receive
+                //thread: a thread that returns early (failed binding) must not
+                //take the io_context down before the socket is destroyed
+                auto svc = std::make_shared<IoService>();
+                iter = subscriptions_.insert({hostAndPort, std::make_unique<OneSinglecastSubscription>(choice, svc, hostAndPort, std::move(bindRequest))}).first;
                 OneSinglecastSubscription *p = iter->second.get();
                 std::optional<thread_cpu_lease_detail::BindHandshake> handshake;
                 if (p->bindRequest().needed) {

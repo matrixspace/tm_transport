@@ -58,10 +58,10 @@ tm_infra 已有一套完整的绑核设施（`CpuBindingSpec`、`IThreadCpuAlloc
 |---|---|
 | `shm_seqlock` | 订阅构造接收 `BindRequest`（在 `addSubscriptionClient` 调用线程里构建）；懒启动读线程时握手；绑定失败则 `addSubscriptionClient` 删除刚插入的订阅再抛出。共享读线程按 identifier 复用，不同 `cpu` 只警告一次。 |
 | `shm_cursor` | 订阅构造接收 `BindRequest`，线程 lambda 第一行绑核 + 握手；绑核失败 join 线程后抛出，订阅不入缓存。 |
-| `shared_memory_broadcast` | 构造接收 `BindRequest`；**先绑核（握手）再向共享内存登记 client 项**，失败时不留半登记的 client；之后缓存 native handle 再 detach。 |
+| `shared_memory_broadcast` | 构造接收 `BindRequest`；段内分配（`heads_`、client record、client 项）全部在启动线程之前完成，**绑核（握手）成功后才把 client 项链入共享列表**；任何构造失败都由 `destroyUnlinkedObjects` 回收这些段内对象（评审 P1/P2 修复）。接收线程不再 detach，析构时 join。 |
 | `zeromq` / `nng` | `getOrStartSubscription` 在裁剪 locator 前读 `cpu`，构造接收 `BindRequest`；共享接收线程不同 `cpu` 警告一次。 |
 | `multicast` | 接收线程构造接收 `BindRequest`（先 join-on-failure 再抛出）；共享发送线程在首次 `getOrStartSender` 时绑 `senderCpu` 并握手，后续不同值警告一次。 |
-| `singlecast` | 接收线程改为在 lambda 内绑核（握手在 detach 之前）；共享发送线程同 multicast。 |
+| `singlecast` | 接收线程改为在 lambda 内绑核（握手在 detach 之前）；接收 `io_context` 由订阅和接收线程通过 `shared_ptr` 共同持有，成员顺序保证 socket 先于 io_context 销毁（评审 P1 修复）；共享发送线程同 multicast。 |
 | `aeron_ipc` | 订阅 poll 线程接收 `BindRequest`；删除私有 `parseCpuList`/`bindCurrentThread`，`driverCpu` 改走 provider；`AeronIpcPublisher` 在 `onDriverAgentStart` 里按 roleName 逐个 agent 取租约（存于 mutex 保护的 `vector<ThreadCpuLease>`，`aeron_driver_close` 后清空），失败打 stderr 并计入新增的 `AeronIpcPublisherStats::driverBindFailed`。`TM_AERON_IPC_DRIVER_CPU` 回退保留。 |
 
 ### 安装点
@@ -169,6 +169,35 @@ release/空闲机器上做验收。
 PLAN 中的性能参考项（`ipc_latency_profiler` 内部 `cpu=` 绑核与外部 `taskset` 对比）未执行：
 该项本来就不作为验收条件，且当前机器为共享环境，延迟数字不可比。
 
+### 评审修复（2026-11-13）
+
+针对 [REVIEW.md](REVIEW.md) 的 4 项意见，以及修复后回归中暴露的一个既有 SMB 崩溃：
+
+| 问题 | 修复 | 回归测试 |
+|---|---|---|
+| P1 singlecast：provider 抛异常时工作线程销毁 `io_context`，之后订阅析构 `sock_.close()` 访问已释放的 reactor | 订阅持有 `shared_ptr<io_context>`（声明在 `sock_` 之前，析构顺序保证 socket 先销毁），线程 lambda 也持有一份 | `throwingProviderTest`（singlecast）|
+| P1 SMB：线程启动后的段内分配抛 `bad_alloc` → 析构可 join 的 `th_` → `std::terminate` | 所有段内分配挪到启动线程之前；链入列表前任何失败都 join 线程（若已启动）并回收 | 新增“段剩余空间 0～1024 字节（步长 32）逐档试，空间不足时 `addSubscriptionClient` 必须抛异常而不终止进程”（13 档触发异常）；旧代码 abort（`terminate called without an active exception`），新代码通过 |
+| P2 SMB：绑核失败泄漏 `heads_` / client record | `destroyUnlinkedObjects` 在所有构造失败路径回收段内对象 | 新增“连续 5 次绑核失败后段可用空间与命名对象数不变” |
+| P2 aeron：`driverCpu=none` 仍要求 provider 并调用它 | 按 `CpuBindingSpec::parse` 的结果，`None` 直接跳过 provider 检查与 agent 回调注册 | 新增“无 provider + `driverCpu=none` 正常启动”，“自定义 provider + `driverCpu=none` 不被调用且 `driverBindFailed=0`” |
+| 既有 SMB 读者/发布者竞争（基线 `e22df3c` 同样存在）| 读者切换 tail（`swapTail()`）改为在 `listMutex` 下进行。`publish()` 本来就在该锁下“读 tail → 走到链尾 → CAS 挂节点”；之前读者无锁切换后立即释放旧链，发布者可能对已释放的链尾节点做 CAS，导致 SIGSEGV 或消息挂在已释放节点上丢失。共享内存布局不变 | 见下 |
+
+验证（release，2026-11-13）：
+
+```bash
+B=builddir_release/test/ipc_concurrency_test/ipc_concurrency_test
+$B --mode=graph --channel="shared_memory_broadcast://::::x[size=268435456]" --writers=4 --count=20000 --threadedSink=true
+```
+
+- 上述用例：基线二进制 12 次中 3 次 SIGSEGV、1 次 rc=1，`received` 只有 5724～69080；修复后 30/30 通过，
+  每次 `received=320000 corrupt=0`（4 个读者全收齐）。崩溃栈：`OneSharedMemoryBroadcastSender::publish`，
+  两个读者线程在 `cond.timed_wait`，只有一个发布线程（threaded sink），排除多写者因素。
+- `ipc_concurrency_test/run_tests.sh … shared_memory_broadcast`：pass=3 fail=0 risk=0 safe=5
+  （修复前 3/4/6 三个无锁多写用例为 RISK/SIGSEGV；`publish` 全程持有跨进程 `listMutex`，多写者本就被串行化，
+  这些崩溃同样来自读者竞争）。
+- `ipc_thread_affinity_test`：292 checks / 0 failed（release、debug 各一次，无段残留）。
+- `aeron_ipc_test/run_tests.sh`：7/8，仅既有的 test3 失败（与修复前及基线相同）。
+- `transport_payload_test`：failures=0。
+
 ## 兼容性与注意事项
 
 - 未设置 `cpu` / `senderCpu` / `driverCpu` 时，线程创建路径、异常行为和性能与改动前一致；
@@ -195,6 +224,7 @@ PLAN 中的性能参考项（`ipc_latency_profiler` 内部 `cpu=` 绑核与外�
 
 ## 相关文档
 
+- [代码评审报告（2026-11-13）](REVIEW.md)：两项 P1、两项 P2，含定向验证结果与运行验证限制。
 - [方案](PLAN.md)
 - 前序：[ZeroMQ 通过 ConnectionLocator 配置 HWM](../20261105-zeromq-hwm-locator/README.md)（同为 locator 属性扩展）
 - 前序：[IPC Transport 并发测试](../20261103-ipc-concurrency-test/README.md)（各 transport 线程模型）

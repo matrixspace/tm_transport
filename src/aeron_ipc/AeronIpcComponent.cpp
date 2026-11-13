@@ -302,16 +302,22 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     cpuStr = e;
                 }
             }
+            //validate in the calling thread before any agent thread exists;
+            //"none" (or an empty CPU list) behaves as if driverCpu were absent:
+            //no provider is needed or called and Aeron's own
+            //AERON_*_CPU_AFFINITY handling stays in place
+            bool bindDriver = false;
             if (!cpuStr.empty()) {
-                //validate in the calling thread before any agent thread exists
                 try {
-                    infra::CpuBindingSpec::parse(cpuStr);
+                    bindDriver = (infra::CpuBindingSpec::parse(cpuStr).kind != infra::CpuBindKind::None);
                 } catch (std::invalid_argument const &e) {
                     throw std::invalid_argument(
                         "aeron_ipc: invalid 'driverCpu' value '"+cpuStr+"' in locator '"
                         +locator_.toPrintFormat()+"': "+e.what()
                     );
                 }
+            }
+            if (bindDriver) {
                 if (!provider_) {
                     throw std::invalid_argument(
                         "aeron_ipc: locator '"+locator_.toPrintFormat()+"' sets 'driverCpu="+cpuStr

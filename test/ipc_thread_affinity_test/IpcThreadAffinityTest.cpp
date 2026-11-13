@@ -29,6 +29,8 @@
 #include <sched.h>
 #include <unistd.h>
 
+#include <boost/interprocess/managed_shared_memory.hpp>
+
 #include <tm_kit/infra/Environments.hpp>
 #include <tm_kit/infra/RealTimeApp.hpp>
 #include <tm_kit/infra/RealTimeThreadedExecutor.hpp>
@@ -879,8 +881,114 @@ namespace {
             }
             check(threw, "aeron: driverCpu without a provider throws std::invalid_argument");
         }
+        // driverCpu=none behaves like an absent driverCpu: no provider needed or called
+        {
+            Env env;
+            int n = nextOrdinal();
+            auto loc = ConnectionLocator::parse(
+                "::::" + tag(n) + "[dir=/dev/shm/aeron_" + tag(n)
+                + ",driver=embedded,driverCpu=none]");
+            bool threw = false;
+            try {
+                (void)env.aeron_ipc_getPublisher(loc);
+            } catch (std::exception const &) {
+                threw = true;
+            }
+            check(!threw, "aeron: driverCpu=none needs no provider");
+        }
+        {
+            Env env;
+            std::atomic<int> calls{0};
+            env.aeron_ipc_setThreadCpuLease([&calls](std::string const &, std::string const &) {
+                ++calls;
+                return infra::ThreadCpuLease{};
+            });
+            int n = nextOrdinal();
+            auto loc = ConnectionLocator::parse(
+                "::::" + tag(n) + "[dir=/dev/shm/aeron_" + tag(n)
+                + ",driver=embedded,driverThreading=dedicated,driverCpu=none]");
+            auto pub = env.aeron_ipc_getPublisher(loc);
+            auto stats = env.aeron_ipc_publisherStats(loc);
+            check(calls.load() == 0 && stats && stats->driverBindFailed == 0,
+                "aeron: driverCpu=none never calls the provider");
+            (void)pub;
+        }
     }
 #endif
+
+    // shared_memory_broadcast subscriptions allocate inside the segment before
+    // they are linked into its client list; failed constructions must give that
+    // memory back and must never terminate the process.
+    void sharedMemoryBroadcastSegmentTest()
+    {
+        namespace bip = boost::interprocess;
+        using SMB = transport::shared_memory_broadcast::SharedMemoryBroadcastComponent;
+
+        // repeated binding failures do not leak segment memory
+        {
+            std::string name = tag(nextOrdinal());
+            Env env;
+            env.shared_memory_broadcast_setThreadCpuLease([](std::string const &who, std::string const &) -> infra::ThreadCpuLease {
+                throw BindFailure("provider refuses " + who);
+            });
+            auto loc = ConnectionLocator::parse("::::" + name + "[size=1048576,busyLoop=true,cpu=auto]");
+            auto failOnce = [&] {
+                try {
+                    env.shared_memory_broadcast_addSubscriptionClient(loc, SMB::NoTopicSelection(), noopHandler);
+                    return false;
+                } catch (BindFailure const &) {
+                    return true;
+                }
+            };
+            // the first attempt creates the segment and its shared list head
+            bool allFailed = failOnce();
+            {
+                bip::managed_shared_memory seg(bip::open_only, name.c_str());
+                auto free0 = seg.get_free_memory();
+                auto named0 = seg.get_num_named_objects();
+                for (int i = 0; i < 5; ++i) {
+                    allFailed = failOnce() && allFailed;
+                }
+                check(allFailed, "shared_memory_broadcast: every failed binding throws the provider's exception");
+                check(seg.get_free_memory() == free0 && seg.get_num_named_objects() == named0,
+                    "shared_memory_broadcast: failed bindings release their segment allocations");
+            }
+            bip::shared_memory_object::remove(name.c_str());
+        }
+
+        // a nearly full segment makes the subscription throw (bad_alloc) instead
+        // of terminating with a joinable receive thread
+        {
+            bool survived = true;
+            int threwCount = 0;
+            for (std::size_t left = 0; left <= 1024; left += 32) {
+                std::string name = tag(nextOrdinal());
+                auto loc = ConnectionLocator::parse("::::" + name + "[size=65536,busyLoop=true]");
+                Env env;
+                // creates the segment and the shared list head, then leaves
+                env.shared_memory_broadcast_removeSubscriptionClient(
+                    env.shared_memory_broadcast_addSubscriptionClient(loc, SMB::NoTopicSelection(), noopHandler));
+                {
+                    bip::managed_shared_memory seg(bip::open_only, name.c_str());
+                    std::size_t n = seg.get_free_memory() > left ? seg.get_free_memory() - left : 0;
+                    while (n >= 16 && seg.allocate(n, std::nothrow) == nullptr) {
+                        n -= 8;
+                    }
+                }
+                try {
+                    auto id = env.shared_memory_broadcast_addSubscriptionClient(loc, SMB::NoTopicSelection(), noopHandler);
+                    env.shared_memory_broadcast_removeSubscriptionClient(id);
+                } catch (std::exception const &) {
+                    ++threwCount;
+                } catch (...) {
+                    survived = false;
+                }
+                bip::shared_memory_object::remove(name.c_str());
+            }
+            check(survived && threwCount > 0,
+                "shared_memory_broadcast: a full segment throws from addSubscriptionClient (" + std::to_string(threwCount) + " sizes)");
+        }
+    }
 
 } // namespace
 
@@ -915,6 +1023,9 @@ int main()
     }
     noAllocatorTest();
     templatePathTest(allowed);
+    if (onlyCase == nullptr || std::string(onlyCase) == "shared_memory_broadcast") {
+        sharedMemoryBroadcastSegmentTest();
+    }
 #ifdef TEST_HAS_HWLOC
     hwlocTest();
 #endif
