@@ -10,6 +10,8 @@
 
 - [IPC Transport 内部线程绑核](20261112-ipc-thread-affinity/README.md) — 2026-11-12 至 2026-11-13 完成：各 IPC transport 组件新增 `xxx_setThreadCpuLease` 注入接口，locator 属性 `cpu`/`senderCpu`/`driverCpu` 经 provider 复用 infra 的 `ThreadCpuLease` 绑核；新增 `test/ipc_thread_affinity_test`（287 项检查全通过），并顺带修复 singlecast/smb detach 后句柄失效与 smb 取消订阅的 use-after-free。
 
+- [aeron_ipc untethered 超时默认值改回 10ms](20261113-aeron-untethered-defaults/README.md) — 2026-11-13 完成：`05962f6` 把 `untetheredWindowLimitTimeoutMs`/`untetheredLingerTimeoutMs` 默认值改为 2s，导致一个慢读者让发布者在 `backPressure=drop` 下周期性丢光所有读者的消息（aeron test3 失败）；默认值改回 10ms，正确性由既有的帧头复检（`overrun`）保证。
+
 ## 任务关系
 
 并发测试任务（20261103-ipc-concurrency-test）发现了并发 Bug，由并发 Bug 修复任务（20261103-ipc-concurrency-bugfix）解决。两个任务文档互相关联。

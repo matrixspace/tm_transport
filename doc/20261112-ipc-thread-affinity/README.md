@@ -153,7 +153,7 @@ multicast / singlecast / aeron_ipc；aeron driver 与 hwloc 按构建条件追�
 | `ipc_thread_affinity_test`（新增） | 287 checks / 0 failed（release 与 debug 各一次） |
 | `shm_seqlock_test/run_tests.sh` | pass=24 fail=0 |
 | `shm_cursor_test/run_tests.sh` | pass=31 fail=0 |
-| `aeron_ipc_test/run_tests.sh` | pass=7 fail=1：仅 test3（慢读者场景要求 fast reader 全收 50 万条零 gap）失败；用基点 `e22df3c` 的未修改 release 二进制单跑同一用例同样失败（fast received 78367 vs 我们 78381），属既有/环境问题（共享机器 + 该用例的零丢失断言），与本次改动无关 |
+| `aeron_ipc_test/run_tests.sh` | pass=7 fail=1：仅 test3（慢读者场景要求 fast reader 全收 50 万条零 gap）失败；用基点 `e22df3c` 的未修改 release 二进制单跑同一用例同样失败（fast received 78367 vs 我们 78381），与本次改动无关。**后续定位（2026-11-13）：** 不是环境问题，是 `05962f6` 把 untethered 超时默认值改为 2s 导致慢读者拖住发布者；已在 [aeron untethered 默认值改回 10ms](../20261113-aeron-untethered-defaults/README.md) 修复，test3 通过 |
 | `ipc_concurrency_test/run_tests.sh` | pass=19 fail=0 risk=15 safe=5；RISK 是脚本本身标注的“不支持的并发写法”观察项（含 aeron 未加锁多写的 SIGSEGV），不是本轮引入 |
 | `multitransport_lifecycle_test/run_tests.py` | 3 个 transport 全部 PASS |
 | `multicast_test` | pass=6 fail=0 |
@@ -195,7 +195,7 @@ $B --mode=graph --channel="shared_memory_broadcast://::::x[size=268435456]" --wr
   （修复前 3/4/6 三个无锁多写用例为 RISK/SIGSEGV；`publish` 全程持有跨进程 `listMutex`，多写者本就被串行化，
   这些崩溃同样来自读者竞争）。
 - `ipc_thread_affinity_test`：292 checks / 0 failed（release、debug 各一次，无段残留）。
-- `aeron_ipc_test/run_tests.sh`：7/8，仅既有的 test3 失败（与修复前及基线相同）。
+- `aeron_ipc_test/run_tests.sh`：7/8，仅既有的 test3 失败（与修复前及基线相同）；根因与修复见 [aeron untethered 默认值改回 10ms](../20261113-aeron-untethered-defaults/README.md)，修复后 8/8。
 - `transport_payload_test`：failures=0。
 
 ## 兼容性与注意事项
@@ -225,6 +225,7 @@ $B --mode=graph --channel="shared_memory_broadcast://::::x[size=268435456]" --wr
 ## 相关文档
 
 - [代码评审报告（2026-11-13）](REVIEW.md)：两项 P1、两项 P2，含定向验证结果与运行验证限制。
+- [aeron untethered 默认值改回 10ms](../20261113-aeron-untethered-defaults/README.md)：回归中 test3 失败的根因修复（合并入本分支）。
 - [方案](PLAN.md)
 - 前序：[ZeroMQ 通过 ConnectionLocator 配置 HWM](../20261105-zeromq-hwm-locator/README.md)（同为 locator 属性扩展）
 - 前序：[IPC Transport 并发测试](../20261103-ipc-concurrency-test/README.md)（各 transport 线程模型）

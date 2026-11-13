@@ -417,11 +417,14 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
 
             std::string uri = "aeron:ipc?term-length="+std::to_string(layout.termLength)
                 +"|mtu="+std::to_string(layout.mtu)
-                // Aeron's own defaults are 5 s / 5 s / 5 s; we use 2 s so that a
-                // genuinely stalled reader is ejected before it accumulates very large
-                // back-pressure, while still giving slow callbacks time to finish.
-                +"|untethered-window-limit-timeout="+durationMs(queryU64(locator_, "untetheredWindowLimitTimeoutMs", 2000))
-                +"|untethered-linger-timeout="+durationMs(queryU64(locator_, "untetheredLingerTimeoutMs", 2000))
+                // Aeron's own defaults are 5 s / 5 s / 5 s. While an untethered reader
+                // holds the window, a backPressure=drop publisher drops every message for
+                // all readers, so a slow reader is ejected after 10 ms + 10 ms instead.
+                // An ejected reader whose handler is still copying a reused term is caught
+                // by the header re-check in handleFragment (counted as overrun), so the
+                // short timeouts cost only the slow reader's own messages.
+                +"|untethered-window-limit-timeout="+durationMs(queryU64(locator_, "untetheredWindowLimitTimeoutMs", 10))
+                +"|untethered-linger-timeout="+durationMs(queryU64(locator_, "untetheredLingerTimeoutMs", 10))
                 +"|untethered-resting-timeout="+durationMs(queryU64(locator_, "untetheredRestingTimeoutMs", 100));
             aeron_async_add_exclusive_publication_t *async = nullptr;
             if (aeron_async_add_exclusive_publication(&async, client_, uri.c_str(), streamIdFor(locator_)) < 0) {

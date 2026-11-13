@@ -39,7 +39,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     //                can be behind the publisher)
     //  tether        false (default): a slow reader cannot hold the publisher back indefinitely
     //  untetheredWindowLimitTimeoutMs / untetheredLingerTimeoutMs / untetheredRestingTimeoutMs
-    //                (publisher side, defaults 10 / 10 / 100)
+    //                (publisher side, defaults 10 / 10 / 100). While an untethered reader
+    //                holds the window the publisher is back pressured (with
+    //                backPressure=drop every reader loses those messages), so raising
+    //                these trades the other readers' delivery for the slow reader's
+    //                fewer losses. A reader ejected mid-fragment never sees torn data:
+    //                the fragment is dropped and counted in AeronIpcSubscriberStats::overrun.
     //  backPressure  drop (default): a claim that is back pressured is dropped and counted
     //                retry: spin until the claim succeeds (a stalled tethered reader stalls the publisher)
     //  driver        auto (default) | embedded | external   (publisher side only; auto embeds a driver
