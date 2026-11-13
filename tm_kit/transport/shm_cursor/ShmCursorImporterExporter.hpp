@@ -12,6 +12,8 @@
 #include <tm_kit/transport/HeartbeatAndAlertComponent.hpp>
 #include <tm_kit/transport/AbstractHookFactoryComponent.hpp>
 
+#include <tm_kit/transport/ThreadCpuLeaseProviderInstall.hpp>
+
 namespace dev { namespace cd606 { namespace tm { namespace transport { namespace shm_cursor {
 
     template <class Env, std::enable_if_t<std::is_base_of_v<ShmCursorComponent, Env>, int> = 0>
@@ -36,6 +38,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     , mutex_() {
                 }
                 virtual void start(Env *env) override final {
+                    installThreadCpuLeaseProviders<Env>(env);
                     std::lock_guard<std::mutex> _(mutex_);
                     if (!client_) {
                         client_ = env->shm_cursor_addSubscriptionClient(
@@ -82,6 +85,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     , mutex_() {
                 }
                 virtual void start(Env *env) override final {
+                    installThreadCpuLeaseProviders<Env>(env);
                     std::lock_guard<std::mutex> _(mutex_);
                     if (!wireToUserHook_) {
                         wireToUserHook_ = DefaultHookFactory<Env>::template incomingHook<T>(env);
@@ -134,6 +138,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     , heartbeatName_(heartbeatName) {
                 }
                 virtual void start(Env *env) override final {
+                    installThreadCpuLeaseProviders<Env>(env);
                     env_ = env;
                     publisher_ = env->shm_cursor_getPublisher(locator_, userToWireHook_);
                     if constexpr (std::is_convertible_v<
@@ -170,6 +175,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     , heartbeatName_(heartbeatName) {
                 }
                 virtual void start(Env *env) override final {
+                    installThreadCpuLeaseProviders<Env>(env);
                     env_ = env;
                     if (!userToWireHook_) {
                         userToWireHook_ = DefaultHookFactory<Env>::template outgoingHook<T>(env);
@@ -192,6 +198,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             return M::exporter(new LocalE(locator, userToWireHook, heartbeatName));
         }
         static std::future<basic::ByteDataWithTopic> fetchFirstUpdateAndDisconnect(Env *env, ConnectionLocator const &locator, std::variant<ShmCursorComponent::NoTopicSelection, std::string, std::regex> const &topic, std::optional<WireToUserHook> hook = std::nullopt) {
+            installThreadCpuLeaseProviders<Env>(env);
             std::shared_ptr<std::promise<basic::ByteDataWithTopic>> ret = std::make_shared<std::promise<basic::ByteDataWithTopic>>();
             std::shared_ptr<std::atomic<uint32_t>> id = std::make_shared<std::atomic<uint32_t>>();
 
@@ -215,6 +222,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         }
         template <class T>
         static std::future<basic::TypedDataWithTopic<T>> fetchTypedFirstUpdateAndDisconnect(Env *env, ConnectionLocator const &locator, std::variant<ShmCursorComponent::NoTopicSelection, std::string, std::regex> const &topic, std::function<bool(T const &)> predicate = std::function<bool(T const &)>(), std::optional<WireToUserHook> hook = std::nullopt) {
+            installThreadCpuLeaseProviders<Env>(env);
             std::shared_ptr<std::promise<basic::TypedDataWithTopic<T>>> ret = std::make_shared<std::promise<basic::TypedDataWithTopic<T>>>();
             std::shared_ptr<std::atomic<uint32_t>> id = std::make_shared<std::atomic<uint32_t>>();
 

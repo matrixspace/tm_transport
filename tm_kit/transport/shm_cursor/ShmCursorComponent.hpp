@@ -14,6 +14,7 @@
 #include <tm_kit/basic/ByteData.hpp>
 #include <tm_kit/transport/ConnectionLocator.hpp>
 #include <tm_kit/transport/ByteDataHook.hpp>
+#include <tm_kit/transport/ThreadCpuLeaseProvider.hpp>
 
 namespace dev { namespace cd606 { namespace tm { namespace transport { namespace shm_cursor {
 
@@ -36,6 +37,14 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     //   publisherLock : (publisher) "false" (default) or "true"; set to true when
     //                one process publishes to the segment from more than one
     //                thread (e.g. data plus HeartbeatAndAlertComponent heartbeats)
+    //
+    //   cpu        : (reader) CPU binding for the segment's reader thread,
+    //                CpuBindingSpec syntax (none/auto/numa:<n>/cpus:<list>/<list>;
+    //                no commas, use ranges). It needs a provider installed through
+    //                shm_cursor_setThreadCpuLease (or
+    //                installThreadCpuLeaseProviders<Env>). There is one reader
+    //                thread per segment, so only the locator that creates it
+    //                decides the binding; later different values warn.
     //
     // Only the identifier is used to key the segment; the first locator seen
     // for a segment in this process determines its properties. slotSize and
@@ -73,6 +82,15 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         // number of messages this process's publisher for the segment has
         // rejected because topic+payload exceeded the slot capacity
         uint64_t shm_cursor_publisherRejectedCount(ConnectionLocator const &locator);
+        //Installs the CPU binding provider used by the "cpu" locator property.
+        //The provider is invoked on the reader thread itself as its first action.
+        //It can be set only once; a second call throws std::logic_error.
+        void shm_cursor_setThreadCpuLease(ThreadCpuLeaseProvider provider);
+    private:
+        template <class Env>
+        friend void ::dev::cd606::tm::transport::installThreadCpuLeaseProviders(Env *);
+        //Framework entry point: installs the default provider unless one is set.
+        void shm_cursor_setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider);
     };
 
 }}}}}

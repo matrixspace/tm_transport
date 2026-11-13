@@ -15,6 +15,7 @@
 #include <tm_kit/basic/ByteData.hpp>
 #include <tm_kit/transport/ConnectionLocator.hpp>
 #include <tm_kit/transport/ByteDataHook.hpp>
+#include <tm_kit/transport/ThreadCpuLeaseProvider.hpp>
 
 namespace dev { namespace cd606 { namespace tm { namespace transport { namespace shm_seqlock {
 
@@ -73,6 +74,13 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     //                    published one (default); next: first message published
     //                    after joining
     //  mlock=true|false  best-effort mlock of the mapping (default true)
+    //  cpu=<spec>        CPU binding for the segment's reader thread,
+    //                    CpuBindingSpec syntax (none/auto/numa:<n>/cpus:<list>/<list>;
+    //                    no commas, use ranges). It needs a provider installed
+    //                    through shm_seqlock_setThreadCpuLease (or
+    //                    installThreadCpuLeaseProviders<Env>). There is one reader
+    //                    thread per segment, so only the locator that creates it
+    //                    decides the binding; later different values warn.
     //
     //There is one reader thread per segment per component; the first subscription
     //on a segment decides the reader properties. Only one thread in one process
@@ -112,6 +120,15 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         std::unordered_map<ConnectionLocator, std::thread::native_handle_type> shm_seqlock_threadHandles();
         std::unordered_map<ConnectionLocator, ShmSeqlockReaderStats> shm_seqlock_readerStats();
         std::unordered_map<ConnectionLocator, ShmSeqlockPublisherStats> shm_seqlock_publisherStats();
+        //Installs the CPU binding provider used by the "cpu" locator property.
+        //The provider is invoked on the reader thread itself as its first action.
+        //It can be set only once; a second call throws std::logic_error.
+        void shm_seqlock_setThreadCpuLease(ThreadCpuLeaseProvider provider);
+    private:
+        template <class Env>
+        friend void ::dev::cd606::tm::transport::installThreadCpuLeaseProviders(Env *);
+        //Framework entry point: installs the default provider unless one is set.
+        void shm_seqlock_setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider);
     };
 
 } } } } }

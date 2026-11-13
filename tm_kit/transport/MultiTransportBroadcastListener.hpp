@@ -23,6 +23,7 @@
 #endif // TM_KIT_TRANSPORT_AERON_IPC
 #endif
 #include <tm_kit/transport/AbstractHookFactoryComponent.hpp>
+#include <tm_kit/transport/ThreadCpuLeaseProviderInstall.hpp>
 #include <tm_kit/transport/grpc_interop/GrpcInteropComponent.hpp>
 #include <tm_kit/transport/json_rest/JsonRESTComponent.hpp>
 #include <tm_kit/transport/websocket/WebSocketComponent.hpp>
@@ -1299,7 +1300,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport {
         }
         ~MultiTransportBroadcastListener() {
         }
-        void start(Env */*env*/) override final {
+        void start(Env *env) override final {
+            //This node calls the transport component APIs directly instead of
+            //going through an ImporterExporter, so it installs the default
+            //thread CPU binding provider itself (no-op if one is already set).
+            installThreadCpuLeaseProviders<Env>(env);
         }
         void handle(typename M::template InnerData<typename M::template Key<MultiTransportBroadcastListenerInput>> &&input) override final {
             actuallyHandle(std::move(input));

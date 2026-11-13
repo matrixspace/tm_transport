@@ -8,6 +8,8 @@
 #include <boost/bind/bind.hpp>
 
 #include <tm_kit/transport/multicast/MulticastComponent.hpp>
+
+#include "../ThreadCpuLeaseSupport.hpp"
 #include "InterfaceToIP.hpp"
 
 #ifdef _MSC_VER
@@ -65,6 +67,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::mutex mutex_;
 
             std::atomic<bool> running_;
+            thread_cpu_lease_detail::BindRequest bindRequest_;
+            bool warnedCpuMismatch_ = false;
 
             inline void callClient(ClientCB const &c, basic::ByteDataWithTopic &&d) {
                 if (c.hook) {
@@ -167,12 +171,13 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
             }
         public:
-            OneMulticastSubscription(MulticastComponentTopicEncodingChoice encodingChoice, ConnectionLocator const &locator, std::string const &interface)
+            OneMulticastSubscription(MulticastComponentTopicEncodingChoice encodingChoice, ConnectionLocator const &locator, std::string const &interface
+                , thread_cpu_lease_detail::BindRequest bindRequest)
                 : encodingChoice_(encodingChoice), locator_(locator), service_(), sock_(service_), senderPoint_(), mcastAddr_(), joinInterface_(), buffer_()
                 , noFilterClients_(), stringMatchClients_(), regexMatchClients_()
                 , thHandle_()
                 , thread_()
-                , mutex_(), running_(true)
+                , mutex_(), running_(true), bindRequest_(std::move(bindRequest))
             {
                 boost::asio::ip::udp::resolver resolver(service_);
 
@@ -230,7 +235,16 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                                 , boost::asio::placeholders::bytes_transferred)
                 );
 
-                thread_ = std::thread([this]() {
+                std::optional<thread_cpu_lease_detail::BindHandshake> handshake;
+                if (bindRequest_.needed) {
+                    handshake.emplace();
+                }
+                thread_ = std::thread([this, hs = handshake ? &*handshake : nullptr]() {
+                    //first action: pin this thread
+                    auto lease = thread_cpu_lease_detail::bindWorkerThread(&bindRequest_, hs);
+                    if (!lease) {
+                        return;
+                    }
 #if BOOST_VERSION >= 108700
                     auto work_guard = boost::asio::make_work_guard(service_);
 #else
@@ -238,6 +252,15 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
 #endif
                     service_.run();
                 });
+                if (handshake) {
+                    try {
+                        handshake->future.get();
+                    } catch (...) {
+                        //the io thread has already returned
+                        thread_.join();
+                        throw;
+                    }
+                }
                 thHandle_ = thread_.native_handle();
             }
             ~OneMulticastSubscription() {
@@ -348,6 +371,21 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::optional<std::thread::native_handle_type> getThreadHandle() {
                 std::lock_guard<std::mutex> _(mutex_);
                 return thHandle_;
+            }
+            thread_cpu_lease_detail::BindRequest const &bindRequest() const {
+                return bindRequest_;
+            }
+            //There is one receive thread per host:port: the first locator decides
+            //the binding, later different values only warn once.
+            void warnCpuMismatch(ConnectionLocator const &locator, thread_cpu_lease_detail::BindRequest const &request) {
+                if (warnedCpuMismatch_) {
+                    return;
+                }
+                warnedCpuMismatch_ = true;
+                std::cerr << "multicast: receive thread for " << locator_.toPrintFormat()
+                    << " already uses cpu='" << bindRequest_.spec
+                    << "', ignoring cpu='" << request.spec << "' requested by "
+                    << locator.toPrintFormat() << std::endl;
             }
         };
         std::unordered_map<ConnectionLocator, std::unique_ptr<OneMulticastSubscription>> subscriptions_;
@@ -575,12 +613,27 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
 
         std::mutex mutex_;
         bool senderThreadStarted_;
+        thread_cpu_lease_detail::BindRequest senderBindRequest_;
+        bool warnedSenderCpuMismatch_ = false;
+
+        //the binding provider, settable once before the graph starts
+        std::mutex providerMutex_;
+        ThreadCpuLeaseProvider provider_;
+        bool providerSet_ = false;
+
+        ThreadCpuLeaseProvider getThreadCpuLeaseProvider() {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            return provider_;
+        }
 
         uint32_t counter_;
         std::unordered_map<uint32_t, OneMulticastSubscription *> idToSubscriptionMap_;
         std::mutex idMutex_;
 
         OneMulticastSubscription *getOrStartSubscription(ConnectionLocator const &d) {
+            auto bindRequest = thread_cpu_lease_detail::makeThreadCpuBindRequest(
+                d, "cpu", "multicast receiver "+d.host()+":"+std::to_string(d.port()), getThreadCpuLeaseProvider()
+                , "multicast", "multicast_setThreadCpuLease");
             ConnectionLocator hostAndPort {d.host(), d.port()};
             std::lock_guard<std::mutex> _(mutex_);
             auto iter = subscriptions_.find(hostAndPort);
@@ -590,7 +643,10 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     choice = MulticastComponentTopicEncodingChoice::Binary;
                 }
                 auto interface = d.query("interface", "");
-                iter = subscriptions_.insert({hostAndPort, std::make_unique<OneMulticastSubscription>(choice, hostAndPort, interface)}).first;
+                iter = subscriptions_.insert({hostAndPort, std::make_unique<OneMulticastSubscription>(
+                    choice, hostAndPort, interface, std::move(bindRequest))}).first;
+            } else if (!thread_cpu_lease_detail::sameCpuBinding(iter->second->bindRequest(), bindRequest)) {
+                iter->second->warnCpuMismatch(d, bindRequest);
             }
             return iter->second.get();
         }
@@ -612,18 +668,46 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             //thread to unwind.
         }
         OneMulticastSender *getOrStartSender(ConnectionLocator const &d) {
+            auto bindRequest = thread_cpu_lease_detail::makeThreadCpuBindRequest(
+                d, "senderCpu", "multicast sender "+d.host()+":"+std::to_string(d.port()), getThreadCpuLeaseProvider()
+                , "multicast", "multicast_setThreadCpuLease");
             ConnectionLocator hostAndPort {d.host(), d.port()};
             std::lock_guard<std::mutex> _(mutex_);
             if (!senderThreadStarted_) {
-                senderThread_ = std::thread([this]() {
-#if BOOST_VERSION >= 108700   
+                senderBindRequest_ = bindRequest;
+                std::optional<thread_cpu_lease_detail::BindHandshake> handshake;
+                if (bindRequest.needed) {
+                    handshake.emplace();
+                }
+                senderThread_ = std::thread([this, hs = handshake ? &*handshake : nullptr]() {
+                    //first action: pin this thread
+                    auto lease = thread_cpu_lease_detail::bindWorkerThread(&senderBindRequest_, hs);
+                    if (!lease) {
+                        return;
+                    }
+#if BOOST_VERSION >= 108700
                     auto work_guard = boost::asio::make_work_guard(senderService_);
 #else
                     boost::asio::io_service::work work(senderService_);
-#endif                    
+#endif
                     senderService_.run();
                 });
+                if (handshake) {
+                    try {
+                        handshake->future.get();
+                    } catch (...) {
+                        //the sender thread has already returned
+                        senderThread_.join();
+                        throw;
+                    }
+                }
                 senderThreadStarted_ = true;
+            } else if (!thread_cpu_lease_detail::sameCpuBinding(senderBindRequest_, bindRequest)
+                && !warnedSenderCpuMismatch_) {
+                warnedSenderCpuMismatch_ = true;
+                std::cerr << "multicast: sender thread already uses senderCpu='"
+                    << senderBindRequest_.spec << "', ignoring senderCpu='" << bindRequest.spec
+                    << "' requested by " << d.toPrintFormat() << std::endl;
             }
             auto iter = senders_.find(hostAndPort);
             if (iter == senders_.end()) {
@@ -665,6 +749,22 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
             }
             senders.clear();
+        }
+        void setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                throw std::logic_error("multicast: thread CPU lease provider is already set");
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
+        }
+        void setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                return;
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
         }
         uint32_t addSubscriptionClient(ConnectionLocator const &locator,
             std::variant<MulticastComponent::NoTopicSelection, std::string, std::regex> const &topic,
@@ -741,5 +841,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     }
     std::unordered_map<ConnectionLocator, std::thread::native_handle_type> MulticastComponent::multicast_threadHandles() {
         return impl_->threadHandles();
+    }
+    void MulticastComponent::multicast_setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLease(std::move(provider));
+    }
+    void MulticastComponent::multicast_setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLeaseIfUnset(std::move(provider));
     }
 } } } } }

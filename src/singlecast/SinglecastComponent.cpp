@@ -7,6 +7,8 @@
 
 #include <tm_kit/transport/singlecast/SinglecastComponent.hpp>
 
+#include "../ThreadCpuLeaseSupport.hpp"
+
 namespace dev { namespace cd606 { namespace tm { namespace transport { namespace singlecast {
     
     enum class SinglecastComponentTopicEncodingChoice {
@@ -27,10 +29,19 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
 
     class SinglecastComponentImpl {
     private:
+#if BOOST_VERSION >= 108700
+        using IoService = boost::asio::io_context;
+#else
+        using IoService = boost::asio::io_service;
+#endif
         class OneSinglecastSubscription {
         private:
             SinglecastComponentTopicEncodingChoice encodingChoice_;
             ConnectionLocator locator_;
+            //Shared with the receive thread. Declared before sock_ so that the
+            //socket is closed and destroyed while its io_context is still alive,
+            //whichever of this object and the thread finishes last.
+            std::shared_ptr<IoService> service_;
             boost::asio::ip::udp::socket sock_;
             boost::asio::ip::udp::endpoint senderPoint_;
             std::array<char, 16*1024*1024> buffer_;
@@ -46,6 +57,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             std::mutex mutex_;
 
             std::atomic<bool> running_;
+            thread_cpu_lease_detail::BindRequest bindRequest_;
+            bool warnedCpuMismatch_ = false;
 
             inline void callClient(ClientCB const &c, basic::ByteDataWithTopic &&d) {
                 if (c.hook) {
@@ -150,17 +163,14 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 }
             }
         public:
-#if BOOST_VERSION >= 108700        
-            OneSinglecastSubscription(SinglecastComponentTopicEncodingChoice encodingChoice, boost::asio::io_context *service, ConnectionLocator const &locator) 
-#else
-            OneSinglecastSubscription(SinglecastComponentTopicEncodingChoice encodingChoice, boost::asio::io_service *service, ConnectionLocator const &locator) 
-#endif            
-                : encodingChoice_(encodingChoice), locator_(locator), sock_(*service), senderPoint_(), buffer_()
+            OneSinglecastSubscription(SinglecastComponentTopicEncodingChoice encodingChoice, std::shared_ptr<IoService> service, ConnectionLocator const &locator
+                , thread_cpu_lease_detail::BindRequest bindRequest)
+                : encodingChoice_(encodingChoice), locator_(locator), service_(std::move(service)), sock_(*service_), senderPoint_(), buffer_()
                 , noFilterClients_(), stringMatchClients_(), regexMatchClients_()
                 , thHandle_()
-                , mutex_(), running_(true)
+                , mutex_(), running_(true), bindRequest_(std::move(bindRequest))
             {
-                boost::asio::ip::udp::resolver resolver(*service);
+                boost::asio::ip::udp::resolver resolver(*service_);
 
                 {
 #if BOOST_VERSION >= 108700                    
@@ -258,6 +268,21 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 std::lock_guard<std::mutex> _(mutex_);
                 return thHandle_;
             }
+            thread_cpu_lease_detail::BindRequest const &bindRequest() const {
+                return bindRequest_;
+            }
+            //There is one receive thread per host:port: the first locator decides
+            //the binding, later different values only warn once.
+            void warnCpuMismatch(ConnectionLocator const &locator, thread_cpu_lease_detail::BindRequest const &request) {
+                if (warnedCpuMismatch_) {
+                    return;
+                }
+                warnedCpuMismatch_ = true;
+                std::cerr << "singlecast: receive thread for " << locator_.toPrintFormat()
+                    << " already uses cpu='" << bindRequest_.spec
+                    << "', ignoring cpu='" << request.spec << "' requested by "
+                    << locator.toPrintFormat() << std::endl;
+            }
         };
         std::unordered_map<ConnectionLocator, std::unique_ptr<OneSinglecastSubscription>> subscriptions_;
         
@@ -331,12 +356,27 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
 
         std::mutex mutex_;
         bool senderThreadStarted_;
+        thread_cpu_lease_detail::BindRequest senderBindRequest_;
+        bool warnedSenderCpuMismatch_ = false;
+
+        //the binding provider, settable once before the graph starts
+        std::mutex providerMutex_;
+        ThreadCpuLeaseProvider provider_;
+        bool providerSet_ = false;
+
+        ThreadCpuLeaseProvider getThreadCpuLeaseProvider() {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            return provider_;
+        }
 
         uint32_t counter_;
         std::unordered_map<uint32_t, OneSinglecastSubscription *> idToSubscriptionMap_;
         std::mutex idMutex_;
 
         OneSinglecastSubscription *getOrStartSubscription(ConnectionLocator const &d) {
+            auto bindRequest = thread_cpu_lease_detail::makeThreadCpuBindRequest(
+                d, "cpu", "singlecast receiver "+d.host()+":"+std::to_string(d.port()), getThreadCpuLeaseProvider()
+                , "singlecast", "singlecast_setThreadCpuLease");
             ConnectionLocator hostAndPort {d.host(), d.port()};
             std::lock_guard<std::mutex> _(mutex_);
             auto iter = subscriptions_.find(hostAndPort);
@@ -345,22 +385,43 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 if (d.query("ignoreTopic", "false") == "true") {
                     choice = SinglecastComponentTopicEncodingChoice::Binary;
                 }
-#if BOOST_VERSION >= 108700
-                std::unique_ptr<boost::asio::io_context> svc = std::make_unique<boost::asio::io_context>();
-#else
-                std::unique_ptr<boost::asio::io_service> svc = std::make_unique<boost::asio::io_service>();
-#endif                
-                iter = subscriptions_.insert({hostAndPort, std::make_unique<OneSinglecastSubscription>(choice, svc.get(), hostAndPort)}).first;
-                std::thread th([svc=std::move(svc)] {
-#if BOOST_VERSION >= 108700   
-                    auto work_guard = boost::asio::make_work_guard(*svc);
-#else
-                    boost::asio::io_service::work work(*svc);
-#endif                    
+                //owned jointly by the subscription (its socket) and the receive
+                //thread: a thread that returns early (failed binding) must not
+                //take the io_context down before the socket is destroyed
+                auto svc = std::make_shared<IoService>();
+                iter = subscriptions_.insert({hostAndPort, std::make_unique<OneSinglecastSubscription>(choice, svc, hostAndPort, std::move(bindRequest))}).first;
+                OneSinglecastSubscription *p = iter->second.get();
+                std::optional<thread_cpu_lease_detail::BindHandshake> handshake;
+                if (p->bindRequest().needed) {
+                    handshake.emplace();
+                }
+                std::thread th([svc=std::move(svc), req = p->bindRequest(), hs = handshake ? &*handshake : nullptr] {
+                    //first action: pin this thread
+                    auto lease = thread_cpu_lease_detail::bindWorkerThread(&req, hs);
+                    if (!lease) {
+                        return;
+                    }
+                    //the outstanding async_receive_from is the only work; once
+                    //the subscription closes its socket, run() returns and the
+                    //lease below is released
                     svc->run();
                 });
+                if (handshake) {
+                    try {
+                        handshake->future.get();
+                    } catch (...) {
+                        //the io thread has already returned
+                        th.join();
+                        subscriptions_.erase(hostAndPort);
+                        throw;
+                    }
+                }
+                //detach() clears std::thread's native handle, so cache it first
+                auto nativeHandle = th.native_handle();
                 th.detach();
-                iter->second->setThreadHandle(th.native_handle());
+                p->setThreadHandle(nativeHandle);
+            } else if (!thread_cpu_lease_detail::sameCpuBinding(iter->second->bindRequest(), bindRequest)) {
+                iter->second->warnCpuMismatch(d, bindRequest);
             }
             return iter->second.get();
         }
@@ -371,18 +432,46 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             }
         }
         OneSinglecastSender *getOrStartSender(ConnectionLocator const &d) {
+            auto bindRequest = thread_cpu_lease_detail::makeThreadCpuBindRequest(
+                d, "senderCpu", "singlecast sender "+d.host()+":"+std::to_string(d.port()), getThreadCpuLeaseProvider()
+                , "singlecast", "singlecast_setThreadCpuLease");
             ConnectionLocator hostAndPort {d.host(), d.port()};
             std::lock_guard<std::mutex> _(mutex_);
             if (!senderThreadStarted_) {
-                senderThread_ = std::thread([this]() {
-#if BOOST_VERSION >= 108700                    
+                senderBindRequest_ = bindRequest;
+                std::optional<thread_cpu_lease_detail::BindHandshake> handshake;
+                if (bindRequest.needed) {
+                    handshake.emplace();
+                }
+                senderThread_ = std::thread([this, hs = handshake ? &*handshake : nullptr]() {
+                    //first action: pin this thread
+                    auto lease = thread_cpu_lease_detail::bindWorkerThread(&senderBindRequest_, hs);
+                    if (!lease) {
+                        return;
+                    }
+#if BOOST_VERSION >= 108700
                     auto work_guard = boost::asio::make_work_guard(senderService_);
 #else
                     boost::asio::io_service::work work(senderService_);
-#endif                    
+#endif
                     senderService_.run();
                 });
+                if (handshake) {
+                    try {
+                        handshake->future.get();
+                    } catch (...) {
+                        //the sender thread has already returned
+                        senderThread_.join();
+                        throw;
+                    }
+                }
                 senderThreadStarted_ = true;
+            } else if (!thread_cpu_lease_detail::sameCpuBinding(senderBindRequest_, bindRequest)
+                && !warnedSenderCpuMismatch_) {
+                warnedSenderCpuMismatch_ = true;
+                std::cerr << "singlecast: sender thread already uses senderCpu='"
+                    << senderBindRequest_.spec << "', ignoring senderCpu='" << bindRequest.spec
+                    << "' requested by " << d.toPrintFormat() << std::endl;
             }
             auto iter = senders_.find(hostAndPort);
             if (iter == senders_.end()) {
@@ -415,6 +504,22 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 } catch (std::system_error const &) {
                 }
             }
+        }
+        void setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                throw std::logic_error("singlecast: thread CPU lease provider is already set");
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
+        }
+        void setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+            std::lock_guard<std::mutex> _(providerMutex_);
+            if (providerSet_) {
+                return;
+            }
+            provider_ = std::move(provider);
+            providerSet_ = true;
         }
         uint32_t addSubscriptionClient(ConnectionLocator const &locator,
             std::variant<SinglecastComponent::NoTopicSelection, std::string, std::regex> const &topic,
@@ -491,5 +596,11 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     }
     std::unordered_map<ConnectionLocator, std::thread::native_handle_type> SinglecastComponent::singlecast_threadHandles() {
         return impl_->threadHandles();
+    }
+    void SinglecastComponent::singlecast_setThreadCpuLease(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLease(std::move(provider));
+    }
+    void SinglecastComponent::singlecast_setThreadCpuLeaseIfUnset(ThreadCpuLeaseProvider provider) {
+        impl_->setThreadCpuLeaseIfUnset(std::move(provider));
     }
 } } } } }

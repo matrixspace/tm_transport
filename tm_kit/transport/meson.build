@@ -1,5 +1,7 @@
 tm_transport_headers = [
       'ConnectionLocator.hpp'
+      , 'ThreadCpuLeaseProvider.hpp'
+      , 'ThreadCpuLeaseProviderInstall.hpp'
       , 'ByteDataHook.hpp'
       , 'BoostUUIDComponent.hpp'
       , 'AbstractIdentityCheckerComponent.hpp'
