@@ -3,7 +3,7 @@
 **任务开始时间：** 2026-11-13  
 **任务结束时间：** 2026-11-13  
 **状态：** 完成  
-**分支：** `fix/aeron-untethered-defaults`（基于 `feature/ipc-thread-affinity` `3eed176`，验证后合并回绑核分支）
+**分支：** `fix/aeron-untethered-defaults`（基于 `feature/ipc-thread-affinity` `3eed176`），commit `8bb9d5c`，已 fast-forward 合并回 `feature/ipc-thread-affinity`，临时分支已删除
 
 ## 背景
 
