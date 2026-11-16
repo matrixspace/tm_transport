@@ -1,0 +1,2094 @@
+{
+  "date": "2026-11-13",
+  "scope": "staged release performance baseline",
+  "full_plan_matrix": false,
+  "note": "Covers the requested staged dimensions only; not the full 1200-config default matrix, no calibrated 50%/90% load and no soak.",
+  "environment": {
+    "uname": [
+      "Linux",
+      "localhost.localdomain",
+      "4.18.0-372.9.1.el8.x86_64",
+      "#1 SMP Tue May 10 14:48:47 UTC 2022",
+      "x86_64",
+      "x86_64"
+    ],
+    "cpu": {
+      "/proc/cpuinfo": "processor\t: 0\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 0\ncpu cores\t: 14\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 1\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 0\ncpu cores\t: 14\napicid\t\t: 32\ninitial apicid\t: 32\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 2\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 6\ncpu cores\t: 14\napicid\t\t: 12\ninitial apicid\t: 12\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 3\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2300.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 6\ncpu cores\t: 14\napicid\t\t: 44\ninitial apicid\t: 44\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 4\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 1\ncpu cores\t: 14\napicid\t\t: 2\ninitial apicid\t: 2\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 5\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 1\ncpu cores\t: 14\napicid\t\t: 34\ninitial apicid\t: 34\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 6\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 5\ncpu cores\t: 14\napicid\t\t: 10\ninitial apicid\t: 10\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 7\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 5\ncpu cores\t: 14\napicid\t\t: 42\ninitial apicid\t: 42\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 8\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 2\ncpu cores\t: 14\napicid\t\t: 4\ninitial apicid\t: 4\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 9\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 2\ncpu cores\t: 14\napicid\t\t: 36\ninitial apicid\t: 36\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 10\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 4\ncpu cores\t: 14\napicid\t\t: 8\ninitial apicid\t: 8\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 11\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 4\ncpu cores\t: 14\napicid\t\t: 40\ninitial apicid\t: 40\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 12\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 3\ncpu cores\t: 14\napicid\t\t: 6\ninitial apicid\t: 6\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 13\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 3\ncpu cores\t: 14\napicid\t\t: 38\ninitial apicid\t: 38\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 14\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 14\ncpu cores\t: 14\napicid\t\t: 28\ninitial apicid\t: 28\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 15\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 14\ncpu cores\t: 14\napicid\t\t: 60\ninitial apicid\t: 60\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 16\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 811.522\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 8\ncpu cores\t: 14\napicid\t\t: 16\ninitial apicid\t: 16\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 17\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 8\ncpu cores\t: 14\napicid\t\t: 48\ninitial apicid\t: 48\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 18\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 13\ncpu cores\t: 14\napicid\t\t: 26\ninitial apicid\t: 26\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 19\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 13\ncpu cores\t: 14\napicid\t\t: 58\ninitial apicid\t: 58\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 20\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 9\ncpu cores\t: 14\napicid\t\t: 18\ninitial apicid\t: 18\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 21\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 9\ncpu cores\t: 14\napicid\t\t: 50\ninitial apicid\t: 50\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 22\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 12\ncpu cores\t: 14\napicid\t\t: 24\ninitial apicid\t: 24\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 23\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 12\ncpu cores\t: 14\napicid\t\t: 56\ninitial apicid\t: 56\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 24\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 10\ncpu cores\t: 14\napicid\t\t: 20\ninitial apicid\t: 20\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 25\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 10\ncpu cores\t: 14\napicid\t\t: 52\ninitial apicid\t: 52\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 26\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 11\ncpu cores\t: 14\napicid\t\t: 22\ninitial apicid\t: 22\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 27\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 11\ncpu cores\t: 14\napicid\t\t: 54\ninitial apicid\t: 54\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 28\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 0\ncpu cores\t: 14\napicid\t\t: 1\ninitial apicid\t: 1\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 29\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 0\ncpu cores\t: 14\napicid\t\t: 33\ninitial apicid\t: 33\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 30\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 6\ncpu cores\t: 14\napicid\t\t: 13\ninitial apicid\t: 13\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 31\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 6\ncpu cores\t: 14\napicid\t\t: 45\ninitial apicid\t: 45\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 32\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 1\ncpu cores\t: 14\napicid\t\t: 3\ninitial apicid\t: 3\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 33\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 1\ncpu cores\t: 14\napicid\t\t: 35\ninitial apicid\t: 35\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 34\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 5\ncpu cores\t: 14\napicid\t\t: 11\ninitial apicid\t: 11\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 35\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 5\ncpu cores\t: 14\napicid\t\t: 43\ninitial apicid\t: 43\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 36\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 2\ncpu cores\t: 14\napicid\t\t: 5\ninitial apicid\t: 5\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 37\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 2\ncpu cores\t: 14\napicid\t\t: 37\ninitial apicid\t: 37\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 38\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 4\ncpu cores\t: 14\napicid\t\t: 9\ninitial apicid\t: 9\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 39\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 4\ncpu cores\t: 14\napicid\t\t: 41\ninitial apicid\t: 41\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 40\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 3\ncpu cores\t: 14\napicid\t\t: 7\ninitial apicid\t: 7\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 41\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 3\ncpu cores\t: 14\napicid\t\t: 39\ninitial apicid\t: 39\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 42\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 14\ncpu cores\t: 14\napicid\t\t: 29\ninitial apicid\t: 29\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 43\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 14\ncpu cores\t: 14\napicid\t\t: 61\ninitial apicid\t: 61\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 44\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 8\ncpu cores\t: 14\napicid\t\t: 17\ninitial apicid\t: 17\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 45\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 8\ncpu cores\t: 14\napicid\t\t: 49\ninitial apicid\t: 49\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 46\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 13\ncpu cores\t: 14\napicid\t\t: 27\ninitial apicid\t: 27\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 47\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 13\ncpu cores\t: 14\napicid\t\t: 59\ninitial apicid\t: 59\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 48\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 9\ncpu cores\t: 14\napicid\t\t: 19\ninitial apicid\t: 19\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 49\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 9\ncpu cores\t: 14\napicid\t\t: 51\ninitial apicid\t: 51\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 50\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 12\ncpu cores\t: 14\napicid\t\t: 25\ninitial apicid\t: 25\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 51\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 12\ncpu cores\t: 14\napicid\t\t: 57\ninitial apicid\t: 57\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 52\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 10\ncpu cores\t: 14\napicid\t\t: 21\ninitial apicid\t: 21\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 53\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 10\ncpu cores\t: 14\napicid\t\t: 53\ninitial apicid\t: 53\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 54\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 0\nsiblings\t: 28\ncore id\t\t: 11\ncpu cores\t: 14\napicid\t\t: 23\ninitial apicid\t: 23\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4000.00\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\nprocessor\t: 55\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz\nstepping\t: 4\nmicrocode\t: 0x2006c0a\ncpu MHz\t\t: 2000.000\ncache size\t: 19712 KB\nphysical id\t: 1\nsiblings\t: 28\ncore id\t\t: 11\ncpu cores\t: 14\napicid\t\t: 55\ninitial apicid\t: 55\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single pti ssbd mba ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit\nbogomips\t: 4005.75\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:\n\n",
+      "/sys/devices/system/cpu/online": "0-55\n",
+      "/sys/devices/system/node/online": "0-1\n",
+      "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor": {
+        "unavailable": "[Errno 2] No such file or directory: '/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor'"
+      },
+      "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq": {
+        "unavailable": "[Errno 2] No such file or directory: '/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq'"
+      },
+      "affinity": [
+        16,
+        18,
+        20,
+        22,
+        24,
+        26,
+        28,
+        30,
+        32,
+        34
+      ]
+    },
+    "commit": "727f88d20864dbc6cf42bb02211404492fc94b1b",
+    "dirty_status": "",
+    "binary": "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_resource_system_test",
+    "binary_sha256": "929009fdbc779d8b4681f0526f02778dbd7e63fddb18f949c10876a303eda91e",
+    "binary_environment": {
+      "kind": "environment",
+      "build_type": "release",
+      "compiler": "15.2.1 20260123 (Red Hat 15.2.1-7)",
+      "fault_probes": false
+    },
+    "batches": [
+      {
+        "label": "stage-a",
+        "path": "/tmp/shm-perf-stage-a",
+        "shortened": false,
+        "full_dimensions": false
+      },
+      {
+        "label": "stage-b",
+        "path": "/tmp/shm-perf-stage-b",
+        "shortened": false,
+        "full_dimensions": false
+      },
+      {
+        "label": "stage-c",
+        "path": "/tmp/shm-perf-stage-c",
+        "shortened": false,
+        "full_dimensions": false
+      }
+    ]
+  },
+  "configs": [
+    {
+      "readers": 0,
+      "payload": 256,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "futex",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 111.8128,
+      "publish_mean_ns_stdev": 7.421976863343081,
+      "publish_mean_ns_min": 102.605,
+      "publish_mean_ns_max": 123.343,
+      "publish_p50_ns_avg": 107.4,
+      "publish_p99_ns_avg": 186.4,
+      "publish_p99_ns_max": 248,
+      "publish_max_ns_max": 32064,
+      "process_cpu_percent_avg": 99.76786,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          4856,
+          4860
+        ],
+        "pss_kib": [
+          1983,
+          2026
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          1,
+          1
+        ],
+        "maps": [
+          42,
+          42
+        ],
+        "segment_maps": [
+          1,
+          1
+        ]
+      },
+      "reader_metrics": []
+    },
+    {
+      "readers": 0,
+      "payload": 256,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "spin",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 96.02002,
+      "publish_mean_ns_stdev": 4.893187241216096,
+      "publish_mean_ns_min": 89.2412,
+      "publish_mean_ns_max": 100.834,
+      "publish_p50_ns_avg": 94.6,
+      "publish_p99_ns_avg": 160.4,
+      "publish_p99_ns_max": 210,
+      "publish_max_ns_max": 810,
+      "process_cpu_percent_avg": 99.7721,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          4876,
+          4888
+        ],
+        "pss_kib": [
+          1989,
+          2025
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          1,
+          1
+        ],
+        "maps": [
+          42,
+          42
+        ],
+        "segment_maps": [
+          1,
+          1
+        ]
+      },
+      "reader_metrics": []
+    },
+    {
+      "readers": 1,
+      "payload": 64,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "futex",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 2301.692,
+      "publish_mean_ns_stdev": 41.022667587566644,
+      "publish_mean_ns_min": 2256.78,
+      "publish_mean_ns_max": 2359.41,
+      "publish_p50_ns_avg": 2316.8,
+      "publish_p99_ns_avg": 2521.6,
+      "publish_p99_ns_max": 2592,
+      "publish_max_ns_max": 11928,
+      "process_cpu_percent_avg": 166.6926,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          4116,
+          4464
+        ],
+        "pss_kib": [
+          1309,
+          1356
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 4672.0,
+          "latency_p90_ns_avg": 4979.2,
+          "latency_p99_ns_avg": 5132.8,
+          "latency_p99_ns_max": 5824,
+          "latency_max_ns_max": 71864,
+          "freshness_p99_ns_avg": 5286.4,
+          "freshness_max_ns_max": 71998
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 64,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "spin",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 92.60664,
+      "publish_mean_ns_stdev": 4.521495478091295,
+      "publish_mean_ns_min": 86.5611,
+      "publish_mean_ns_max": 99.3409,
+      "publish_p50_ns_avg": 92.8,
+      "publish_p99_ns_avg": 135.4,
+      "publish_p99_ns_max": 142,
+      "publish_max_ns_max": 538,
+      "process_cpu_percent_avg": 199.59380000000002,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          3984,
+          4508
+        ],
+        "pss_kib": [
+          1306,
+          1361
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 348.8,
+          "latency_p90_ns_avg": 407.2,
+          "latency_p99_ns_avg": 504.8,
+          "latency_p99_ns_max": 520,
+          "latency_max_ns_max": 14242,
+          "freshness_p99_ns_avg": 1248.0,
+          "freshness_max_ns_max": 16475
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 256,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "futex",
+      "rounds": 15,
+      "status_counts": {
+        "PASS": 15
+      },
+      "publish_mean_ns_avg": 2352.674,
+      "publish_mean_ns_stdev": 115.15977346278515,
+      "publish_mean_ns_min": 2208.79,
+      "publish_mean_ns_max": 2671.41,
+      "publish_p50_ns_avg": 2353.0666666666666,
+      "publish_p99_ns_avg": 2717.866666666667,
+      "publish_p99_ns_max": 3200,
+      "publish_max_ns_max": 13297,
+      "process_cpu_percent_avg": 170.439,
+      "offered_total": 4500000,
+      "accepted_total": 4500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          6184,
+          6016
+        ],
+        "pss_kib": [
+          2064,
+          2115
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 4500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 4868.266666666666,
+          "latency_p90_ns_avg": 5235.2,
+          "latency_p99_ns_avg": 5640.533333333334,
+          "latency_p99_ns_max": 7936,
+          "latency_max_ns_max": 182336,
+          "freshness_p99_ns_avg": 5811.2,
+          "freshness_max_ns_max": 182468
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 256,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "spin",
+      "rounds": 15,
+      "status_counts": {
+        "PASS": 15
+      },
+      "publish_mean_ns_avg": 104.97482,
+      "publish_mean_ns_stdev": 7.9455382174064635,
+      "publish_mean_ns_min": 94.4535,
+      "publish_mean_ns_max": 123.29,
+      "publish_p50_ns_avg": 99.46666666666667,
+      "publish_p99_ns_avg": 252.13333333333333,
+      "publish_p99_ns_max": 284,
+      "publish_max_ns_max": 7040,
+      "process_cpu_percent_avg": 199.57833333333335,
+      "offered_total": 4500000,
+      "accepted_total": 4500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          6024,
+          6060
+        ],
+        "pss_kib": [
+          2055,
+          2121
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 4500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 462.4,
+          "latency_p90_ns_avg": 577.0666666666667,
+          "latency_p99_ns_avg": 901.8666666666667,
+          "latency_p99_ns_max": 4416,
+          "latency_max_ns_max": 43040,
+          "freshness_p99_ns_avg": 1038.9333333333334,
+          "freshness_max_ns_max": 43183
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 256,
+      "layout": "inline",
+      "read": "spec",
+      "wait": "futex",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 244.64139999999998,
+      "publish_mean_ns_stdev": 15.859701215344503,
+      "publish_mean_ns_min": 226.179,
+      "publish_mean_ns_max": 268.861,
+      "publish_p50_ns_avg": 248.0,
+      "publish_p99_ns_avg": 512.0,
+      "publish_p99_ns_max": 544,
+      "publish_max_ns_max": 4342,
+      "process_cpu_percent_avg": 199.59980000000002,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          5928,
+          6060
+        ],
+        "pss_kib": [
+          2076,
+          2121
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 415.2,
+          "latency_p90_ns_avg": 556.8,
+          "latency_p99_ns_avg": 723.2,
+          "latency_p99_ns_max": 840,
+          "latency_max_ns_max": 16124,
+          "freshness_p99_ns_avg": 849.6,
+          "freshness_max_ns_max": 16260
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 256,
+      "layout": "inline",
+      "read": "spec",
+      "wait": "spin",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 95.72056,
+      "publish_mean_ns_stdev": 5.570726265613846,
+      "publish_mean_ns_min": 89.0021,
+      "publish_mean_ns_max": 104.439,
+      "publish_p50_ns_avg": 90.8,
+      "publish_p99_ns_avg": 250.0,
+      "publish_p99_ns_max": 264,
+      "publish_max_ns_max": 725,
+      "process_cpu_percent_avg": 199.6018,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          6012,
+          6140
+        ],
+        "pss_kib": [
+          2076,
+          2121
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 399.2,
+          "latency_p90_ns_avg": 563.2,
+          "latency_p99_ns_avg": 708.8,
+          "latency_p99_ns_max": 728,
+          "latency_max_ns_max": 17502,
+          "freshness_p99_ns_avg": 846.4,
+          "freshness_max_ns_max": 17649
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 256,
+      "layout": "inline-premark",
+      "read": "classic",
+      "wait": "futex",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 2441.326,
+      "publish_mean_ns_stdev": 283.76882666001205,
+      "publish_mean_ns_min": 2256,
+      "publish_mean_ns_max": 3004.77,
+      "publish_p50_ns_avg": 2419.2,
+      "publish_p99_ns_avg": 3673.6,
+      "publish_p99_ns_max": 7808,
+      "publish_max_ns_max": 30597,
+      "process_cpu_percent_avg": 140.3674,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          6024,
+          6568
+        ],
+        "pss_kib": [
+          2087,
+          2124
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 4812.8,
+          "latency_p90_ns_avg": 5235.2,
+          "latency_p99_ns_avg": 6144.0,
+          "latency_p99_ns_max": 9472,
+          "latency_max_ns_max": 32663,
+          "freshness_p99_ns_avg": 6310.4,
+          "freshness_max_ns_max": 32858
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 256,
+      "layout": "inline-premark",
+      "read": "classic",
+      "wait": "spin",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 108.09916000000001,
+      "publish_mean_ns_stdev": 9.535439503368476,
+      "publish_mean_ns_min": 95.7605,
+      "publish_mean_ns_max": 119.167,
+      "publish_p50_ns_avg": 107.2,
+      "publish_p99_ns_avg": 169.2,
+      "publish_p99_ns_max": 178,
+      "publish_max_ns_max": 672,
+      "process_cpu_percent_avg": 199.589,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          6056,
+          6140
+        ],
+        "pss_kib": [
+          2085,
+          2121
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 404.0,
+          "latency_p90_ns_avg": 465.6,
+          "latency_p99_ns_avg": 584.0,
+          "latency_p99_ns_max": 600,
+          "latency_max_ns_max": 16304,
+          "freshness_p99_ns_avg": 718.4,
+          "freshness_max_ns_max": 16429
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 256,
+      "layout": "inline-premark",
+      "read": "spec",
+      "wait": "futex",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 203.5178,
+      "publish_mean_ns_stdev": 6.143038805021506,
+      "publish_mean_ns_min": 195.451,
+      "publish_mean_ns_max": 212.145,
+      "publish_p50_ns_avg": 167.2,
+      "publish_p99_ns_avg": 517.6,
+      "publish_p99_ns_max": 544,
+      "publish_max_ns_max": 4855,
+      "process_cpu_percent_avg": 199.59859999999998,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          6184,
+          6568
+        ],
+        "pss_kib": [
+          2088,
+          2124
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 371.2,
+          "latency_p90_ns_avg": 497.6,
+          "latency_p99_ns_avg": 680.0,
+          "latency_p99_ns_max": 712,
+          "latency_max_ns_max": 17194,
+          "freshness_p99_ns_avg": 1547.2,
+          "freshness_max_ns_max": 17321
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 256,
+      "layout": "inline-premark",
+      "read": "spec",
+      "wait": "spin",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 103.97666,
+      "publish_mean_ns_stdev": 12.269398640292032,
+      "publish_mean_ns_min": 95.0525,
+      "publish_mean_ns_max": 128.023,
+      "publish_p50_ns_avg": 99.0,
+      "publish_p99_ns_avg": 212.4,
+      "publish_p99_ns_max": 260,
+      "publish_max_ns_max": 7788,
+      "process_cpu_percent_avg": 199.59980000000002,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          6184,
+          6056
+        ],
+        "pss_kib": [
+          2092,
+          2119
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 380.8,
+          "latency_p90_ns_avg": 570.4,
+          "latency_p99_ns_avg": 1396.8,
+          "latency_p99_ns_max": 4224,
+          "latency_max_ns_max": 40639,
+          "freshness_p99_ns_avg": 1526.4,
+          "freshness_max_ns_max": 40767
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 256,
+      "layout": "split",
+      "read": "classic",
+      "wait": "futex",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 2438.248,
+      "publish_mean_ns_stdev": 158.85135182301718,
+      "publish_mean_ns_min": 2303.12,
+      "publish_mean_ns_max": 2732.87,
+      "publish_p50_ns_avg": 2432.0,
+      "publish_p99_ns_avg": 2860.8,
+      "publish_p99_ns_max": 3008,
+      "publish_max_ns_max": 13603,
+      "process_cpu_percent_avg": 158.67739999999998,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          6648,
+          6516
+        ],
+        "pss_kib": [
+          2349,
+          2364
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 4851.2,
+          "latency_p90_ns_avg": 5465.6,
+          "latency_p99_ns_avg": 6131.2,
+          "latency_p99_ns_max": 8320,
+          "latency_max_ns_max": 81930,
+          "freshness_p99_ns_avg": 6336.0,
+          "freshness_max_ns_max": 82124
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 256,
+      "layout": "split",
+      "read": "classic",
+      "wait": "spin",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 100.62832,
+      "publish_mean_ns_stdev": 5.5673430680711595,
+      "publish_mean_ns_min": 92.8937,
+      "publish_mean_ns_max": 107.252,
+      "publish_p50_ns_avg": 96.0,
+      "publish_p99_ns_avg": 209.6,
+      "publish_p99_ns_max": 242,
+      "publish_max_ns_max": 702,
+      "process_cpu_percent_avg": 199.5922,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          6704,
+          6660
+        ],
+        "pss_kib": [
+          2344,
+          2371
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 446.4,
+          "latency_p90_ns_avg": 548.8,
+          "latency_p99_ns_avg": 636.8,
+          "latency_p99_ns_max": 656,
+          "latency_max_ns_max": 27639,
+          "freshness_p99_ns_avg": 819.2,
+          "freshness_max_ns_max": 27752
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 256,
+      "layout": "split",
+      "read": "spec",
+      "wait": "futex",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 246.92620000000002,
+      "publish_mean_ns_stdev": 7.958489112890715,
+      "publish_mean_ns_min": 232.558,
+      "publish_mean_ns_max": 255.422,
+      "publish_p50_ns_avg": 206.0,
+      "publish_p99_ns_avg": 569.6,
+      "publish_p99_ns_max": 584,
+      "publish_max_ns_max": 9669,
+      "process_cpu_percent_avg": 199.598,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          6644,
+          6468
+        ],
+        "pss_kib": [
+          2344,
+          2374
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 396.8,
+          "latency_p90_ns_avg": 620.8,
+          "latency_p99_ns_avg": 769.6,
+          "latency_p99_ns_max": 848,
+          "latency_max_ns_max": 15539,
+          "freshness_p99_ns_avg": 902.4,
+          "freshness_max_ns_max": 15677
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 256,
+      "layout": "split",
+      "read": "spec",
+      "wait": "spin",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 102.88312,
+      "publish_mean_ns_stdev": 7.39744986719072,
+      "publish_mean_ns_min": 95.1206,
+      "publish_mean_ns_max": 116.295,
+      "publish_p50_ns_avg": 95.8,
+      "publish_p99_ns_avg": 278.4,
+      "publish_p99_ns_max": 284,
+      "publish_max_ns_max": 2596,
+      "process_cpu_percent_avg": 199.5994,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          6716,
+          6660
+        ],
+        "pss_kib": [
+          2353,
+          2371
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 407.2,
+          "latency_p90_ns_avg": 628.8,
+          "latency_p99_ns_avg": 764.8,
+          "latency_p99_ns_max": 816,
+          "latency_max_ns_max": 46012,
+          "freshness_p99_ns_avg": 894.4,
+          "freshness_max_ns_max": 46123
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 1024,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "futex",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 2373.85,
+      "publish_mean_ns_stdev": 54.18877300696152,
+      "publish_mean_ns_min": 2310.36,
+      "publish_mean_ns_max": 2444.94,
+      "publish_p50_ns_avg": 2368.0,
+      "publish_p99_ns_avg": 2777.6,
+      "publish_p99_ns_max": 3168,
+      "publish_max_ns_max": 18401,
+      "process_cpu_percent_avg": 165.6528,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          12188,
+          12296
+        ],
+        "pss_kib": [
+          5147,
+          5195
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 4915.2,
+          "latency_p90_ns_avg": 5171.2,
+          "latency_p99_ns_avg": 5414.4,
+          "latency_p99_ns_max": 5760,
+          "latency_max_ns_max": 30792,
+          "freshness_p99_ns_avg": 6297.6,
+          "freshness_max_ns_max": 30994
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 1024,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "spin",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 144.32999999999998,
+      "publish_mean_ns_stdev": 3.646189133876629,
+      "publish_mean_ns_min": 140.617,
+      "publish_mean_ns_max": 150.809,
+      "publish_p50_ns_avg": 134.0,
+      "publish_p99_ns_avg": 315.2,
+      "publish_p99_ns_max": 328,
+      "publish_max_ns_max": 5574,
+      "process_cpu_percent_avg": 199.58980000000003,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          12184,
+          12264
+        ],
+        "pss_kib": [
+          5141,
+          5185
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 740.8,
+          "latency_p90_ns_avg": 867.2,
+          "latency_p99_ns_avg": 1012.8,
+          "latency_p99_ns_max": 1040,
+          "latency_max_ns_max": 29955,
+          "freshness_p99_ns_avg": 1158.4,
+          "freshness_max_ns_max": 30087
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 4096,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "futex",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 2836.214,
+      "publish_mean_ns_stdev": 247.8041148649473,
+      "publish_mean_ns_min": 2615.4,
+      "publish_mean_ns_max": 3209.46,
+      "publish_p50_ns_avg": 2860.8,
+      "publish_p99_ns_avg": 3385.6,
+      "publish_p99_ns_max": 3776,
+      "publish_max_ns_max": 11805,
+      "process_cpu_percent_avg": 166.3792,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          37084,
+          37136
+        ],
+        "pss_kib": [
+          17432,
+          17484
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 6054.4,
+          "latency_p90_ns_avg": 6540.8,
+          "latency_p99_ns_avg": 7321.6,
+          "latency_p99_ns_max": 9600,
+          "latency_max_ns_max": 31877,
+          "freshness_p99_ns_avg": 7705.6,
+          "freshness_max_ns_max": 32277
+        }
+      ]
+    },
+    {
+      "readers": 1,
+      "payload": 4096,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "spin",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 656.5716,
+      "publish_mean_ns_stdev": 12.8992609803818,
+      "publish_mean_ns_min": 646.912,
+      "publish_mean_ns_max": 681.623,
+      "publish_p50_ns_avg": 638.4,
+      "publish_p99_ns_avg": 1123.2,
+      "publish_p99_ns_max": 1152,
+      "publish_max_ns_max": 10861,
+      "process_cpu_percent_avg": 199.5894,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          37168,
+          37084
+        ],
+        "pss_kib": [
+          17445,
+          17468
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          2,
+          2
+        ],
+        "maps": [
+          47,
+          47
+        ],
+        "segment_maps": [
+          2,
+          2
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 1667.2,
+          "latency_p90_ns_avg": 1884.8,
+          "latency_p99_ns_avg": 2163.2,
+          "latency_p99_ns_max": 2208,
+          "latency_max_ns_max": 60125,
+          "freshness_p99_ns_avg": 2464.0,
+          "freshness_max_ns_max": 60417
+        }
+      ]
+    },
+    {
+      "readers": 2,
+      "payload": 256,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "futex",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 3217.8660000000004,
+      "publish_mean_ns_stdev": 32.695857596949466,
+      "publish_mean_ns_min": 3184.53,
+      "publish_mean_ns_max": 3258.69,
+      "publish_p50_ns_avg": 3238.4,
+      "publish_p99_ns_avg": 3552.0,
+      "publish_p99_ns_max": 3712,
+      "publish_max_ns_max": 35727,
+      "process_cpu_percent_avg": 244.0538,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          5132,
+          5124
+        ],
+        "pss_kib": [
+          2141,
+          2175
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          3,
+          3
+        ],
+        "maps": [
+          52,
+          52
+        ],
+        "segment_maps": [
+          3,
+          3
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 5196.8,
+          "latency_p90_ns_avg": 5747.2,
+          "latency_p99_ns_avg": 6054.4,
+          "latency_p99_ns_max": 6912,
+          "latency_max_ns_max": 37547,
+          "freshness_p99_ns_avg": 6182.4,
+          "freshness_max_ns_max": 37697
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 5606.4,
+          "latency_p90_ns_avg": 6028.8,
+          "latency_p99_ns_avg": 6323.2,
+          "latency_p99_ns_max": 7040,
+          "latency_max_ns_max": 176076,
+          "freshness_p99_ns_avg": 6464.0,
+          "freshness_max_ns_max": 176229
+        }
+      ]
+    },
+    {
+      "readers": 2,
+      "payload": 256,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "spin",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 101.72604,
+      "publish_mean_ns_stdev": 3.8435204599949744,
+      "publish_mean_ns_min": 95.4702,
+      "publish_mean_ns_max": 107.529,
+      "publish_p50_ns_avg": 94.2,
+      "publish_p99_ns_avg": 293.6,
+      "publish_p99_ns_max": 308,
+      "publish_max_ns_max": 6651,
+      "process_cpu_percent_avg": 299.3256,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          5180,
+          5100
+        ],
+        "pss_kib": [
+          2143,
+          2188
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          3,
+          3
+        ],
+        "maps": [
+          52,
+          52
+        ],
+        "segment_maps": [
+          3,
+          3
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 571.2,
+          "latency_p90_ns_avg": 688.0,
+          "latency_p99_ns_avg": 777.6,
+          "latency_p99_ns_max": 808,
+          "latency_max_ns_max": 12062,
+          "freshness_p99_ns_avg": 908.8,
+          "freshness_max_ns_max": 12187
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 569.6,
+          "latency_p90_ns_avg": 686.4,
+          "latency_p99_ns_avg": 776.0,
+          "latency_p99_ns_max": 808,
+          "latency_max_ns_max": 19393,
+          "freshness_p99_ns_avg": 907.2,
+          "freshness_max_ns_max": 19537
+        }
+      ]
+    },
+    {
+      "readers": 4,
+      "payload": 256,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "futex",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 5068.264,
+      "publish_mean_ns_stdev": 261.43135187654894,
+      "publish_mean_ns_min": 4891.06,
+      "publish_mean_ns_max": 5586.33,
+      "publish_p50_ns_avg": 5158.4,
+      "publish_p99_ns_avg": 5542.4,
+      "publish_p99_ns_max": 6336,
+      "publish_max_ns_max": 29648,
+      "process_cpu_percent_avg": 377.91040000000004,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          5044,
+          5040
+        ],
+        "pss_kib": [
+          2317,
+          2347
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          5,
+          5
+        ],
+        "maps": [
+          62,
+          62
+        ],
+        "segment_maps": [
+          5,
+          5
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 6617.6,
+          "latency_p90_ns_avg": 7718.4,
+          "latency_p99_ns_avg": 8192.0,
+          "latency_p99_ns_max": 9344,
+          "latency_max_ns_max": 3561152,
+          "freshness_p99_ns_avg": 8332.8,
+          "freshness_max_ns_max": 3561298
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 6233.6,
+          "latency_p90_ns_avg": 7411.2,
+          "latency_p99_ns_avg": 7974.4,
+          "latency_p99_ns_max": 8448,
+          "latency_max_ns_max": 89953,
+          "freshness_p99_ns_avg": 8115.2,
+          "freshness_max_ns_max": 90112
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 6796.8,
+          "latency_p90_ns_avg": 7961.6,
+          "latency_p99_ns_avg": 8294.4,
+          "latency_p99_ns_max": 9344,
+          "latency_max_ns_max": 32137,
+          "freshness_p99_ns_avg": 8460.8,
+          "freshness_max_ns_max": 47353
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 6131.2,
+          "latency_p90_ns_avg": 7078.4,
+          "latency_p99_ns_avg": 7488.0,
+          "latency_p99_ns_max": 8320,
+          "latency_max_ns_max": 42491,
+          "freshness_p99_ns_avg": 7641.6,
+          "freshness_max_ns_max": 45875
+        }
+      ]
+    },
+    {
+      "readers": 4,
+      "payload": 256,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "spin",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 110.6866,
+      "publish_mean_ns_stdev": 5.255245706910383,
+      "publish_mean_ns_min": 105.467,
+      "publish_mean_ns_max": 120.188,
+      "publish_p50_ns_avg": 101.6,
+      "publish_p99_ns_avg": 342.4,
+      "publish_p99_ns_max": 376,
+      "publish_max_ns_max": 8414,
+      "process_cpu_percent_avg": 498.85959999999994,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          5172,
+          5164
+        ],
+        "pss_kib": [
+          2319,
+          2354
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          5,
+          5
+        ],
+        "maps": [
+          62,
+          62
+        ],
+        "segment_maps": [
+          5,
+          5
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 638.4,
+          "latency_p90_ns_avg": 779.2,
+          "latency_p99_ns_avg": 891.2,
+          "latency_p99_ns_max": 904,
+          "latency_max_ns_max": 20329,
+          "freshness_p99_ns_avg": 1027.2,
+          "freshness_max_ns_max": 20476
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 638.4,
+          "latency_p90_ns_avg": 779.2,
+          "latency_p99_ns_avg": 892.8,
+          "latency_p99_ns_max": 912,
+          "latency_max_ns_max": 36025,
+          "freshness_p99_ns_avg": 1027.2,
+          "freshness_max_ns_max": 36122
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 636.8,
+          "latency_p90_ns_avg": 777.6,
+          "latency_p99_ns_avg": 889.6,
+          "latency_p99_ns_max": 904,
+          "latency_max_ns_max": 23186,
+          "freshness_p99_ns_avg": 1025.6,
+          "freshness_max_ns_max": 23301
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 636.8,
+          "latency_p90_ns_avg": 777.6,
+          "latency_p99_ns_avg": 886.4,
+          "latency_p99_ns_max": 904,
+          "latency_max_ns_max": 30540,
+          "freshness_p99_ns_avg": 1022.4,
+          "freshness_max_ns_max": 30670
+        }
+      ]
+    },
+    {
+      "readers": 8,
+      "payload": 256,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "futex",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 8293.498000000001,
+      "publish_mean_ns_stdev": 327.068559687415,
+      "publish_mean_ns_min": 7955.82,
+      "publish_mean_ns_max": 8892.94,
+      "publish_p50_ns_avg": 8384.0,
+      "publish_p99_ns_avg": 9369.6,
+      "publish_p99_ns_max": 10496,
+      "publish_max_ns_max": 47085,
+      "process_cpu_percent_avg": 657.8,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          5360,
+          5692
+        ],
+        "pss_kib": [
+          2620,
+          2670
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          9,
+          9
+        ],
+        "maps": [
+          82,
+          82
+        ],
+        "segment_maps": [
+          9,
+          9
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 7078.4,
+          "latency_p90_ns_avg": 9881.6,
+          "latency_p99_ns_avg": 10828.8,
+          "latency_p99_ns_max": 12928,
+          "latency_max_ns_max": 3934502,
+          "freshness_p99_ns_avg": 10982.4,
+          "freshness_max_ns_max": 3963979
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 7782.4,
+          "latency_p90_ns_avg": 9830.4,
+          "latency_p99_ns_avg": 11212.8,
+          "latency_p99_ns_max": 11648,
+          "latency_max_ns_max": 195040,
+          "freshness_p99_ns_avg": 11366.4,
+          "freshness_max_ns_max": 195195
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 7923.2,
+          "latency_p90_ns_avg": 10444.8,
+          "latency_p99_ns_avg": 11417.6,
+          "latency_p99_ns_max": 12928,
+          "latency_max_ns_max": 128528,
+          "freshness_p99_ns_avg": 11571.2,
+          "freshness_max_ns_max": 128668
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 7705.6,
+          "latency_p90_ns_avg": 9523.2,
+          "latency_p99_ns_avg": 10777.6,
+          "latency_p99_ns_max": 11776,
+          "latency_max_ns_max": 3927664,
+          "freshness_p99_ns_avg": 10956.8,
+          "freshness_max_ns_max": 3959976
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 7488.0,
+          "latency_p90_ns_avg": 10496.0,
+          "latency_p99_ns_avg": 11673.6,
+          "latency_p99_ns_max": 12032,
+          "latency_max_ns_max": 298344,
+          "freshness_p99_ns_avg": 11852.8,
+          "freshness_max_ns_max": 298474
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 8281.6,
+          "latency_p90_ns_avg": 10700.8,
+          "latency_p99_ns_avg": 11443.2,
+          "latency_p99_ns_max": 12672,
+          "latency_max_ns_max": 277316,
+          "freshness_p99_ns_avg": 11622.4,
+          "freshness_max_ns_max": 277466
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 8230.4,
+          "latency_p90_ns_avg": 10240.0,
+          "latency_p99_ns_avg": 11264.0,
+          "latency_p99_ns_max": 11648,
+          "latency_max_ns_max": 398765,
+          "freshness_p99_ns_avg": 11392.0,
+          "freshness_max_ns_max": 398915
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 7961.6,
+          "latency_p90_ns_avg": 10163.2,
+          "latency_p99_ns_avg": 11212.8,
+          "latency_p99_ns_max": 12928,
+          "latency_max_ns_max": 195446,
+          "freshness_p99_ns_avg": 11366.4,
+          "freshness_max_ns_max": 195586
+        }
+      ]
+    },
+    {
+      "readers": 8,
+      "payload": 256,
+      "layout": "inline",
+      "read": "classic",
+      "wait": "spin",
+      "rounds": 5,
+      "status_counts": {
+        "PASS": 5
+      },
+      "publish_mean_ns_avg": 109.446,
+      "publish_mean_ns_stdev": 12.036514561948572,
+      "publish_mean_ns_min": 96.948,
+      "publish_mean_ns_max": 132.036,
+      "publish_p50_ns_avg": 99.2,
+      "publish_p99_ns_avg": 377.6,
+      "publish_p99_ns_max": 388,
+      "publish_max_ns_max": 8479,
+      "process_cpu_percent_avg": 897.7062,
+      "offered_total": 1500000,
+      "accepted_total": 1500000,
+      "rejected_total": 0,
+      "resource": {
+        "rss_kib": [
+          5404,
+          5768
+        ],
+        "pss_kib": [
+          2655,
+          2685
+        ],
+        "fd": [
+          5,
+          5
+        ],
+        "threads": [
+          9,
+          9
+        ],
+        "maps": [
+          82,
+          82
+        ],
+        "segment_maps": [
+          9,
+          9
+        ]
+      },
+      "reader_metrics": [
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 753.6,
+          "latency_p90_ns_avg": 921.6,
+          "latency_p99_ns_avg": 1132.8,
+          "latency_p99_ns_max": 1376,
+          "latency_max_ns_max": 36916,
+          "freshness_p99_ns_avg": 1280.0,
+          "freshness_max_ns_max": 164245
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 752.0,
+          "latency_p90_ns_avg": 916.8,
+          "latency_p99_ns_avg": 1078.4,
+          "latency_p99_ns_max": 1104,
+          "latency_max_ns_max": 208662,
+          "freshness_p99_ns_avg": 1209.6,
+          "freshness_max_ns_max": 222790
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 753.6,
+          "latency_p90_ns_avg": 920.0,
+          "latency_p99_ns_avg": 1078.4,
+          "latency_p99_ns_max": 1104,
+          "latency_max_ns_max": 30918,
+          "freshness_p99_ns_avg": 1209.6,
+          "freshness_max_ns_max": 164217
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 750.4,
+          "latency_p90_ns_avg": 915.2,
+          "latency_p99_ns_avg": 1075.2,
+          "latency_p99_ns_max": 1104,
+          "latency_max_ns_max": 15918,
+          "freshness_p99_ns_avg": 1200.0,
+          "freshness_max_ns_max": 164446
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 756.8,
+          "latency_p90_ns_avg": 929.6,
+          "latency_p99_ns_avg": 1084.8,
+          "latency_p99_ns_max": 1120,
+          "latency_max_ns_max": 10424,
+          "freshness_p99_ns_avg": 1219.2,
+          "freshness_max_ns_max": 164195
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 752.0,
+          "latency_p90_ns_avg": 918.4,
+          "latency_p99_ns_avg": 1078.4,
+          "latency_p99_ns_max": 1104,
+          "latency_max_ns_max": 61901,
+          "freshness_p99_ns_avg": 1206.4,
+          "freshness_max_ns_max": 225395
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 753.6,
+          "latency_p90_ns_avg": 921.6,
+          "latency_p99_ns_avg": 1084.8,
+          "latency_p99_ns_max": 1104,
+          "latency_max_ns_max": 98814,
+          "freshness_p99_ns_avg": 1209.6,
+          "freshness_max_ns_max": 262308
+        },
+        {
+          "received_total": 1500000,
+          "lost_total": 0,
+          "bad_total": 0,
+          "order_errors_total": 0,
+          "loss_rate": 0.0,
+          "latency_p50_ns_avg": 752.0,
+          "latency_p90_ns_avg": 916.8,
+          "latency_p99_ns_avg": 1078.4,
+          "latency_p99_ns_max": 1104,
+          "latency_max_ns_max": 226931,
+          "freshness_p99_ns_avg": 1209.6,
+          "freshness_max_ns_max": 227159
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "No calibrated 50%/90% no-loss load; the offered rate is a selected rate.",
+    "Percentiles are the mean of per-round percentiles, not pooled samples.",
+    "p99.9 is not reported; 300,000 samples per reader per round.",
+    "Affinity was pinned, but the host was not reserved exclusively.",
+    "Frequency governor/current frequency sysfs entries are unavailable.",
+    "Slow-reader writer cost and futex idle CPU come from shm_seqlock_test, not this file.",
+    "2h/24h soak, saturation and graph/MultiTransport performance are separate runs."
+  ],
+  "targeted": {
+    "slow_reader_writer_cost": {
+      "inline": {
+        "base_ns": 142.5,
+        "with_slow_reader_ns": 138.8
+      },
+      "split": {
+        "base_ns": 146.1,
+        "with_slow_reader_ns": 147.0
+      },
+      "inline_premark": {
+        "base_ns": 140.1,
+        "with_slow_reader_ns": 147.2
+      }
+    },
+    "futex_idle_reader_cpu_percent": {
+      "inline": {
+        "futex": 0.0,
+        "futex_reader_spin_publisher": 0.8,
+        "busy_spin_control": 100.0
+      },
+      "split": {
+        "futex": 0.2,
+        "futex_reader_spin_publisher": 0.8,
+        "busy_spin_control": 100.2
+      },
+      "inline_premark": {
+        "futex": 0.0,
+        "futex_reader_spin_publisher": 0.8,
+        "busy_spin_control": 100.2
+      }
+    },
+    "negative_control_inline_premark_spec": {
+      "torn_reads_observed": false,
+      "note": "testNoPremark spec negative control did not tear in this run; PLAN records that as inconclusive, not a hard failure"
+    },
+    "thresholds": {
+      "slow_reader_limit_ns": "1.5 * base + 50",
+      "futex_idle_cpu_limit_percent": 5
+    },
+    "evidence": [
+      "/tmp/shm-perf-base-inline.log",
+      "/tmp/shm-perf-base-split.log",
+      "/tmp/shm-perf-base-inline-premark.log"
+    ]
+  }
+}

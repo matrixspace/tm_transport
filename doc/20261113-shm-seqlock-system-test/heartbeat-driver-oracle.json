@@ -1,0 +1,1 @@
+{"driver_oracle": [{"tail": "", "expected_rejection": false, "status": "PASS"}, {"tail": "DATA aa", "expected_rejection": true, "status": "PASS"}, {"tail": "BAD_HB", "expected_rejection": true, "status": "PASS"}, {"tail": "ERROR late failure", "expected_rejection": true, "status": "PASS"}, {"tail": "REGISTER", "expected_rejection": true, "status": "PASS"}]}

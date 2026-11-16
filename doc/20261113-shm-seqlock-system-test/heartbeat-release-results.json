@@ -1,0 +1,622 @@
+{
+  "results": [
+    {
+      "case": "direct",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 0.34183212788775563,
+      "children": [
+        {
+          "pid": 45,
+          "exit": 0
+        },
+        {
+          "pid": 48,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "ttl",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 1.435210168827325,
+      "children": [
+        {
+          "pid": 54,
+          "exit": 0
+        },
+        {
+          "pid": 57,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "shared",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 0.1904438277706504,
+      "children": [
+        {
+          "pid": 63,
+          "exit": 0
+        },
+        {
+          "pid": 66,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "timer",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 3.841331392992288,
+      "children": [
+        {
+          "pid": 71,
+          "exit": 0
+        },
+        {
+          "pid": 74,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "growth",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 0.2872158773243427,
+      "children": [
+        {
+          "pid": 79,
+          "exit": 0
+        },
+        {
+          "pid": 82,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "restart",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 1.7643037377856672,
+      "children": [
+        {
+          "pid": 88,
+          "exit": -9
+        },
+        {
+          "pid": 91,
+          "exit": 0
+        },
+        {
+          "pid": 96,
+          "exit": 0
+        },
+        {
+          "pid": 99,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "address",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 0.23408404691144824,
+      "children": [
+        {
+          "pid": 104,
+          "exit": 0
+        },
+        {
+          "pid": 107,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "lock",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 0.4727576388977468,
+      "children": [
+        {
+          "pid": 114,
+          "exit": 0
+        },
+        {
+          "pid": 117,
+          "exit": 0
+        },
+        {
+          "pid": 122,
+          "exit": 1
+        },
+        {
+          "pid": 125,
+          "exit": 0
+        },
+        {
+          "pid": 128,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "timer_separate",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 3.892492088023573,
+      "children": [
+        {
+          "pid": 134,
+          "exit": 0
+        },
+        {
+          "pid": 137,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "slow_reader",
+      "layout": "inline",
+      "status": "PASS",
+      "delayed_heartbeat_age_seconds": 1.151257038116455,
+      "seconds": 1.6855259253643453,
+      "children": [
+        {
+          "pid": 143,
+          "exit": 0
+        },
+        {
+          "pid": 146,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "risk_first_unlocked",
+      "layout": "inline",
+      "status": "RISK_NOT_OBSERVED",
+      "category": "unsupported-concurrent-first-unlocked",
+      "invalid_or_reordered": 0,
+      "delivered": 782,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "observation_notes": [],
+      "interpretation": "No safety claim; later writerLock cannot retrofit the cached sender.",
+      "seconds": 1.0496539804153144,
+      "children": [
+        {
+          "pid": 152,
+          "exit": 0
+        },
+        {
+          "pid": 155,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "direct",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 0.34446512069553137,
+      "children": [
+        {
+          "pid": 162,
+          "exit": 0
+        },
+        {
+          "pid": 165,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "ttl",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 1.4356167260557413,
+      "children": [
+        {
+          "pid": 171,
+          "exit": 0
+        },
+        {
+          "pid": 174,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "shared",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 0.19049581000581384,
+      "children": [
+        {
+          "pid": 180,
+          "exit": 0
+        },
+        {
+          "pid": 183,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "timer",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 3.8396187857724726,
+      "children": [
+        {
+          "pid": 188,
+          "exit": 0
+        },
+        {
+          "pid": 191,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "growth",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 0.28668383695185184,
+      "children": [
+        {
+          "pid": 196,
+          "exit": 0
+        },
+        {
+          "pid": 199,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "restart",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 1.7633703309111297,
+      "children": [
+        {
+          "pid": 205,
+          "exit": -9
+        },
+        {
+          "pid": 208,
+          "exit": 0
+        },
+        {
+          "pid": 213,
+          "exit": 0
+        },
+        {
+          "pid": 216,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "address",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 0.23376857489347458,
+      "children": [
+        {
+          "pid": 221,
+          "exit": 0
+        },
+        {
+          "pid": 224,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "lock",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 0.4737115502357483,
+      "children": [
+        {
+          "pid": 231,
+          "exit": 0
+        },
+        {
+          "pid": 234,
+          "exit": 0
+        },
+        {
+          "pid": 239,
+          "exit": 1
+        },
+        {
+          "pid": 242,
+          "exit": 0
+        },
+        {
+          "pid": 245,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "timer_separate",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 3.895445592701435,
+      "children": [
+        {
+          "pid": 251,
+          "exit": 0
+        },
+        {
+          "pid": 254,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "slow_reader",
+      "layout": "split",
+      "status": "PASS",
+      "delayed_heartbeat_age_seconds": 1.15165114402771,
+      "seconds": 1.6869407268241048,
+      "children": [
+        {
+          "pid": 260,
+          "exit": 0
+        },
+        {
+          "pid": 263,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "risk_first_unlocked",
+      "layout": "split",
+      "status": "RISK_NOT_OBSERVED",
+      "category": "unsupported-concurrent-first-unlocked",
+      "invalid_or_reordered": 0,
+      "delivered": 837,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "observation_notes": [],
+      "interpretation": "No safety claim; later writerLock cannot retrofit the cached sender.",
+      "seconds": 1.054024790879339,
+      "children": [
+        {
+          "pid": 269,
+          "exit": 0
+        },
+        {
+          "pid": 272,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "direct",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 0.3441109689883888,
+      "children": [
+        {
+          "pid": 279,
+          "exit": 0
+        },
+        {
+          "pid": 282,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "ttl",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 1.4356174040585756,
+      "children": [
+        {
+          "pid": 288,
+          "exit": 0
+        },
+        {
+          "pid": 291,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "shared",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 0.19067680602893233,
+      "children": [
+        {
+          "pid": 297,
+          "exit": 0
+        },
+        {
+          "pid": 300,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "timer",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 3.8408280657604337,
+      "children": [
+        {
+          "pid": 305,
+          "exit": 0
+        },
+        {
+          "pid": 308,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "growth",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 0.28905285988003016,
+      "children": [
+        {
+          "pid": 313,
+          "exit": 0
+        },
+        {
+          "pid": 316,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "restart",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 1.75819729315117,
+      "children": [
+        {
+          "pid": 322,
+          "exit": -9
+        },
+        {
+          "pid": 325,
+          "exit": 0
+        },
+        {
+          "pid": 330,
+          "exit": 0
+        },
+        {
+          "pid": 333,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "address",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 0.23391490802168846,
+      "children": [
+        {
+          "pid": 338,
+          "exit": 0
+        },
+        {
+          "pid": 341,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "lock",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 0.4748494918458164,
+      "children": [
+        {
+          "pid": 348,
+          "exit": 0
+        },
+        {
+          "pid": 351,
+          "exit": 0
+        },
+        {
+          "pid": 356,
+          "exit": 1
+        },
+        {
+          "pid": 359,
+          "exit": 0
+        },
+        {
+          "pid": 362,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "timer_separate",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 3.8938082149252295,
+      "children": [
+        {
+          "pid": 368,
+          "exit": 0
+        },
+        {
+          "pid": 371,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "slow_reader",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "delayed_heartbeat_age_seconds": 1.1511504650115967,
+      "seconds": 1.6848870730027556,
+      "children": [
+        {
+          "pid": 377,
+          "exit": 0
+        },
+        {
+          "pid": 380,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "risk_first_unlocked",
+      "layout": "inline-premark",
+      "status": "RISK_OBSERVED",
+      "category": "unsupported-concurrent-first-unlocked",
+      "invalid_or_reordered": 1,
+      "delivered": 939,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "observation_notes": [],
+      "interpretation": "No safety claim; later writerLock cannot retrofit the cached sender.",
+      "seconds": 1.0553352781571448,
+      "children": [
+        {
+          "pid": 386,
+          "exit": 0
+        },
+        {
+          "pid": 389,
+          "exit": 0
+        }
+      ]
+    }
+  ]
+}

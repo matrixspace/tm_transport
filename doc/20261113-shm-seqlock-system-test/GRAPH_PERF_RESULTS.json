@@ -1,0 +1,4347 @@
+{
+  "date": "2026-11-16",
+  "scope": "graph and MultiTransport performance for shm_seqlock",
+  "environment": {
+    "uname": [
+      "Linux",
+      "localhost.localdomain",
+      "4.18.0-372.9.1.el8.x86_64",
+      "#1 SMP Tue May 10 14:48:47 UTC 2022",
+      "x86_64"
+    ],
+    "cpu_model": "Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz",
+    "binary": "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+    "binary_sha256": "74913db63666d957466bacafab6aac861fa0c08963409bf7fe5b28e075b50a79",
+    "command": [
+      "test/shm_seqlock_graph_bench/run_bench.py",
+      "builddir_suite_release/shm_seqlock_graph_bench",
+      "--out=/tmp/shm-graph-bench",
+      "--repeat",
+      "5",
+      "--duration-ms",
+      "30000",
+      "--warmup-ms",
+      "5000"
+    ],
+    "commit": "831ca9d70a24cf7e15d26c5fb0f8d59e301e7e4e",
+    "dirty_status": "M doc/20261113-shm-seqlock-system-test/REPORT.md\n M test/shm_seqlock_system_test/suite/meson.build\n?? doc/20261113-shm-seqlock-system-test/codex-session-01a1d3a2-41ec-72c0-9696-d7db4a9f0f6b.md\n?? test/shm_seqlock_graph_bench/",
+    "affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55
+    ],
+    "duration_ms": 30000,
+    "warmup_ms": 5000,
+    "repeat": 5,
+    "method": "RealTimeApp graph trigger -> publisher -> shm_seqlock -> importer/listener -> sinks; message rate paced by a sender thread; final stats are post-warmup."
+  },
+  "configs": {
+    "raw-l1-spin-rate10000": {
+      "mode": "raw",
+      "listeners": 1,
+      "wait": "spin",
+      "rate": 10000,
+      "payload_bytes": 256,
+      "requested_rounds": 5,
+      "passed_rounds": 5,
+      "offered_per_second_avg": 10000.033333333333,
+      "offered_per_second_min": 10000.033333333333,
+      "offered_per_second_max": 10000.033333333333,
+      "sink_metrics": [
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 3692.8,
+          "p90_ns_avg": 4083.2,
+          "p99_ns_avg": 4448.0,
+          "p99_ns_max": 5056,
+          "max_ns_max": 96918
+        }
+      ],
+      "lost_total": 0,
+      "reader_p99_ns_max": 5056
+    },
+    "raw-l1-futex-rate10000": {
+      "mode": "raw",
+      "listeners": 1,
+      "wait": "futex",
+      "rate": 10000,
+      "payload_bytes": 256,
+      "requested_rounds": 5,
+      "passed_rounds": 5,
+      "offered_per_second_avg": 10000.033333333333,
+      "offered_per_second_min": 10000.033333333333,
+      "offered_per_second_max": 10000.033333333333,
+      "sink_metrics": [
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 11878.4,
+          "p90_ns_avg": 12620.8,
+          "p99_ns_avg": 15027.2,
+          "p99_ns_max": 21760,
+          "max_ns_max": 610074
+        }
+      ],
+      "lost_total": 0,
+      "reader_p99_ns_max": 21760
+    },
+    "raw-l1-spin-rate0": {
+      "mode": "raw",
+      "listeners": 1,
+      "wait": "spin",
+      "rate": 0,
+      "payload_bytes": 256,
+      "requested_rounds": 5,
+      "passed_rounds": 5,
+      "offered_per_second_avg": 516216.6,
+      "offered_per_second_min": 458392.56666666665,
+      "offered_per_second_max": 674428.3333333334,
+      "sink_metrics": [
+        {
+          "received_total": 77432485,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 3411.2,
+          "p90_ns_avg": 4083.2,
+          "p99_ns_avg": 4678.4,
+          "p99_ns_max": 4928,
+          "max_ns_max": 4356220
+        }
+      ],
+      "lost_total": 0,
+      "reader_p99_ns_max": 4928
+    },
+    "raw-l4-spin-rate10000": {
+      "mode": "raw",
+      "listeners": 4,
+      "wait": "spin",
+      "rate": 10000,
+      "payload_bytes": 256,
+      "requested_rounds": 5,
+      "passed_rounds": 5,
+      "offered_per_second_avg": 10000.033333333333,
+      "offered_per_second_min": 10000.033333333333,
+      "offered_per_second_max": 10000.033333333333,
+      "sink_metrics": [
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 3494.4,
+          "p90_ns_avg": 3948.8,
+          "p99_ns_avg": 4339.2,
+          "p99_ns_max": 5120,
+          "max_ns_max": 114299
+        },
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 4102.4,
+          "p90_ns_avg": 4576.0,
+          "p99_ns_avg": 4979.2,
+          "p99_ns_max": 5760,
+          "max_ns_max": 115441
+        },
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 4716.8,
+          "p90_ns_avg": 5184.0,
+          "p99_ns_avg": 5568.0,
+          "p99_ns_max": 6336,
+          "max_ns_max": 116394
+        },
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 5324.8,
+          "p90_ns_avg": 5798.4,
+          "p99_ns_avg": 6195.2,
+          "p99_ns_max": 6976,
+          "max_ns_max": 117177
+        }
+      ],
+      "lost_total": 0,
+      "reader_p99_ns_max": 6976
+    },
+    "raw-l4-futex-rate10000": {
+      "mode": "raw",
+      "listeners": 4,
+      "wait": "futex",
+      "rate": 10000,
+      "payload_bytes": 256,
+      "requested_rounds": 5,
+      "passed_rounds": 5,
+      "offered_per_second_avg": 10000.033333333333,
+      "offered_per_second_min": 10000.033333333333,
+      "offered_per_second_max": 10000.033333333333,
+      "sink_metrics": [
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 13747.2,
+          "p90_ns_avg": 14361.6,
+          "p99_ns_avg": 16307.2,
+          "p99_ns_max": 21760,
+          "max_ns_max": 2706465
+        },
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 15564.8,
+          "p90_ns_avg": 16307.2,
+          "p99_ns_avg": 18560.0,
+          "p99_ns_max": 25344,
+          "max_ns_max": 2709443
+        },
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 17356.8,
+          "p90_ns_avg": 18201.6,
+          "p99_ns_avg": 20352.0,
+          "p99_ns_max": 27136,
+          "max_ns_max": 2711843
+        },
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 19148.8,
+          "p90_ns_avg": 20377.6,
+          "p99_ns_avg": 22118.4,
+          "p99_ns_max": 28928,
+          "max_ns_max": 2714675
+        }
+      ],
+      "lost_total": 0,
+      "reader_p99_ns_max": 28928
+    },
+    "raw-l4-spin-rate0": {
+      "mode": "raw",
+      "listeners": 4,
+      "wait": "spin",
+      "rate": 0,
+      "payload_bytes": 256,
+      "requested_rounds": 5,
+      "passed_rounds": 5,
+      "offered_per_second_avg": 699614.8466666666,
+      "offered_per_second_min": 695138.9666666667,
+      "offered_per_second_max": 701270.3,
+      "sink_metrics": [
+        {
+          "received_total": 50163574,
+          "lost_total": 54751158,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 6370099.2,
+          "p90_ns_avg": 11377049.6,
+          "p99_ns_avg": 12530483.2,
+          "p99_ns_max": 12582912,
+          "max_ns_max": 13630176
+        },
+        {
+          "received_total": 50163573,
+          "lost_total": 54751158,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 6370099.2,
+          "p90_ns_avg": 11377049.6,
+          "p99_ns_avg": 12530483.2,
+          "p99_ns_max": 12582912,
+          "max_ns_max": 13630868
+        },
+        {
+          "received_total": 50163572,
+          "lost_total": 54751158,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 6370099.2,
+          "p90_ns_avg": 11403264.0,
+          "p99_ns_avg": 12530483.2,
+          "p99_ns_max": 12582912,
+          "max_ns_max": 13631473
+        },
+        {
+          "received_total": 50163572,
+          "lost_total": 54751158,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 6370099.2,
+          "p90_ns_avg": 11403264.0,
+          "p99_ns_avg": 12530483.2,
+          "p99_ns_max": 12582912,
+          "max_ns_max": 13632077
+        }
+      ],
+      "lost_total": 219004632,
+      "reader_p99_ns_max": 12582912
+    },
+    "multi-l1-spin-rate10000": {
+      "mode": "multi",
+      "listeners": 1,
+      "wait": "spin",
+      "rate": 10000,
+      "payload_bytes": 256,
+      "requested_rounds": 5,
+      "passed_rounds": 5,
+      "offered_per_second_avg": 10000.013333333334,
+      "offered_per_second_min": 9999.933333333332,
+      "offered_per_second_max": 10000.033333333333,
+      "sink_metrics": [
+        {
+          "received_total": 1500002,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 3910.4,
+          "p90_ns_avg": 4339.2,
+          "p99_ns_avg": 4716.8,
+          "p99_ns_max": 5248,
+          "max_ns_max": 128843
+        }
+      ],
+      "lost_total": 0,
+      "reader_p99_ns_max": 5248
+    },
+    "multi-l1-futex-rate10000": {
+      "mode": "multi",
+      "listeners": 1,
+      "wait": "futex",
+      "rate": 10000,
+      "payload_bytes": 256,
+      "requested_rounds": 5,
+      "passed_rounds": 5,
+      "offered_per_second_avg": 10000.033333333333,
+      "offered_per_second_min": 10000.033333333333,
+      "offered_per_second_max": 10000.033333333333,
+      "sink_metrics": [
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 14131.2,
+          "p90_ns_avg": 15488.0,
+          "p99_ns_avg": 16537.6,
+          "p99_ns_max": 17152,
+          "max_ns_max": 916434
+        }
+      ],
+      "lost_total": 0,
+      "reader_p99_ns_max": 17152
+    },
+    "multi-l1-spin-rate0": {
+      "mode": "multi",
+      "listeners": 1,
+      "wait": "spin",
+      "rate": 0,
+      "payload_bytes": 256,
+      "requested_rounds": 5,
+      "passed_rounds": 5,
+      "offered_per_second_avg": 591935.12,
+      "offered_per_second_min": 516636.6,
+      "offered_per_second_max": 695154.5,
+      "sink_metrics": [
+        {
+          "received_total": 88790263,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 3193.6,
+          "p90_ns_avg": 4019.2,
+          "p99_ns_avg": 659052.8,
+          "p99_ns_max": 3276800,
+          "max_ns_max": 9508485
+        }
+      ],
+      "lost_total": 0,
+      "reader_p99_ns_max": 3276800
+    },
+    "multi-l4-spin-rate10000": {
+      "mode": "multi",
+      "listeners": 4,
+      "wait": "spin",
+      "rate": 10000,
+      "payload_bytes": 256,
+      "requested_rounds": 5,
+      "passed_rounds": 5,
+      "offered_per_second_avg": 10000.033333333333,
+      "offered_per_second_min": 10000.033333333333,
+      "offered_per_second_max": 10000.033333333333,
+      "sink_metrics": [
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 4012.8,
+          "p90_ns_avg": 4390.4,
+          "p99_ns_avg": 4736.0,
+          "p99_ns_max": 4864,
+          "max_ns_max": 127602
+        },
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 4838.4,
+          "p90_ns_avg": 5209.6,
+          "p99_ns_avg": 5580.8,
+          "p99_ns_max": 5760,
+          "max_ns_max": 128610
+        },
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 5644.8,
+          "p90_ns_avg": 6003.2,
+          "p99_ns_avg": 6374.4,
+          "p99_ns_max": 6592,
+          "max_ns_max": 129771
+        },
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 6451.2,
+          "p90_ns_avg": 6822.4,
+          "p99_ns_avg": 7193.6,
+          "p99_ns_max": 7424,
+          "max_ns_max": 130961
+        }
+      ],
+      "lost_total": 0,
+      "reader_p99_ns_max": 7424
+    },
+    "multi-l4-futex-rate10000": {
+      "mode": "multi",
+      "listeners": 4,
+      "wait": "futex",
+      "rate": 10000,
+      "payload_bytes": 256,
+      "requested_rounds": 5,
+      "passed_rounds": 5,
+      "offered_per_second_avg": 10000.033333333333,
+      "offered_per_second_min": 10000.033333333333,
+      "offered_per_second_max": 10000.033333333333,
+      "sink_metrics": [
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 14924.8,
+          "p90_ns_avg": 16256.0,
+          "p99_ns_avg": 18150.4,
+          "p99_ns_max": 26368,
+          "max_ns_max": 875414
+        },
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 17254.4,
+          "p90_ns_avg": 18713.6,
+          "p99_ns_avg": 20531.2,
+          "p99_ns_max": 28672,
+          "max_ns_max": 878410
+        },
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 19558.4,
+          "p90_ns_avg": 21094.4,
+          "p99_ns_avg": 22886.4,
+          "p99_ns_max": 30976,
+          "max_ns_max": 881218
+        },
+        {
+          "received_total": 1500005,
+          "lost_total": 0,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 21862.4,
+          "p90_ns_avg": 23449.6,
+          "p99_ns_avg": 25292.8,
+          "p99_ns_max": 33280,
+          "max_ns_max": 883969
+        }
+      ],
+      "lost_total": 0,
+      "reader_p99_ns_max": 33280
+    },
+    "multi-l4-spin-rate0": {
+      "mode": "multi",
+      "listeners": 4,
+      "wait": "spin",
+      "rate": 0,
+      "payload_bytes": 256,
+      "requested_rounds": 5,
+      "passed_rounds": 5,
+      "offered_per_second_avg": 716721.5266666667,
+      "offered_per_second_min": 713453.3333333334,
+      "offered_per_second_max": 720041.1333333333,
+      "sink_metrics": [
+        {
+          "received_total": 39289754,
+          "lost_total": 68192310,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 6068633.6,
+          "p90_ns_avg": 10800332.8,
+          "p99_ns_avg": 11848908.8,
+          "p99_ns_max": 11927552,
+          "max_ns_max": 13386637
+        },
+        {
+          "received_total": 39289753,
+          "lost_total": 68192310,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 6068633.6,
+          "p90_ns_avg": 10800332.8,
+          "p99_ns_avg": 11848908.8,
+          "p99_ns_max": 11927552,
+          "max_ns_max": 13387705
+        },
+        {
+          "received_total": 39289751,
+          "lost_total": 68192310,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 6068633.6,
+          "p90_ns_avg": 10800332.8,
+          "p99_ns_avg": 11848908.8,
+          "p99_ns_max": 11927552,
+          "max_ns_max": 13388496
+        },
+        {
+          "received_total": 39289750,
+          "lost_total": 68192310,
+          "dup_total": 0,
+          "ooo_total": 0,
+          "corrupt_total": 0,
+          "bad_total": 0,
+          "p50_ns_avg": 6068633.6,
+          "p90_ns_avg": 10800332.8,
+          "p99_ns_avg": 11848908.8,
+          "p99_ns_max": 11927552,
+          "max_ns_max": 13389286
+        }
+      ],
+      "lost_total": 272769240,
+      "reader_p99_ns_max": 11927552
+    }
+  },
+  "rounds": [
+    {
+      "config": "multi-l1-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_39273b20b6a844fcbba7fc2c0806a854",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.334678484126925,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 299998,
+        "elapsed_seconds": 35.3064,
+        "sinks": [
+          {
+            "received": 299998,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3968,
+            "p90_ns": 4352,
+            "p99_ns": 4800,
+            "max_ns": 24603
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 4
+    },
+    {
+      "config": "raw-l1-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_33efe76959c1454a862ae93dafd6888f",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33645986998454,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3744,
+            "p90_ns": 4096,
+            "p99_ns": 4416,
+            "max_ns": 47466
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 4
+    },
+    {
+      "config": "raw-l1-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_b53b51a9bc7c4389a7bca30aa7eb9727",
+        "1",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33537693088874,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 20232850,
+        "elapsed_seconds": 35.3064,
+        "sinks": [
+          {
+            "received": 20232849,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 2624,
+            "p90_ns": 3072,
+            "p99_ns": 3744,
+            "max_ns": 137219
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 0
+    },
+    {
+      "config": "raw-l1-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_2c696f1c9f18423b8183fe825d6fb418",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33407888514921,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4352,
+            "p90_ns": 4736,
+            "p99_ns": 5056,
+            "max_ns": 96848
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 1
+    },
+    {
+      "config": "raw-l4-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_fc1243bfbfc44168864d5269132ee7c7",
+        "4",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33697825996205,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 20854169,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 9783533,
+            "lost": 11067613,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6422528,
+            "p90_ns": 11403264,
+            "p99_ns": 12582912,
+            "max_ns": 13630176
+          },
+          {
+            "received": 9783533,
+            "lost": 11067613,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6422528,
+            "p90_ns": 11403264,
+            "p99_ns": 12582912,
+            "max_ns": 13630782
+          },
+          {
+            "received": 9783533,
+            "lost": 11067613,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6422528,
+            "p90_ns": 11403264,
+            "p99_ns": 12582912,
+            "max_ns": 13631390
+          },
+          {
+            "received": 9783533,
+            "lost": 11067613,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6422528,
+            "p90_ns": 11403264,
+            "p99_ns": 12582912,
+            "max_ns": 13631995
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 1
+    },
+    {
+      "config": "multi-l4-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_b54538d9c86e4c8abc68fa65d7ff9b6c",
+        "4",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.3351925779134,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 21512859,
+        "elapsed_seconds": 35.3064,
+        "sinks": [
+          {
+            "received": 7852230,
+            "lost": 13652657,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6094848,
+            "p90_ns": 10747904,
+            "p99_ns": 11796480,
+            "max_ns": 12248886
+          },
+          {
+            "received": 7852230,
+            "lost": 13652657,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6094848,
+            "p90_ns": 10747904,
+            "p99_ns": 11796480,
+            "max_ns": 12249671
+          },
+          {
+            "received": 7852230,
+            "lost": 13652657,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6094848,
+            "p90_ns": 10747904,
+            "p99_ns": 11796480,
+            "max_ns": 12250457
+          },
+          {
+            "received": 7852230,
+            "lost": 13652657,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6094848,
+            "p90_ns": 10747904,
+            "p99_ns": 11796480,
+            "max_ns": 12251242
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 0
+    },
+    {
+      "config": "raw-l4-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_6bc87a6c3a454f3f9bc3b81ac185bded",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33541194815189,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3069,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4160,
+            "p90_ns": 4672,
+            "p99_ns": 5120,
+            "max_ns": 52264
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4736,
+            "p90_ns": 5312,
+            "p99_ns": 5760,
+            "max_ns": 53735
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 5376,
+            "p90_ns": 5952,
+            "p99_ns": 6336,
+            "max_ns": 54695
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 5952,
+            "p90_ns": 6528,
+            "p99_ns": 6976,
+            "max_ns": 55521
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 2
+    },
+    {
+      "config": "raw-l1-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_19a58e02c761435b923ddb09acc8e608",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.4351307740435,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 11392,
+            "p90_ns": 11904,
+            "p99_ns": 14592,
+            "max_ns": 484402
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 4
+    },
+    {
+      "config": "raw-l1-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_1b65645447554f27b894be99201c01e1",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.437951812986284,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 13824,
+            "p90_ns": 15872,
+            "p99_ns": 21760,
+            "max_ns": 155610
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 3
+    },
+    {
+      "config": "multi-l1-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_b3746927cc3b455cbf29d58f3cbdce7b",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.43847674084827,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3066,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 12800,
+            "p90_ns": 15104,
+            "p99_ns": 16128,
+            "max_ns": 46046
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 2
+    },
+    {
+      "config": "raw-l4-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_2f6f85813a744adc9cdaa83efb5a0739",
+        "4",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33838907862082,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 21024651,
+        "elapsed_seconds": 35.3069,
+        "sinks": [
+          {
+            "received": 10220839,
+            "lost": 10797194,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11403264,
+            "p99_ns": 12582912,
+            "max_ns": 12739951
+          },
+          {
+            "received": 10220839,
+            "lost": 10797194,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11403264,
+            "p99_ns": 12582912,
+            "max_ns": 12740554
+          },
+          {
+            "received": 10220839,
+            "lost": 10797194,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11403264,
+            "p99_ns": 12582912,
+            "max_ns": 12741162
+          },
+          {
+            "received": 10220839,
+            "lost": 10797194,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11403264,
+            "p99_ns": 12582912,
+            "max_ns": 12741763
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 4
+    },
+    {
+      "config": "raw-l4-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_9ab58d5b886e40f7bf7359624921f9a1",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.4349587331526,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 16896,
+            "p90_ns": 17920,
+            "p99_ns": 18688,
+            "max_ns": 902848
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 18944,
+            "p90_ns": 19968,
+            "p99_ns": 20736,
+            "max_ns": 905214
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 20736,
+            "p90_ns": 21760,
+            "p99_ns": 22528,
+            "max_ns": 907243
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 22528,
+            "p90_ns": 23552,
+            "p99_ns": 24064,
+            "max_ns": 909244
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 4
+    },
+    {
+      "config": "multi-l4-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_54ec88c8b9354f3f808e9561905e7b2b",
+        "4",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33931036526337,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 21446921,
+        "elapsed_seconds": 35.307,
+        "sinks": [
+          {
+            "received": 7841225,
+            "lost": 13601448,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6094848,
+            "p90_ns": 10878976,
+            "p99_ns": 11927552,
+            "max_ns": 12308371
+          },
+          {
+            "received": 7841225,
+            "lost": 13601448,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6094848,
+            "p90_ns": 10878976,
+            "p99_ns": 11927552,
+            "max_ns": 12309406
+          },
+          {
+            "received": 7841224,
+            "lost": 13601448,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6094848,
+            "p90_ns": 10878976,
+            "p99_ns": 11927552,
+            "max_ns": 12310196
+          },
+          {
+            "received": 7841224,
+            "lost": 13601448,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6094848,
+            "p90_ns": 10878976,
+            "p99_ns": 11927552,
+            "max_ns": 12310987
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 1
+    },
+    {
+      "config": "multi-l1-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_966ef3c70504451496c52a84d2c34165",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.43572388589382,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 15232,
+            "p90_ns": 16128,
+            "p99_ns": 17152,
+            "max_ns": 107490
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 4
+    },
+    {
+      "config": "raw-l1-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_d948d225afc8429d82ce113cbf1509aa",
+        "1",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.337141023017466,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 14820684,
+        "elapsed_seconds": 35.3064,
+        "sinks": [
+          {
+            "received": 14820683,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3552,
+            "p90_ns": 4288,
+            "p99_ns": 4864,
+            "max_ns": 136188
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 1
+    },
+    {
+      "config": "multi-l1-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_d2bc505351024c7a8da3ff6737fe751e",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.43527429411188,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 12928,
+            "p90_ns": 14592,
+            "p99_ns": 15616,
+            "max_ns": 736718
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 3
+    },
+    {
+      "config": "raw-l4-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_b71fb6913a9845cfacddebe1e1484132",
+        "4",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33726279111579,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 21018748,
+        "elapsed_seconds": 35.3069,
+        "sinks": [
+          {
+            "received": 10169465,
+            "lost": 10843541,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11403264,
+            "p99_ns": 12451840,
+            "max_ns": 13570205
+          },
+          {
+            "received": 10169465,
+            "lost": 10843541,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11403264,
+            "p99_ns": 12451840,
+            "max_ns": 13570810
+          },
+          {
+            "received": 10169464,
+            "lost": 10843541,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11403264,
+            "p99_ns": 12451840,
+            "max_ns": 13571413
+          },
+          {
+            "received": 10169464,
+            "lost": 10843541,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11403264,
+            "p99_ns": 12451840,
+            "max_ns": 13572020
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 3
+    },
+    {
+      "config": "multi-l1-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_c71b60f721df46a2ac896c6ff1ea9e88",
+        "1",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33402362186462,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 20754269,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 20754268,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 2880,
+            "p90_ns": 3232,
+            "p99_ns": 3872,
+            "max_ns": 133246
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 2
+    },
+    {
+      "config": "raw-l4-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_7fbb3fbebd6e46e4a0d49b921bbe24af",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33517667790875,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3064,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3840,
+            "p90_ns": 4160,
+            "p99_ns": 4480,
+            "max_ns": 114299
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4480,
+            "p90_ns": 4800,
+            "p99_ns": 5120,
+            "max_ns": 115339
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 5056,
+            "p90_ns": 5376,
+            "p99_ns": 5696,
+            "max_ns": 116295
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 5696,
+            "p90_ns": 6016,
+            "p99_ns": 6336,
+            "max_ns": 117147
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 4
+    },
+    {
+      "config": "multi-l4-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_665d02a0645745c3ac8b673d9e07f89b",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33540390385315,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4000,
+            "p90_ns": 4416,
+            "p99_ns": 4800,
+            "max_ns": 87896
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4800,
+            "p90_ns": 5248,
+            "p99_ns": 5632,
+            "max_ns": 89144
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 5632,
+            "p90_ns": 6016,
+            "p99_ns": 6400,
+            "max_ns": 90364
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6400,
+            "p90_ns": 6784,
+            "p99_ns": 7232,
+            "max_ns": 91472
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 0
+    },
+    {
+      "config": "multi-l1-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_917287466f1c4850a86188335acd464e",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33473238302395,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3072,
+            "p90_ns": 3648,
+            "p99_ns": 4064,
+            "max_ns": 5205
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 0
+    },
+    {
+      "config": "raw-l1-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_696acfde00a04b05aa271685bfcf7ab1",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.43661622190848,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 11392,
+            "p90_ns": 11648,
+            "p99_ns": 12160,
+            "max_ns": 610074
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 2
+    },
+    {
+      "config": "raw-l1-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_a249ec734daa4c72941357adf7640c5f",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.43759674904868,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 11392,
+            "p90_ns": 12032,
+            "p99_ns": 14464,
+            "max_ns": 38729
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 0
+    },
+    {
+      "config": "raw-l1-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_549cf00f470147669f7935e6f6494a13",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.43752901582047,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 11392,
+            "p90_ns": 11648,
+            "p99_ns": 12160,
+            "max_ns": 93486
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 1
+    },
+    {
+      "config": "multi-l1-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_dc0f29914dc541fdaff782b87981391a",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.43728233175352,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 14976,
+            "p90_ns": 15872,
+            "p99_ns": 17152,
+            "max_ns": 916434
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 0
+    },
+    {
+      "config": "raw-l1-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_a50d1383a93d40c39b48968bb4738b1b",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33793724980205,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3776,
+            "p90_ns": 4160,
+            "p99_ns": 4480,
+            "max_ns": 96918
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 3
+    },
+    {
+      "config": "multi-l4-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_3cc5acd60f87497d8f1a0ccda19175c6",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.43593796994537,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 12288,
+            "p90_ns": 12544,
+            "p99_ns": 13056,
+            "max_ns": 875414
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 14592,
+            "p90_ns": 14976,
+            "p99_ns": 15360,
+            "max_ns": 878410
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 16896,
+            "p90_ns": 17408,
+            "p99_ns": 17920,
+            "max_ns": 881218
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 19200,
+            "p90_ns": 19712,
+            "p99_ns": 20224,
+            "max_ns": 883969
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 1
+    },
+    {
+      "config": "multi-l1-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_e8963731ad014fef8b16c23a1036bfe5",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33661150187254,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4032,
+            "p90_ns": 4480,
+            "p99_ns": 4800,
+            "max_ns": 18266
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 1
+    },
+    {
+      "config": "multi-l4-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_81daf434191647c68b6f6ca0f7e105ce",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33526031207293,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3968,
+            "p90_ns": 4416,
+            "p99_ns": 4800,
+            "max_ns": 6345
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4800,
+            "p90_ns": 5184,
+            "p99_ns": 5632,
+            "max_ns": 7629
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 5632,
+            "p90_ns": 6016,
+            "p99_ns": 6464,
+            "max_ns": 8885
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6400,
+            "p90_ns": 6784,
+            "p99_ns": 7232,
+            "max_ns": 10141
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 2
+    },
+    {
+      "config": "multi-l4-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_e64c90aa167a4313aa6f629f9e3a4f65",
+        "4",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33626958634704,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 21403600,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 7776711,
+            "lost": 13619662,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6094848,
+            "p90_ns": 10878976,
+            "p99_ns": 11927552,
+            "max_ns": 12360853
+          },
+          {
+            "received": 7776711,
+            "lost": 13619662,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6094848,
+            "p90_ns": 10878976,
+            "p99_ns": 11927552,
+            "max_ns": 12361647
+          },
+          {
+            "received": 7776710,
+            "lost": 13619662,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6094848,
+            "p90_ns": 10878976,
+            "p99_ns": 11927552,
+            "max_ns": 12362435
+          },
+          {
+            "received": 7776710,
+            "lost": 13619662,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6094848,
+            "p90_ns": 10878976,
+            "p99_ns": 11927552,
+            "max_ns": 12363225
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 3
+    },
+    {
+      "config": "raw-l4-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_21e55ca3c79f4d3f92fffbfad5eebf83",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33521221391857,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3069,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3936,
+            "p90_ns": 4288,
+            "p99_ns": 4608,
+            "max_ns": 114227
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4544,
+            "p90_ns": 4928,
+            "p99_ns": 5248,
+            "max_ns": 115441
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 5184,
+            "p90_ns": 5504,
+            "p99_ns": 5824,
+            "max_ns": 116394
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 5760,
+            "p90_ns": 6144,
+            "p99_ns": 6464,
+            "max_ns": 117177
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 3
+    },
+    {
+      "config": "raw-l1-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_430ee3ecc5df4bd9afab1cde52e88f0f",
+        "1",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.336648552212864,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 13751777,
+        "elapsed_seconds": 35.3064,
+        "sinks": [
+          {
+            "received": 13751776,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3680,
+            "p90_ns": 4352,
+            "p99_ns": 4928,
+            "max_ns": 23886
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 4
+    },
+    {
+      "config": "raw-l1-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_ab391306b4cf434499c65b0aafd0dfa6",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.335235056933016,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 2816,
+            "p90_ns": 3328,
+            "p99_ns": 3808,
+            "max_ns": 11007
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 2
+    },
+    {
+      "config": "raw-l4-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_39b6a55a66a44b9f86e0599f705bb370",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33407498989254,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3058,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 2784,
+            "p90_ns": 3328,
+            "p99_ns": 3776,
+            "max_ns": 10722
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3392,
+            "p90_ns": 3936,
+            "p99_ns": 4416,
+            "max_ns": 11429
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4000,
+            "p90_ns": 4544,
+            "p99_ns": 4992,
+            "max_ns": 12138
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4608,
+            "p90_ns": 5184,
+            "p99_ns": 5632,
+            "max_ns": 12869
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 1
+    },
+    {
+      "config": "raw-l4-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_41a2eef53ea741dfb14e5c5b18d474d5",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.42758640414104,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 14848,
+            "p90_ns": 15616,
+            "p99_ns": 16128,
+            "max_ns": 188092
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 16640,
+            "p90_ns": 17408,
+            "p99_ns": 17920,
+            "max_ns": 190312
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 18432,
+            "p90_ns": 19200,
+            "p99_ns": 19712,
+            "max_ns": 192512
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 20224,
+            "p90_ns": 20992,
+            "p99_ns": 21504,
+            "max_ns": 194533
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 2
+    },
+    {
+      "config": "raw-l4-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_4f95c4d3380c4012aeefa35fa9e03663",
+        "4",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.337953358422965,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 21006550,
+        "elapsed_seconds": 35.3064,
+        "sinks": [
+          {
+            "received": 9893382,
+            "lost": 11108589,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11272192,
+            "p99_ns": 12451840,
+            "max_ns": 13629839
+          },
+          {
+            "received": 9893381,
+            "lost": 11108589,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11272192,
+            "p99_ns": 12451840,
+            "max_ns": 13630868
+          },
+          {
+            "received": 9893381,
+            "lost": 11108589,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11403264,
+            "p99_ns": 12451840,
+            "max_ns": 13631473
+          },
+          {
+            "received": 9893381,
+            "lost": 11108589,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11403264,
+            "p99_ns": 12451840,
+            "max_ns": 13632077
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 2
+    },
+    {
+      "config": "multi-l4-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_d51588473f9244e99e8a75ae05260b08",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33507737284526,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3069,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4160,
+            "p90_ns": 4544,
+            "p99_ns": 4864,
+            "max_ns": 112182
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4992,
+            "p90_ns": 5376,
+            "p99_ns": 5760,
+            "max_ns": 113635
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 5824,
+            "p90_ns": 6208,
+            "p99_ns": 6592,
+            "max_ns": 114897
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6720,
+            "p90_ns": 7104,
+            "p99_ns": 7424,
+            "max_ns": 116051
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 1
+    },
+    {
+      "config": "multi-l4-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_b856775c2be440498d712e60442c825d",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.43261505663395,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3069,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 14848,
+            "p90_ns": 15616,
+            "p99_ns": 17408,
+            "max_ns": 52027
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 17152,
+            "p90_ns": 17920,
+            "p99_ns": 19712,
+            "max_ns": 54593
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 19456,
+            "p90_ns": 20480,
+            "p99_ns": 22016,
+            "max_ns": 57661
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 21760,
+            "p90_ns": 22784,
+            "p99_ns": 24832,
+            "max_ns": 61339
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 2
+    },
+    {
+      "config": "raw-l4-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_0561dd1ed1cf405d91af9667d4031511",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33602257492021,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3069,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 2752,
+            "p90_ns": 3296,
+            "p99_ns": 3712,
+            "max_ns": 13452
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3360,
+            "p90_ns": 3904,
+            "p99_ns": 4352,
+            "max_ns": 14217
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3968,
+            "p90_ns": 4544,
+            "p99_ns": 4992,
+            "max_ns": 14940
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4608,
+            "p90_ns": 5120,
+            "p99_ns": 5568,
+            "max_ns": 15793
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 0
+    },
+    {
+      "config": "multi-l1-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_8ea2df599e0a4b729f5fab1c286a361f",
+        "1",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.333575319033116,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 16120817,
+        "elapsed_seconds": 35.3043,
+        "sinks": [
+          {
+            "received": 16120816,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3264,
+            "p90_ns": 4224,
+            "p99_ns": 4864,
+            "max_ns": 135954
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 3
+    },
+    {
+      "config": "raw-l4-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_f4d34a8b166141f6bbad9310c1bf5bb2",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.436718995217234,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3069,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 11392,
+            "p90_ns": 11648,
+            "p99_ns": 12160,
+            "max_ns": 2706465
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 13056,
+            "p90_ns": 13440,
+            "p99_ns": 13952,
+            "max_ns": 2709443
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 14848,
+            "p90_ns": 15232,
+            "p99_ns": 15744,
+            "max_ns": 2711843
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 16640,
+            "p90_ns": 17152,
+            "p99_ns": 17664,
+            "max_ns": 2714675
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 3
+    },
+    {
+      "config": "multi-l4-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_56373af32eb74958ba0b65ab8b3847fc",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.43993422109634,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3071,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 15616,
+            "p90_ns": 16384,
+            "p99_ns": 17664,
+            "max_ns": 222438
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 17920,
+            "p90_ns": 18944,
+            "p99_ns": 20224,
+            "max_ns": 226297
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 20224,
+            "p90_ns": 21248,
+            "p99_ns": 22528,
+            "max_ns": 229630
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 22528,
+            "p90_ns": 23552,
+            "p99_ns": 24832,
+            "max_ns": 232913
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 0
+    },
+    {
+      "config": "multi-l4-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_ce54a8a0d9c54ccd94f4b20e7e105d8a",
+        "4",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.339054006617516,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 21543615,
+        "elapsed_seconds": 35.3071,
+        "sinks": [
+          {
+            "received": 7861719,
+            "lost": 13681489,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6029312,
+            "p90_ns": 10747904,
+            "p99_ns": 11796480,
+            "max_ns": 13386637
+          },
+          {
+            "received": 7861718,
+            "lost": 13681489,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6029312,
+            "p90_ns": 10747904,
+            "p99_ns": 11796480,
+            "max_ns": 13387705
+          },
+          {
+            "received": 7861718,
+            "lost": 13681489,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6029312,
+            "p90_ns": 10747904,
+            "p99_ns": 11796480,
+            "max_ns": 13388496
+          },
+          {
+            "received": 7861718,
+            "lost": 13681489,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6029312,
+            "p90_ns": 10747904,
+            "p99_ns": 11796480,
+            "max_ns": 13389286
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 2
+    },
+    {
+      "config": "multi-l4-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_6a4bcbc7d4ae45e9bc9751bd75e72132",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33601007470861,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3069,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3968,
+            "p90_ns": 4288,
+            "p99_ns": 4608,
+            "max_ns": 123898
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4800,
+            "p90_ns": 5120,
+            "p99_ns": 5440,
+            "max_ns": 125146
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 5568,
+            "p90_ns": 5888,
+            "p99_ns": 6208,
+            "max_ns": 126350
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6400,
+            "p90_ns": 6720,
+            "p99_ns": 7040,
+            "max_ns": 127549
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 3
+    },
+    {
+      "config": "multi-l1-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_72ef401ccc094382874191785055160f",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.334805299993604,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4000,
+            "p90_ns": 4352,
+            "p99_ns": 4672,
+            "max_ns": 128843
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 3
+    },
+    {
+      "config": "multi-l4-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_1d44b37ec78c475e9cb2280cde51322b",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.335955017246306,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3069,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3968,
+            "p90_ns": 4288,
+            "p99_ns": 4608,
+            "max_ns": 127602
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4800,
+            "p90_ns": 5120,
+            "p99_ns": 5440,
+            "max_ns": 128610
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 5568,
+            "p90_ns": 5888,
+            "p99_ns": 6208,
+            "max_ns": 129771
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6336,
+            "p90_ns": 6720,
+            "p99_ns": 7040,
+            "max_ns": 130961
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 4
+    },
+    {
+      "config": "multi-l1-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_92451163421b4326b25edd7a8b7268e3",
+        "1",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33608970884234,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 15499098,
+        "elapsed_seconds": 35.3064,
+        "sinks": [
+          {
+            "received": 15499097,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3392,
+            "p90_ns": 4288,
+            "p99_ns": 4864,
+            "max_ns": 137984
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 4
+    },
+    {
+      "config": "raw-l1-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_e703d3dec2df41718693392a68d5b97a",
+        "1",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.336561360862106,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 14366100,
+        "elapsed_seconds": 35.3064,
+        "sinks": [
+          {
+            "received": 14366099,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3584,
+            "p90_ns": 4352,
+            "p99_ns": 4928,
+            "max_ns": 136293
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 2
+    },
+    {
+      "config": "multi-l4-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_ca854374026a47c3a8727d321509a235",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.4368216637522,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3069,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 14464,
+            "p90_ns": 15488,
+            "p99_ns": 16256,
+            "max_ns": 61815
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 16896,
+            "p90_ns": 17920,
+            "p99_ns": 18688,
+            "max_ns": 64357
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 19200,
+            "p90_ns": 20224,
+            "p99_ns": 20992,
+            "max_ns": 66923
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 21504,
+            "p90_ns": 22528,
+            "p99_ns": 23296,
+            "max_ns": 69494
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 3
+    },
+    {
+      "config": "raw-l1-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_ba85dc5066d042d0a52c352683bda556",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.339591125026345,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3776,
+            "p90_ns": 4096,
+            "p99_ns": 4480,
+            "max_ns": 42322
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 0
+    },
+    {
+      "config": "multi-l1-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_fe73156dee3544c6aed052f65d37417c",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.43573701707646,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 14720,
+            "p90_ns": 15744,
+            "p99_ns": 16640,
+            "max_ns": 101239
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 1
+    },
+    {
+      "config": "raw-l4-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_535b270afe48439a98e4a3f78d9f1756",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.438539115246385,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3066,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 14208,
+            "p90_ns": 14848,
+            "p99_ns": 21760,
+            "max_ns": 114375
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 16000,
+            "p90_ns": 17152,
+            "p99_ns": 25344,
+            "max_ns": 156215
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 17920,
+            "p90_ns": 19456,
+            "p99_ns": 27136,
+            "max_ns": 158180
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 19712,
+            "p90_ns": 23040,
+            "p99_ns": 28928,
+            "max_ns": 160151
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 0
+    },
+    {
+      "config": "multi-l1-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_c30bf5faec7345c9b04d33dc2d7c2c34",
+        "1",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33769442513585,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 20854635,
+        "elapsed_seconds": 35.3064,
+        "sinks": [
+          {
+            "received": 20854634,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3040,
+            "p90_ns": 4064,
+            "p99_ns": 3276800,
+            "max_ns": 9508485
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 1
+    },
+    {
+      "config": "multi-l1-spin-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_7208f94c077b48a98756aa1e03bd0910",
+        "1",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.32715731160715,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 4480,
+            "p90_ns": 4864,
+            "p99_ns": 5248,
+            "max_ns": 114591
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 2
+    },
+    {
+      "config": "raw-l4-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_a99fa4108f42435a9ff9fc3d3fb85885",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.435074873268604,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 11392,
+            "p90_ns": 11776,
+            "p99_ns": 12800,
+            "max_ns": 284830
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 13184,
+            "p90_ns": 13568,
+            "p99_ns": 14848,
+            "max_ns": 286798
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 14848,
+            "p90_ns": 15360,
+            "p99_ns": 16640,
+            "max_ns": 288803
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 16640,
+            "p90_ns": 17152,
+            "p99_ns": 18432,
+            "max_ns": 290754
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 1
+    },
+    {
+      "config": "multi-l4-futex-rate10000",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_ae17bd7332c34c6997de15086f0ede05",
+        "4",
+        "10000",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "futex"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.43811475485563,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 10000,
+        "payload_bytes": 256,
+        "offered": 300001,
+        "elapsed_seconds": 35.3071,
+        "sinks": [
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 17408,
+            "p90_ns": 21248,
+            "p99_ns": 26368,
+            "max_ns": 174235
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 19712,
+            "p90_ns": 23808,
+            "p99_ns": 28672,
+            "max_ns": 176745
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 22016,
+            "p90_ns": 26112,
+            "p99_ns": 30976,
+            "max_ns": 179272
+          },
+          {
+            "received": 300001,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 24320,
+            "p90_ns": 28672,
+            "p99_ns": 33280,
+            "max_ns": 181822
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 4
+    },
+    {
+      "config": "raw-l4-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_89b608f66d48402bb0536e17cd7e3539",
+        "4",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33837757492438,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 4,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 21038109,
+        "elapsed_seconds": 35.307,
+        "sinks": [
+          {
+            "received": 10096355,
+            "lost": 10934221,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11403264,
+            "p99_ns": 12582912,
+            "max_ns": 13277667
+          },
+          {
+            "received": 10096355,
+            "lost": 10934221,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11403264,
+            "p99_ns": 12582912,
+            "max_ns": 13278272
+          },
+          {
+            "received": 10096355,
+            "lost": 10934221,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11403264,
+            "p99_ns": 12582912,
+            "max_ns": 13278881
+          },
+          {
+            "received": 10096355,
+            "lost": 10934221,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6356992,
+            "p90_ns": 11403264,
+            "p99_ns": 12582912,
+            "max_ns": 13279486
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 0
+    },
+    {
+      "config": "multi-l1-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_b330f9afce83475d95f74806228490a2",
+        "1",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33496160712093,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 1,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 15561449,
+        "elapsed_seconds": 35.3064,
+        "sinks": [
+          {
+            "received": 15561448,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3392,
+            "p90_ns": 4288,
+            "p99_ns": 4864,
+            "max_ns": 136717
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 0
+    },
+    {
+      "config": "multi-l4-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "multi",
+        "shmbench_37ce399eed484dc58f173f6c08e0cd7f",
+        "4",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.33729194290936,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "multi",
+        "listeners": 4,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 21601234,
+        "elapsed_seconds": 35.3065,
+        "sinks": [
+          {
+            "received": 7957869,
+            "lost": 13637054,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6029312,
+            "p90_ns": 10747904,
+            "p99_ns": 11796480,
+            "max_ns": 12234780
+          },
+          {
+            "received": 7957869,
+            "lost": 13637054,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6029312,
+            "p90_ns": 10747904,
+            "p99_ns": 11796480,
+            "max_ns": 12235567
+          },
+          {
+            "received": 7957869,
+            "lost": 13637054,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6029312,
+            "p90_ns": 10747904,
+            "p99_ns": 11796480,
+            "max_ns": 12236354
+          },
+          {
+            "received": 7957868,
+            "lost": 13637054,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 6029312,
+            "p90_ns": 10747904,
+            "p99_ns": 11796480,
+            "max_ns": 12237138
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 4
+    },
+    {
+      "config": "raw-l1-spin-rate0",
+      "command": [
+        "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_graph_bench",
+        "raw",
+        "shmbench_c2f0fb036bc34d859392dc2fbdb6a585",
+        "1",
+        "0",
+        "256",
+        "30000",
+        "5000",
+        "inline",
+        "classic",
+        "spin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 35.3361858590506,
+      "result": {
+        "kind": "graph-bench",
+        "mode": "raw",
+        "listeners": 1,
+        "rate": 0,
+        "payload_bytes": 256,
+        "offered": 14261079,
+        "elapsed_seconds": 35.3064,
+        "sinks": [
+          {
+            "received": 14261078,
+            "lost": 0,
+            "dup": 0,
+            "ooo": 0,
+            "corrupt": 0,
+            "bad": 0,
+            "p50_ns": 3616,
+            "p90_ns": 4352,
+            "p99_ns": 4928,
+            "max_ns": 4356220
+          }
+        ]
+      },
+      "status": "PASS",
+      "round": 3
+    }
+  ],
+  "duration_seconds": 2122.4948251247406,
+  "limits": [
+    "Publisher and listeners run in one process (loopback graph); cross-process graph not measured.",
+    "raw mode uses ShmSeqlockImporterExporter; multi uses MultiTransport publisher/listener with shm_seqlock channels.",
+    "payload 256 bytes; layouts inline, read classic; wait spin/futex; 1 or 4 sinks.",
+    "Rate=0 is saturation; sinks may lose messages there, which is reported separately.",
+    "Percentiles are per-round histogram quantiles averaged over rounds (<=1.6% bucket error).",
+    "The host is shared; affinity is not pinned for this run."
+  ],
+  "note": "12 configs x 5 rounds, all PASS. 10k msg/s configs have zero loss; rate=0 saturation with 4 listeners loses on the shared per-segment reader thread by design."
+}

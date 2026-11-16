@@ -1,0 +1,496 @@
+{
+  "results": [
+    {
+      "case": "direct",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 0.35832889284938574,
+      "children": [
+        {
+          "pid": 65,
+          "exit": 0
+        },
+        {
+          "pid": 68,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "ttl",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 1.4388788267970085,
+      "children": [
+        {
+          "pid": 74,
+          "exit": 0
+        },
+        {
+          "pid": 77,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "shared",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 0.20109958527609706,
+      "children": [
+        {
+          "pid": 83,
+          "exit": 0
+        },
+        {
+          "pid": 86,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "timer",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 3.6560668209567666,
+      "children": [
+        {
+          "pid": 91,
+          "exit": 0
+        },
+        {
+          "pid": 94,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "growth",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 0.2965358281508088,
+      "children": [
+        {
+          "pid": 99,
+          "exit": 0
+        },
+        {
+          "pid": 102,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "restart",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 1.77596022374928,
+      "children": [
+        {
+          "pid": 108,
+          "exit": -9
+        },
+        {
+          "pid": 111,
+          "exit": 0
+        },
+        {
+          "pid": 116,
+          "exit": 0
+        },
+        {
+          "pid": 119,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "address",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 0.2400136673822999,
+      "children": [
+        {
+          "pid": 124,
+          "exit": 0
+        },
+        {
+          "pid": 127,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "lock",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 0.48451010696589947,
+      "children": [
+        {
+          "pid": 134,
+          "exit": 0
+        },
+        {
+          "pid": 137,
+          "exit": 0
+        },
+        {
+          "pid": 142,
+          "exit": 1
+        },
+        {
+          "pid": 145,
+          "exit": 0
+        },
+        {
+          "pid": 148,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "timer_separate",
+      "layout": "inline",
+      "status": "PASS",
+      "seconds": 3.7226715101860464,
+      "children": [
+        {
+          "pid": 154,
+          "exit": 0
+        },
+        {
+          "pid": 157,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "direct",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 0.3571077617816627,
+      "children": [
+        {
+          "pid": 163,
+          "exit": 0
+        },
+        {
+          "pid": 166,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "ttl",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 1.4378317156806588,
+      "children": [
+        {
+          "pid": 172,
+          "exit": 0
+        },
+        {
+          "pid": 175,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "shared",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 0.20533720217645168,
+      "children": [
+        {
+          "pid": 181,
+          "exit": 0
+        },
+        {
+          "pid": 184,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "timer",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 3.678336063865572,
+      "children": [
+        {
+          "pid": 189,
+          "exit": 0
+        },
+        {
+          "pid": 192,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "growth",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 0.2958221612498164,
+      "children": [
+        {
+          "pid": 197,
+          "exit": 0
+        },
+        {
+          "pid": 200,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "restart",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 1.7738099279813468,
+      "children": [
+        {
+          "pid": 206,
+          "exit": -9
+        },
+        {
+          "pid": 209,
+          "exit": 0
+        },
+        {
+          "pid": 214,
+          "exit": 0
+        },
+        {
+          "pid": 217,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "address",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 0.2385204709134996,
+      "children": [
+        {
+          "pid": 222,
+          "exit": 0
+        },
+        {
+          "pid": 225,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "lock",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 0.43429657025262713,
+      "children": [
+        {
+          "pid": 232,
+          "exit": 0
+        },
+        {
+          "pid": 235,
+          "exit": 0
+        },
+        {
+          "pid": 240,
+          "exit": 1
+        },
+        {
+          "pid": 243,
+          "exit": 0
+        },
+        {
+          "pid": 246,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "timer_separate",
+      "layout": "split",
+      "status": "PASS",
+      "seconds": 3.7293803300708532,
+      "children": [
+        {
+          "pid": 252,
+          "exit": 0
+        },
+        {
+          "pid": 255,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "direct",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 0.36011709179729223,
+      "children": [
+        {
+          "pid": 261,
+          "exit": 0
+        },
+        {
+          "pid": 264,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "ttl",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 1.4396022707223892,
+      "children": [
+        {
+          "pid": 270,
+          "exit": 0
+        },
+        {
+          "pid": 273,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "shared",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 0.2216836349107325,
+      "children": [
+        {
+          "pid": 279,
+          "exit": 0
+        },
+        {
+          "pid": 282,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "timer",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 3.68029393395409,
+      "children": [
+        {
+          "pid": 287,
+          "exit": 0
+        },
+        {
+          "pid": 290,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "growth",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 0.29418940283358097,
+      "children": [
+        {
+          "pid": 295,
+          "exit": 0
+        },
+        {
+          "pid": 298,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "restart",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 1.7733918027952313,
+      "children": [
+        {
+          "pid": 304,
+          "exit": -9
+        },
+        {
+          "pid": 307,
+          "exit": 0
+        },
+        {
+          "pid": 312,
+          "exit": 0
+        },
+        {
+          "pid": 315,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "address",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 0.24353972636163235,
+      "children": [
+        {
+          "pid": 320,
+          "exit": 0
+        },
+        {
+          "pid": 323,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "lock",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 0.44612936209887266,
+      "children": [
+        {
+          "pid": 330,
+          "exit": 0
+        },
+        {
+          "pid": 333,
+          "exit": 0
+        },
+        {
+          "pid": 338,
+          "exit": 1
+        },
+        {
+          "pid": 341,
+          "exit": 0
+        },
+        {
+          "pid": 344,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "timer_separate",
+      "layout": "inline-premark",
+      "status": "PASS",
+      "seconds": 3.728031307924539,
+      "children": [
+        {
+          "pid": 350,
+          "exit": 0
+        },
+        {
+          "pid": 353,
+          "exit": 0
+        }
+      ]
+    }
+  ]
+}

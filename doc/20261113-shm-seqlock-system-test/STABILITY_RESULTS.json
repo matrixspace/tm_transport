@@ -1,0 +1,597 @@
+{
+  "started_unix": 1794618538.4804173,
+  "duration_seconds": 175316.09453556687,
+  "duration_hours": 48.69891514876858,
+  "planned_hours": 72,
+  "stopped_early_by_user": true,
+  "passed": true,
+  "totals": {
+    "sent": 37666054606,
+    "rejected": 0,
+    "received": 183174608960,
+    "lost": 669599831,
+    "corrupt": 0,
+    "bad": 0,
+    "dup": 0,
+    "ooo": 0,
+    "writer_instances": 838,
+    "reader_instances": 1185
+  },
+  "lanes": [
+    {
+      "name": "fixed-low-2r",
+      "passed": true,
+      "violations": [],
+      "rate": 100,
+      "payload": "fixed:64",
+      "props": "mlock=false,layout=inline,slotSize=512,slotCount=4096,wait=futex,read=classic,spinCount=1,pauseAfter=1,join=latest",
+      "writer_instances": 1,
+      "reader_instances": 2,
+      "sent": 17531469,
+      "rejected": 0,
+      "received": 35062937,
+      "lost": 0,
+      "corrupt": 0,
+      "bad": 0,
+      "dup": 0,
+      "ooo": 0,
+      "sent_per_second": 99.99919885531868,
+      "reader_p99_ns_max": 8192,
+      "reader_max_ns_max": 7300795,
+      "restarts": {
+        "writer": 0,
+        "reader": 0
+      },
+      "resource_max": {
+        "writer": {},
+        "reader": {}
+      }
+    },
+    {
+      "name": "fixed-high-2r",
+      "passed": true,
+      "violations": [],
+      "rate": 100000,
+      "payload": "fixed:64",
+      "props": "mlock=false,layout=inline,slotSize=512,slotCount=4096,wait=spin,read=classic,spinCount=1,pauseAfter=1,join=latest",
+      "writer_instances": 1,
+      "reader_instances": 2,
+      "sent": 17531379310,
+      "rejected": 0,
+      "received": 35062756613,
+      "lost": 0,
+      "corrupt": 0,
+      "bad": 0,
+      "dup": 0,
+      "ooo": 0,
+      "sent_per_second": 99998.68726509511,
+      "reader_p99_ns_max": 2048,
+      "reader_max_ns_max": 1179197,
+      "restarts": {
+        "writer": 0,
+        "reader": 0
+      },
+      "resource_max": {
+        "writer": {},
+        "reader": {}
+      }
+    },
+    {
+      "name": "var-high-8r",
+      "passed": true,
+      "violations": [],
+      "rate": 20000,
+      "payload": "random:64:4096",
+      "props": "mlock=false,layout=split,slotSize=8192,slotCount=1024,wait=spin,read=classic,spinCount=1,pauseAfter=1,join=latest,stride128=true",
+      "writer_instances": 1,
+      "reader_instances": 8,
+      "sent": 3506295779,
+      "rejected": 0,
+      "received": 28050362079,
+      "lost": 0,
+      "corrupt": 0,
+      "bad": 0,
+      "dup": 0,
+      "ooo": 0,
+      "sent_per_second": 19999.851059245837,
+      "reader_p99_ns_max": 32768,
+      "reader_max_ns_max": 7452178,
+      "restarts": {
+        "writer": 0,
+        "reader": 0
+      },
+      "resource_max": {
+        "writer": {},
+        "reader": {}
+      }
+    },
+    {
+      "name": "ultra-var-max",
+      "passed": true,
+      "violations": [],
+      "rate": 0,
+      "payload": "random:64:4096",
+      "props": "mlock=false,layout=split,slotSize=8192,slotCount=1024,wait=spin,read=classic,spinCount=1,pauseAfter=1,join=latest,stride128=true",
+      "writer_instances": 1,
+      "reader_instances": 8,
+      "sent": 13790074275,
+      "rejected": 0,
+      "received": 110320559685,
+      "lost": 0,
+      "corrupt": 0,
+      "bad": 0,
+      "dup": 0,
+      "ooo": 0,
+      "sent_per_second": 78658.34743542253,
+      "reader_p99_ns_max": 32768,
+      "reader_max_ns_max": 9030222,
+      "restarts": {
+        "writer": 0,
+        "reader": 0
+      },
+      "resource_max": {
+        "writer": {},
+        "reader": {}
+      }
+    },
+    {
+      "name": "fixed-4k-premark-4r",
+      "passed": true,
+      "violations": [],
+      "rate": 10000,
+      "payload": "fixed:4096",
+      "props": "mlock=false,layout=inline-premark,slotSize=8192,slotCount=512,wait=spin,read=spec,spinCount=1,pauseAfter=1,join=latest",
+      "writer_instances": 1,
+      "reader_instances": 4,
+      "sent": 1753148218,
+      "rejected": 0,
+      "received": 7012592424,
+      "lost": 0,
+      "corrupt": 0,
+      "bad": 0,
+      "dup": 0,
+      "ooo": 0,
+      "sent_per_second": 9999.92740338129,
+      "reader_p99_ns_max": 32768,
+      "reader_max_ns_max": 8172781,
+      "restarts": {
+        "writer": 0,
+        "reader": 0
+      },
+      "resource_max": {
+        "writer": {},
+        "reader": {}
+      }
+    },
+    {
+      "name": "restarts",
+      "passed": true,
+      "violations": [],
+      "rate": 2000,
+      "payload": "random:128:1024",
+      "props": "mlock=false,layout=inline,slotSize=2048,slotCount=2048,wait=futex,read=classic,spinCount=1,pauseAfter=1,join=latest",
+      "writer_instances": 829,
+      "reader_instances": 1151,
+      "sent": 349001977,
+      "rejected": 0,
+      "received": 1136084760,
+      "lost": 263605787,
+      "corrupt": 0,
+      "bad": 0,
+      "dup": 0,
+      "ooo": 0,
+      "sent_per_second": 1990.7012982724013,
+      "reader_p99_ns_max": 536870912,
+      "reader_max_ns_max": 1041807554,
+      "restarts": {
+        "writer": 828,
+        "reader": 1147
+      },
+      "resource_max": {
+        "reader": {},
+        "writer": {}
+      }
+    },
+    {
+      "name": "slow-vs-fast",
+      "passed": true,
+      "violations": [],
+      "rate": 2000,
+      "payload": "fixed:256",
+      "props": "mlock=false,layout=inline,slotSize=1024,slotCount=4096,wait=spin,read=classic,spinCount=1,pauseAfter=1,join=latest",
+      "writer_instances": 1,
+      "reader_instances": 3,
+      "sent": 350626183,
+      "rejected": 0,
+      "received": 735921595,
+      "lost": 315953848,
+      "corrupt": 0,
+      "bad": 0,
+      "dup": 0,
+      "ooo": 0,
+      "sent_per_second": 1999.9657414731394,
+      "reader_p99_ns_max": 1073741824,
+      "reader_max_ns_max": 2065114087,
+      "restarts": {
+        "writer": 0,
+        "reader": 0
+      },
+      "resource_max": {
+        "writer": {},
+        "reader": {}
+      }
+    },
+    {
+      "name": "tiny-ring",
+      "passed": true,
+      "violations": [],
+      "rate": 1000,
+      "payload": "fixed:16",
+      "props": "mlock=false,layout=split,slotSize=128,slotCount=2,wait=spin,read=classic,spinCount=1,pauseAfter=1,join=latest",
+      "writer_instances": 1,
+      "reader_instances": 3,
+      "sent": 175314354,
+      "rejected": 0,
+      "received": 435902799,
+      "lost": 90040196,
+      "corrupt": 0,
+      "bad": 0,
+      "dup": 0,
+      "ooo": 0,
+      "sent_per_second": 999.9900720149426,
+      "reader_p99_ns_max": 524288,
+      "reader_max_ns_max": 2054706,
+      "restarts": {
+        "writer": 0,
+        "reader": 0
+      },
+      "resource_max": {
+        "writer": {},
+        "reader": {}
+      }
+    },
+    {
+      "name": "large-slot",
+      "passed": true,
+      "violations": [],
+      "rate": 100,
+      "payload": "fixed:1048576",
+      "props": "mlock=false,layout=inline,slotSize=2097152,slotCount=64,wait=futex,read=classic,spinCount=1,pauseAfter=1,join=latest",
+      "writer_instances": 1,
+      "reader_instances": 2,
+      "sent": 17368375,
+      "rejected": 0,
+      "received": 34736748,
+      "lost": 0,
+      "corrupt": 0,
+      "bad": 0,
+      "dup": 0,
+      "ooo": 0,
+      "sent_per_second": 99.06891347318046,
+      "reader_p99_ns_max": 8388608,
+      "reader_max_ns_max": 51869137,
+      "restarts": {
+        "writer": 0,
+        "reader": 0
+      },
+      "resource_max": {
+        "writer": {},
+        "reader": {}
+      }
+    },
+    {
+      "name": "mlock-writerlock",
+      "passed": true,
+      "violations": [],
+      "rate": 1000,
+      "payload": "fixed:256",
+      "props": "mlock=true,layout=inline,slotSize=512,slotCount=512,wait=futex,read=classic,spinCount=1,pauseAfter=1,join=latest,writerLock=true",
+      "writer_instances": 1,
+      "reader_instances": 2,
+      "sent": 175314666,
+      "rejected": 0,
+      "received": 350629320,
+      "lost": 0,
+      "corrupt": 0,
+      "bad": 0,
+      "dup": 0,
+      "ooo": 0,
+      "sent_per_second": 999.991851657598,
+      "reader_p99_ns_max": 8192,
+      "reader_max_ns_max": 9894974,
+      "restarts": {
+        "writer": 0,
+        "reader": 0
+      },
+      "resource_max": {
+        "writer": {},
+        "reader": {}
+      }
+    }
+  ],
+  "environment": {
+    "binary": "/data/hxli/codes/tm_kit/worktrees/shm-seqlock-system-test/builddir_suite_release/shm_seqlock_stability_worker",
+    "binary_sha256": "6dee98984c40cfc83ee664d471d6d7427c8cd443f2c76874c7f23c0c6ae89652",
+    "uname": [
+      "Linux",
+      "localhost.localdomain",
+      "4.18.0-372.9.1.el8.x86_64",
+      "#1 SMP Tue May 10 14:48:47 UTC 2022",
+      "x86_64"
+    ],
+    "affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55
+    ],
+    "lanes_config": [
+      {
+        "name": "fixed-low-2r",
+        "rate": 100,
+        "payload": "fixed:64",
+        "readers": 2,
+        "slow": [
+          0,
+          0
+        ],
+        "props": {
+          "layout": "inline",
+          "slotSize": 512,
+          "slotCount": 4096,
+          "wait": "futex"
+        },
+        "expect_fast_no_loss": true
+      },
+      {
+        "name": "fixed-high-2r",
+        "rate": 100000,
+        "payload": "fixed:64",
+        "readers": 2,
+        "slow": [
+          0,
+          0
+        ],
+        "props": {
+          "layout": "inline",
+          "slotSize": 512,
+          "slotCount": 4096,
+          "wait": "spin"
+        },
+        "expect_fast_no_loss": true
+      },
+      {
+        "name": "var-high-8r",
+        "rate": 20000,
+        "payload": "random:64:4096",
+        "readers": 8,
+        "slow": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "props": {
+          "layout": "split",
+          "slotSize": 8192,
+          "slotCount": 1024,
+          "wait": "spin",
+          "stride128": "true"
+        },
+        "expect_fast_no_loss": true
+      },
+      {
+        "name": "ultra-var-max",
+        "rate": 0,
+        "payload": "random:64:4096",
+        "readers": 8,
+        "slow": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "props": {
+          "layout": "split",
+          "slotSize": 8192,
+          "slotCount": 1024,
+          "wait": "spin",
+          "stride128": "true"
+        },
+        "expect_fast_no_loss": false
+      },
+      {
+        "name": "fixed-4k-premark-4r",
+        "rate": 10000,
+        "payload": "fixed:4096",
+        "readers": 4,
+        "slow": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "props": {
+          "layout": "inline-premark",
+          "slotSize": 8192,
+          "slotCount": 512,
+          "wait": "spin",
+          "read": "spec"
+        },
+        "expect_fast_no_loss": true
+      },
+      {
+        "name": "restarts",
+        "rate": 2000,
+        "payload": "random:128:1024",
+        "readers": 4,
+        "slow": [
+          0,
+          0,
+          2000,
+          0
+        ],
+        "props": {
+          "layout": "inline",
+          "slotSize": 2048,
+          "slotCount": 2048,
+          "wait": "futex"
+        },
+        "restart": {
+          "writer": [
+            120,
+            300
+          ],
+          "reader": [
+            60,
+            240
+          ],
+          "reader_count": [
+            1,
+            1
+          ]
+        },
+        "expect_fast_no_loss": false
+      },
+      {
+        "name": "slow-vs-fast",
+        "rate": 2000,
+        "payload": "fixed:256",
+        "readers": 3,
+        "slow": [
+          0,
+          0,
+          5000
+        ],
+        "props": {
+          "layout": "inline",
+          "slotSize": 1024,
+          "slotCount": 4096,
+          "wait": "spin"
+        },
+        "expect_fast_no_loss": true
+      },
+      {
+        "name": "tiny-ring",
+        "rate": 1000,
+        "payload": "fixed:16",
+        "readers": 3,
+        "slow": [
+          0,
+          0,
+          2000
+        ],
+        "props": {
+          "layout": "split",
+          "slotSize": 128,
+          "slotCount": 2,
+          "wait": "spin"
+        },
+        "expect_fast_no_loss": false
+      },
+      {
+        "name": "large-slot",
+        "rate": 100,
+        "payload": "fixed:1048576",
+        "readers": 2,
+        "slow": [
+          0,
+          0
+        ],
+        "props": {
+          "layout": "inline",
+          "slotSize": 2097152,
+          "slotCount": 64,
+          "wait": "futex"
+        },
+        "expect_fast_no_loss": true
+      },
+      {
+        "name": "mlock-writerlock",
+        "rate": 1000,
+        "payload": "fixed:256",
+        "readers": 2,
+        "slow": [
+          0,
+          0
+        ],
+        "props": {
+          "layout": "inline",
+          "slotSize": 512,
+          "slotCount": 512,
+          "wait": "futex",
+          "mlock": "true",
+          "writerLock": "true"
+        },
+        "expect_fast_no_loss": true
+      }
+    ]
+  },
+  "raw": {
+    "stability_summary": "/tmp/shm-stability-72h-v2/summary.json",
+    "progress": "/tmp/shm-stability-72h-v2/progress.json",
+    "resources": "/tmp/shm-stability-72h-v2-resources/resources.jsonl",
+    "resource_summary": "/tmp/shm-stability-72h-v2-resources/resource_summary.json"
+  },
+  "note": "User stopped the campaign after 48.7h because the duration was sufficient. Zero corruption/duplication/order errors; loss is confined to slow readers and restart windows."
+}

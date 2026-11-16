@@ -1,0 +1,193 @@
+{
+  "date": "2026-11-13",
+  "task": "20261113-shm-seqlock-system-test",
+  "commit": "4d1dd63e5e30860a3eb39ec5b60e5275dbfcff57",
+  "working_tree_dirty": false,
+  "command": [
+    "test/shm_seqlock_system_test/run_suite.py",
+    "builddir_suite_release",
+    "--matrix",
+    "--baseline",
+    "--out=/tmp/shm-suite-final"
+  ],
+  "build": {
+    "type": "release",
+    "compiler": "GCC 15.2.1",
+    "meson": "1.11.2",
+    "fault_probes": false
+  },
+  "uname": [
+    "Linux",
+    "localhost.localdomain",
+    "4.18.0-372.9.1.el8.x86_64",
+    "#1 SMP Tue May 10 14:48:47 UTC 2022",
+    "x86_64"
+  ],
+  "seed": 20261113,
+  "affinity_cpus": 56,
+  "binaries_sha256": {
+    "shm_seqlock_resource_system_test": "929009fdbc779d8b4681f0526f02778dbd7e63fddb18f949c10876a303eda91e",
+    "ipc_concurrency_test": "eb33b85719767a13db417b2fdfbbf6044050c24cf0b68c87b4b7dc2fbf8c06f0",
+    "shm_seqlock_system_worker": "08d9826f704ebbf762c4315fc86612fd5c37b8b934cd778d732bfbe8d8fa510a",
+    "shm_seqlock_blackbox_worker": "2219e50afc6919688fe40e2bb227f1f900570e0069e3e6a2afbb6e65cfdaffc0",
+    "shm_seqlock_graph_system_test": "4c4f40b31aff986fb9536907cec1e00ae4b3f15f42693324037c940f87fc7f0f",
+    "shm_seqlock_test": "db9fe040a471898b30cf06c3cbfa33701b61e64d9b6adfba8089e4956fc11268",
+    "shm_seqlock_heartbeat_system_worker": "fc5f1ac08463920ece3e8484411bfe81fef237c96eedf739a0c6a5a8b6d766c3"
+  },
+  "suite": [
+    {
+      "name": "core",
+      "status": "PASS",
+      "exit_code": 0,
+      "timeout": false,
+      "elapsed_seconds": 41.835181321017444
+    },
+    {
+      "name": "graph",
+      "status": "PASS",
+      "exit_code": 0,
+      "timeout": false,
+      "elapsed_seconds": 19.84563626209274
+    },
+    {
+      "name": "heartbeat",
+      "status": "PASS",
+      "exit_code": 0,
+      "timeout": false,
+      "elapsed_seconds": 44.481723230332136
+    },
+    {
+      "name": "resource",
+      "status": "FAIL",
+      "exit_code": 1,
+      "timeout": false,
+      "elapsed_seconds": 6.375283438246697
+    },
+    {
+      "name": "baseline-inline",
+      "status": "PASS",
+      "exit_code": 0,
+      "timeout": false,
+      "elapsed_seconds": 98.76090426091105
+    },
+    {
+      "name": "baseline-split",
+      "status": "PASS",
+      "exit_code": 0,
+      "timeout": false,
+      "elapsed_seconds": 101.96424704231322
+    },
+    {
+      "name": "baseline-inline-premark",
+      "status": "PASS",
+      "exit_code": 0,
+      "timeout": false,
+      "elapsed_seconds": 103.61907408386469
+    },
+    {
+      "name": "baseline-concurrency",
+      "status": "PASS",
+      "exit_code": 0,
+      "timeout": false,
+      "elapsed_seconds": 25.903658980038017
+    }
+  ],
+  "counts": {
+    "core": {
+      "PASS": 778
+    },
+    "graph": {
+      "PASS": 192
+    },
+    "heartbeat": {
+      "PASS": 30,
+      "RISK_NOT_OBSERVED": 2,
+      "RISK_OBSERVED": 1
+    },
+    "resource": {
+      "pass": 18,
+      "fail": 1,
+      "failed_rounds": [
+        18
+      ],
+      "performance_baseline": false
+    },
+    "baseline": {
+      "passed": 4,
+      "failed": 0
+    }
+  },
+  "known_failure": {
+    "id": "DEF-1",
+    "suite": "resource",
+    "round": 18,
+    "options": {
+      "mode": "churn",
+      "cycles": 20,
+      "wait": "futex",
+      "selfRemove": "true"
+    },
+    "detail": "callback self-removal retains segment mappings and unjoined thread objects until component destruction; decided not to fix (known limitation)",
+    "evidence": "/tmp/shm-suite-final/resource",
+    "tracked_in": "doc/20261113-shm-seqlock-system-test/README.md (已知缺陷 DEF-1)"
+  },
+  "additional_verification": {
+    "debug_matrix": {
+      "artifact": "builddir_system_debug/shm_seqlock_system_worker",
+      "path": "/tmp/shm-func-debug-final",
+      "counts": {
+        "PASS": 778,
+        "FAIL": 0
+      }
+    },
+    "asan_ubsan_matrix": {
+      "artifact": "builddir_system_asan/shm_seqlock_system_worker",
+      "build_options": "-Db_sanitize=address,undefined",
+      "runtime_options": "ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1",
+      "path": "/tmp/shm-func-asan-final2",
+      "counts": {
+        "PASS": 778,
+        "FAIL": 0
+      },
+      "notes": [
+        "LeakSanitizer unavailable in this ptrace environment; not a leak-check pass",
+        "R-resource fd-limit probe skipped under sanitizer because the ASan runtime needs descriptors before main()"
+      ]
+    },
+    "nightly_repeat_20": {
+      "path": "/tmp/shm-nightly-repeat20-final",
+      "counts": {
+        "PASS": 15560,
+        "FAIL": 0
+      }
+    },
+    "process_reconnect_1000": {
+      "path": "/tmp/shm-r08-1000-final",
+      "counts": {
+        "PASS": 1,
+        "FAIL": 0
+      }
+    }
+  },
+  "functional_coverage_added": [
+    "F10",
+    "F11",
+    "R03",
+    "R05",
+    "R06",
+    "R07",
+    "R08",
+    "R-dirty-ext",
+    "R-risk",
+    "R-resource"
+  ],
+  "risk_observations": [
+    "callback throw terminates the reader process (SIGABRT)",
+    "publisher callable used after component destruction terminates the process (SIGSEGV)",
+    "external truncate of an active mapping kills writer and reader (SIGBUS)",
+    "replacing the lock file lets a second writer acquire the segment",
+    "published=2^63 wraps 2*next+2 and delivers slot 0 once"
+  ],
+  "evidence_dir": "/tmp/shm-suite-final",
+  "note": "run_suite exit code 1 is caused only by DEF-1; core/graph/heartbeat/baseline exited 0"
+}

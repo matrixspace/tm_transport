@@ -1,0 +1,88 @@
+{
+  "results": [
+    {
+      "case": "risk_first_unlocked",
+      "layout": "inline",
+      "status": "RISK_NOT_OBSERVED",
+      "category": "unsupported-concurrent-first-unlocked",
+      "invalid_or_reordered": 0,
+      "delivered": 1107,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "observation_notes": [],
+      "first_anomalies": [],
+      "interpretation": "No safety claim; later writerLock cannot retrofit the cached sender.",
+      "seconds": 1.0782344760373235,
+      "children": [
+        {
+          "pid": 45,
+          "exit": 0
+        },
+        {
+          "pid": 48,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "risk_first_unlocked",
+      "layout": "split",
+      "status": "RISK_OBSERVED",
+      "category": "unsupported-concurrent-first-unlocked",
+      "invalid_or_reordered": 2,
+      "delivered": 1025,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "observation_notes": [],
+      "first_anomalies": [
+        "DATA 7269736b2f3535362f3c434a51585f666d747b828990979ea5acb3bac1c8cfd6dde4ebf2f900070e151c232a31383f464d545b626970777e858c939aa1a8afb6bdc4cbd2d9e0e7eef5fc030a11181f262d343b424950575e656c737a81888f969da4abb2b9c0c7ced5dce3eaf1f8ff060d141b222930373e454c535a61686f7673848b9299a0a7aeb5bcc3cad1d8dfe6edf4fb0",
+        "DATA 7269736b2f3635382f6a71787f868d949ba2a9b0b7bec5ccd3dae1e8eff6fd040b121920272e353c434a51585f666d747b828990979ea5acb3bac1c8cfd6dde4ebf2f900070e151c232a31383f464d545b626970777e858c939aa1a8afb6bdc4cbd2d9e0e7eef5fc030a11181f262d343b424950575e656c737a81888f969da473b2b9c0c7ced5dce3eaf1f8ff060d141b22293"
+      ],
+      "interpretation": "No safety claim; later writerLock cannot retrofit the cached sender.",
+      "seconds": 1.0731638330034912,
+      "children": [
+        {
+          "pid": 55,
+          "exit": 0
+        },
+        {
+          "pid": 58,
+          "exit": 0
+        }
+      ]
+    },
+    {
+      "case": "risk_first_unlocked",
+      "layout": "inline-premark",
+      "status": "RISK_OBSERVED",
+      "category": "unsupported-concurrent-first-unlocked",
+      "invalid_or_reordered": 2,
+      "delivered": 1198,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "observation_notes": [],
+      "first_anomalies": [
+        "DATA 7269736b2f3134332f434a51585f666d747b828990979ea5acb3bac1c8cfd6dde4ebf2f900070e151c232a31383f464d545b626970777e858c939aa1a8afb6bdc4cbd2d9e0e7eef5fc030a11181f262d343b424950575e656c737a81888f969da4abb2b9c0c7ced5dce3eaf1f8ff060d141b222930373e454c535a61686f767d848b9299a0a7aeb5bcc3cad1d8dfe6edf4fb020",
+        "DATA 7269736b2f3433332ffd040b121920272e353c434a51585f666d747b828990979ea5acb3bac1c8cfd6dde4ebf2f900070e151c232a31383f464d545b626970777e858c939aa1a8afb6bdc4cbd2d9e0e7eef5fc030a11181f262d343b424950575e656c737a81888f969da4abb2b9c0c7ced5dce3eaf1f8ff060d141b222930373e454c535a61686f767d848b9299a0a7aeb5bcc"
+      ],
+      "interpretation": "No safety claim; later writerLock cannot retrofit the cached sender.",
+      "seconds": 1.0797775047831237,
+      "children": [
+        {
+          "pid": 65,
+          "exit": 0
+        },
+        {
+          "pid": 68,
+          "exit": 0
+        }
+      ]
+    }
+  ]
+}
