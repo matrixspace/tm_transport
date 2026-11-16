@@ -1,0 +1,2 @@
+option('tm_include', type: 'string', description: 'Installed TM Kit header directory')
+option('boost_include', type: 'string', description: 'vcpkg header directory')

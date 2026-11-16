@@ -1,5 +1,9 @@
 if build_machine.system() == 'linux'
     subdir('shm_seqlock_test')
+    subdir('shm_seqlock_system_test')
+    subdir('shm_seqlock_graph_system_test')
+    subdir('shm_seqlock_heartbeat_system_test')
+    subdir('shm_seqlock_resource_system_test')
     subdir('shm_cursor_test')
     subdir('ipc_latency_profiler')
     subdir('zeromq_test')

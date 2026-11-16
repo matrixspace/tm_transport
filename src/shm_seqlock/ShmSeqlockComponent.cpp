@@ -21,6 +21,7 @@
 #include <tm_kit/transport/shm_seqlock/ShmSeqlockComponent.hpp>
 
 #include "../ThreadCpuLeaseSupport.hpp"
+#include "TestProbe.hpp"
 
 namespace dev { namespace cd606 { namespace tm { namespace transport { namespace shm_seqlock {
 
@@ -317,6 +318,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     fail("another live publisher holds "+lockPath_);
                 }
 
+                TM_SHM_TEST_PROBE("writer_locked");
+
                 //We hold the lock, so any existing segment content is ours to reuse or replace
                 bool reused = false;
                 int fd = ::shm_open(shmName_.c_str(), O_RDWR|O_CLOEXEC, 0);
@@ -339,6 +342,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                             if (magic == SHM_SEQLOCK_MAGIC) {
                                 //tell readers still mapping it to reopen by name
                                 h->magic.store(SHM_SEQLOCK_SUPERSEDED, std::memory_order_release);
+                                TM_SHM_TEST_PROBE("superseded");
                             }
                             map_.unmap();
                         }
@@ -356,6 +360,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     uint64_t resume = map_.header->published.load(std::memory_order_acquire);
                     for (uint64_t ii=0; ii<count; ++ii) {
                         auto *sq = (layout_ == SHM_SEQLOCK_LAYOUT_SPLIT ? map_.seqAt<true>(ii) : map_.seqAt<false>(ii));
+                        TM_SHM_TEST_PROBE("recovery_scan");
                         auto seq = sq->load(std::memory_order_relaxed);
                         if (seq & 1) {
                             sq->store(0, std::memory_order_relaxed);
@@ -369,6 +374,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     }
                     map_.header->flags.store(futex_ ? SHM_SEQLOCK_FLAG_FUTEX : 0, std::memory_order_relaxed);
                     map_.header->published.store(resume, std::memory_order_release);
+                    TM_SHM_TEST_PROBE("recovery_epoch");
                     map_.header->epoch.fetch_add(1, std::memory_order_acq_rel);
                 } else {
                     //Readers still mapping an old segment keep their mapping alive
@@ -378,6 +384,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     if (fd < 0) {
                         fail(std::string("cannot create shared memory segment: ")+std::strerror(errno));
                     }
+                    TM_SHM_TEST_PROBE("segment_created");
                     (void) ::fchmod(fd, 0666);
                     if (::ftruncate(fd, static_cast<off_t>(size)) != 0) {
                         int e = errno;
@@ -407,6 +414,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     h->published.store(0, std::memory_order_relaxed);
                     h->futexWord.store(0, std::memory_order_relaxed);
                     h->waiters.store(0, std::memory_order_relaxed);
+                    TM_SHM_TEST_PROBE("before_magic");
                     h->magic.store(SHM_SEQLOCK_MAGIC, std::memory_order_release);
                     map_.setLayoutFromHeader();
                 }
@@ -474,11 +482,14 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     //inline: odd mark first, then write everything, then commit
                     sq->store(2*i+1, std::memory_order_relaxed);
                     std::atomic_thread_fence(std::memory_order_release);
+                    TM_SHM_TEST_PROBE("slot_odd");
                     s->payloadLen.store(static_cast<uint32_t>(pl), std::memory_order_relaxed);
+                    TM_SHM_TEST_PROBE("metadata_partial");
                     s->topicLen.store(static_cast<uint32_t>(tl), std::memory_order_relaxed);
                     s->topicHash.store(lastTopicHash_, std::memory_order_relaxed);
-                    std::memcpy(d, topic.data(), tl);
-                    std::memcpy(d+tl, content.data(), pl);
+                    TM_SHM_TEST_COPY(d, topic.data(), tl, "topic_partial");
+                    TM_SHM_TEST_PROBE("topic_written");
+                    TM_SHM_TEST_COPY(d+tl, content.data(), pl, "payload_partial");
                     sq->store(2*i+2, std::memory_order_release);
                 } else if constexpr (InlinePremark) {
                     //inline-premark: slot was pre-marked odd after the previous commit.
@@ -494,47 +505,56 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                         std::size_t tail = total-L0;
                         if (L0 >= tl) {
                             //L0 falls inside content
-                            std::memcpy(d+L0, content.data()+(L0-tl), tail);
+                            TM_SHM_TEST_COPY(d+L0, content.data()+(L0-tl), tail, "payload_partial");
                         } else {
                             //L0 falls inside topic; tail = topic[L0..tl) + content[0..pl)
                             std::size_t topicTail = tl-L0;
-                            std::memcpy(d+L0, topic.data()+L0, topicTail);
+                            TM_SHM_TEST_COPY(d+L0, topic.data()+L0, topicTail, "topic_partial");
                             if (pl > 0) {
-                                std::memcpy(d+tl, content.data(), pl);
+                                TM_SHM_TEST_COPY(d+tl, content.data(), pl, "payload_partial");
                             }
                         }
                         std::atomic_thread_fence(std::memory_order_release);
                     }
+                    TM_SHM_TEST_PROBE("cold_written");
                     //burst line 0: lengths, topicHash, then topic+content prefix
+                    TM_SHM_TEST_PROBE("slot_odd");
                     s->payloadLen.store(static_cast<uint32_t>(pl), std::memory_order_relaxed);
+                    TM_SHM_TEST_PROBE("metadata_partial");
                     s->topicLen.store(static_cast<uint32_t>(tl), std::memory_order_relaxed);
                     s->topicHash.store(lastTopicHash_, std::memory_order_relaxed);
                     std::size_t l0copy = (total < L0 ? total : L0);
                     if (l0copy <= tl) {
-                        std::memcpy(d, topic.data(), l0copy);
+                        TM_SHM_TEST_COPY(d, topic.data(), l0copy, "topic_partial");
                     } else {
-                        std::memcpy(d, topic.data(), tl);
-                        std::memcpy(d+tl, content.data(), l0copy-tl);
+                        TM_SHM_TEST_COPY(d, topic.data(), tl, "topic_partial");
+                        TM_SHM_TEST_COPY(d+tl, content.data(), l0copy-tl, "payload_partial");
                     }
                     sq->store(2*i+2, std::memory_order_release);
                 } else {
                     //split: the slot was already pre-marked odd after the previous commit
                     //(or when this publisher started), the commit is its only store here
+                    TM_SHM_TEST_PROBE("slot_odd");
                     s->payloadLen.store(static_cast<uint32_t>(pl), std::memory_order_relaxed);
+                    TM_SHM_TEST_PROBE("metadata_partial");
                     s->topicLen.store(static_cast<uint32_t>(tl), std::memory_order_relaxed);
                     s->topicHash.store(lastTopicHash_, std::memory_order_relaxed);
-                    std::memcpy(d, topic.data(), tl);
-                    std::memcpy(d+tl, content.data(), pl);
+                    TM_SHM_TEST_COPY(d, topic.data(), tl, "topic_partial");
+                    TM_SHM_TEST_PROBE("topic_written");
+                    TM_SHM_TEST_COPY(d+tl, content.data(), pl, "payload_partial");
                     sq->store(2*i+2, std::memory_order_release);
                 }
+                TM_SHM_TEST_PROBE("slot_even");
                 next_ = i+1;
                 map_.header->published.store(i+1, std::memory_order_release);
+                TM_SHM_TEST_PROBE("published");
                 if constexpr ((Split || InlinePremark) && Premark) {
                     //pre-mark the next slot while readers are still busy with this message;
                     //the fence orders it before any data store of the next message
                     map_.seqAt<Split>(i+1)->store(2*i+3, std::memory_order_relaxed);
                     std::atomic_thread_fence(std::memory_order_release);
                 }
+                TM_SHM_TEST_PROBE("premarked");
                 if constexpr (Lock) {
                     writing_.clear(std::memory_order_release);
                 }
@@ -703,6 +723,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                             std::cerr << "[ShmSeqlockComponent] segment '" << locator_.identifier()
                                 << "': reader uses wait=futex but the publisher does not, readers will poll every 1ms when idle\n";
                         }
+                        TM_SHM_TEST_PROBE("reader_joined");
                         return true;
                     }
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -788,13 +809,17 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     timeout = std::min(timeout, 1000L);
                 }
                 uint32_t fw = h->futexWord.load(std::memory_order_acquire);
+                TM_SHM_TEST_PROBE("before_waiter");
                 h->waiters.fetch_add(1, std::memory_order_seq_cst);
+                TM_SHM_TEST_PROBE("waiter_registered");
                 //pairs with the publisher's seq_cst fence before it reads waiters.
                 //split and inline-premark: a pre-marked slot (want-1) is the normal
                 //idle state, so sleep until the commit.
                 //inline: want-1 means a write is in progress.
                 if (sq->load(std::memory_order_seq_cst) < ((Split || InlinePremark) ? want : want-1) && running_.load(std::memory_order_relaxed)) {
+                    TM_SHM_TEST_PROBE("before_sleep");
                     futexWait(&(h->futexWord), fw, timeout);
+                    TM_SHM_TEST_PROBE("after_sleep");
                 }
                 //saturating: the publisher may have reset the count meanwhile
                 uint32_t w = h->waiters.load(std::memory_order_relaxed);
