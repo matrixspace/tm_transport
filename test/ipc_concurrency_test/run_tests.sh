@@ -53,6 +53,15 @@ lockprop() {
     *) echo "" ;;
     esac
 }
+# the explicit "no serialization" property for a transport whose lock is now on by
+# default ("" otherwise, so those transports keep their own default). The "no lock"
+# probes use it so they keep exercising the unlocked path.
+unlockprop() {
+    case $1 in
+    shm_seqlock) echo "writerLock=false" ;;
+    *) echo "" ;;
+    esac
+}
 # field <log> <key> -> value from the RESULT line
 field() {
     grep '^RESULT ' "$1" | tail -1 | tr ' ' '\n' | grep "^$2=" | head -1 | cut -d= -f2
@@ -174,24 +183,29 @@ for T in $TRANSPORTS; do
     fi
 
     # 3. in-process multi-thread write without serialization (each thread calls getPublisher)
-    run "$L/3_mt_write_unlocked.log" --mode=inproc --channel="$(chan "$T")" --writers=4 --count="$C"
+    run "$L/3_mt_write_unlocked.log" --mode=inproc --channel="$(chan "$T" "$(unlockprop "$T")")" --writers=4 --count="$C"
     probe "$T in-process 4 writer threads, no lock" "$L/3_mt_write_unlocked.log"
 
     # 4. same, all threads share ONE publisher function object
-    run "$L/4_mt_write_shared.log" --mode=inproc --channel="$(chan "$T")" --writers=4 --count="$C" \
+    run "$L/4_mt_write_shared.log" --mode=inproc --channel="$(chan "$T" "$(unlockprop "$T")")" --writers=4 --count="$C" \
         --sharedPublisher=true
     probe "$T in-process 4 writer threads sharing one publisher, no lock" "$L/4_mt_write_shared.log"
 
     # 5. lock property only on some locators: the first locator of the segment wins
     if [ -n "$LP" ]; then
-        CH=$(chan "$T")
-        ALT=${CH%]},$LP]
+        UP=$(unlockprop "$T")
+        CH=$(chan "$T" "$UP")
+        if [ -n "$UP" ]; then
+            ALT=${CH/$UP/$LP}
+        else
+            ALT=${CH%]},$LP]
+        fi
         run "$L/5_lock_mismatch.log" --mode=inproc --channel="$CH" --altChannel="$ALT" --writers=4 --count="$C"
         probe "$T $LP only on odd writers' locator (first locator decides)" "$L/5_lock_mismatch.log"
     fi
 
     # 6. TM Kit graph: 4 threaded importers -> one MultiTransportBroadcastPublisherManagingUtils sink
-    run "$L/6_graph_direct.log" --mode=graph --channel="$(chan "$T")" --writers=4 --count="$C"
+    run "$L/6_graph_direct.log" --mode=graph --channel="$(chan "$T" "$(unlockprop "$T")")" --writers=4 --count="$C"
     probe "$T graph: 4 threaded importers -> one exporter (threaded=false)" "$L/6_graph_direct.log"
 
     # aeron_ipc: untethered readers (the default) can read a term that the publisher is
@@ -208,7 +222,7 @@ for T in $TRANSPORTS; do
     fi
 
     # 8. graph with threaded=true plus a heartbeat-like direct publisher on the same channel
-    run "$L/8_graph_extra.log" --mode=graph --channel="$(chan "$T")" --writers=2 --count="$C" \
+    run "$L/8_graph_extra.log" --mode=graph --channel="$(chan "$T" "$(unlockprop "$T")")" --writers=2 --count="$C" \
         --threadedSink=true --extraDirectPublisher=true
     probe "$T graph threaded=true + heartbeat-like extra publisher, no lock" "$L/8_graph_extra.log"
     if [ -n "$LP" ]; then

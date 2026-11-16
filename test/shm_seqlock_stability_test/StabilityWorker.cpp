@@ -197,6 +197,7 @@ int main(int argc, char **argv)
 
         if (role == "writer") {
             auto pub = component.shm_seqlock_getPublisher(locator);
+            Histogram publishCost;
             emit("READY");
             auto intervalNs = rate > 0 ? (1000000000LL / rate) : 0;
             auto nextSend = nowNs();
@@ -213,6 +214,7 @@ int main(int argc, char **argv)
                     for (auto const &item : component.shm_seqlock_publisherStats())
                         baseRejected += item.second.rejected;
                     lateMaxUs.store(0, std::memory_order_relaxed);
+                    publishCost.reset();
                     warmupDone = true;
                 }
                 if (durationMs > 0 && now - begin >= static_cast<std::uint64_t>(durationMs) * 1000000ULL)
@@ -233,7 +235,9 @@ int main(int argc, char **argv)
                 basic::ByteDataWithTopic message;
                 message.topic = "s";
                 message.content = buildMessage(generation, seq, static_cast<std::uint32_t>(fill));
+                auto t0 = nowNs();
                 pub(std::move(message));
+                publishCost.add(nowNs() - t0);
                 ++seq;
                 sent.fetch_add(1, std::memory_order_relaxed);
                 if (intervalNs > 0) {
@@ -264,7 +268,9 @@ int main(int argc, char **argv)
                 emit(
                     "STAT W gen=" + std::to_string(generation) + " sent=" + std::to_string(sent.load() - baseSent)
                     + " rejected=" + std::to_string(rejected - baseRejected) + " lateMaxUs=" + std::to_string(lateMaxUs.load())
-                    + " final=1");
+                    + " final=1 pubP50ns=" + std::to_string(publishCost.percentile(0.50))
+                    + " pubP90ns=" + std::to_string(publishCost.percentile(0.90))
+                    + " pubP99ns=" + std::to_string(publishCost.percentile(0.99)));
             }
             return 0;
         }
