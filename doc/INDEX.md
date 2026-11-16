@@ -6,6 +6,8 @@
 
 - [ShmSeqlockComponent 默认参数调整](20261116-shm-seqlock-defaults/README.md) — 2026-11-16 完成：基于上述系统测试报告把默认 `slotSize` 1000→2048、`layout` inline→inline-premark、`writerLock` false→true（显式 `writerLock=false` 仍可强制关锁）。新增 `shm_seqlock_test defaults` 回归验证默认值；并发测试"无锁"探针改为显式关锁，保住未加锁路径的覆盖。
 
+- [ShmSeqlockComponent 读端 join 默认改为 next](20261116-shm-seqlock-join-default/README.md) — 2026-11-16 起：默认 `join` latest→next（只交付加入之后发布的消息），fetch-first/心跳发现随默认变 next；`defaults` 回归新增 join=next 校验。
+
 - [IPC Transport 并发测试](20261103-ipc-concurrency-test/README.md) — 2026-11-03，为 shm_seqlock、shm_cursor、aeron_ipc、shared_memory_broadcast 四种 IPC transport 新增系统性并发测试程序，覆盖进程内多线程读写、多进程读写、graph 场景等 10 类测试。
 
 - [IPC Transport 并发 Bug 修复](20261103-ipc-concurrency-bugfix/README.md) — 2026-11-03 至 2026-11-04，基于并发测试结果修复三类 bug：shm_seqlock 计数器数据竞争、shared_memory_broadcast publisher 侧 SIGSEGV、aeron_ipc untethered 读端 term 重用导致数据损坏。

@@ -312,6 +312,12 @@ namespace {
         transport::shm_seqlock::ShmSeqlockComponent pubComp;
         auto pub = pubComp.shm_seqlock_getPublisher(locator);
 
+        //(0) join=next default: a message published before the reader joins must
+        //not be delivered (join=next delivers only messages published after join).
+        std::string pre;
+        makePayload(pre, 1, 0xFFFF0002ULL, sizeof(PayloadHeader)+16, 0);
+        pub({topics[0], pre});
+
         std::atomic<uint64_t> received {0}, bad {0}, topicBad {0};
         transport::shm_seqlock::ShmSeqlockComponent subComp;
         subComp.shm_seqlock_addSubscriptionClient(
@@ -335,6 +341,7 @@ namespace {
             return (m.empty() ? 0UL : m.begin()->second.lost);
         };
         auto deadline = nowNs()+5000000000LL;
+        bool joinNextOk = (received.load() == 0);
 
         //(1) slotSize=2048 default: a 1500B payload is accepted (the old 1000
         //default would have rejected it) and a 2500B payload is rejected.
@@ -386,10 +393,11 @@ namespace {
             ::close(fd);
         }
 
-        bool pass = (bad.load() == 0 && topicBad.load() == 0
+        bool pass = (joinNextOk && bad.load() == 0 && topicBad.load() == 0
             && received.load()+lost() == 1+2*perThread
             && ps.rejected == 1 && layoutOk && capOk && countOk);
-        std::printf("DEFAULTS received=%lu lost=%lu bad=%lu topicBad=%lu rejected=%lu layout=%s slotSize=%s slotCount=%s %s\n"
+        std::printf("DEFAULTS join=%s received=%lu lost=%lu bad=%lu topicBad=%lu rejected=%lu layout=%s slotSize=%s slotCount=%s %s\n"
+            , (joinNextOk ? "next" : "MISMATCH")
             , static_cast<unsigned long>(received.load()), static_cast<unsigned long>(lost())
             , static_cast<unsigned long>(bad.load()), static_cast<unsigned long>(topicBad.load())
             , static_cast<unsigned long>(ps.rejected)

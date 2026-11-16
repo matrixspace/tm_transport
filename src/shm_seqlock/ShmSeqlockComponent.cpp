@@ -966,7 +966,7 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                 //ownership transfer. read=spec stays available for comparison.
                 , spec_(locator.query("read", "classic") == "spec")
                 , futex_(locator.query("wait", "spin") == "futex")
-                , joinLatest_(locator.query("join", "latest") != "next")
+                , joinLatest_(locator.query("join", "next") == "latest")
                 , doMlock_(queryBool(locator, "mlock", true))
                 , spinCount_(std::max<std::size_t>(1, queryNumber(locator, "spinCount", 20000)))
                 , futexTimeoutUs_(static_cast<long>(std::max<std::size_t>(1, queryNumber(locator, "futexTimeoutUs", 100000))))
