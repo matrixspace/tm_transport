@@ -50,6 +50,7 @@
 
 - 默认 `layout` 改为 inline-premark 后，新建段带一个"始终预标记"的 slot，读者最多落后 `slotCount-1` 条（4096 槽下无感）；旧段/旧读者按段头布局走，无 ABI 影响。
 - 默认 `writerLock=true` 只对"未显式写 writerLock 的 locator"生效；显式 `writerLock=false` 仍是合法的无锁快速路径（代价：调用方保证单线程 publish）。
+- 默认 `writerLock=true` **只适合低频并发**（数据 + 心跳共段）。高频多 writer 并发 publish 到同一段时，`atomic_flag` 自旋锁在饱和争用下**超线性退化**：实测同进程 1/2/4/8 writer 的聚合吞吐约 9.95M / 2.88M / 1.10M / 0.54M 条/s（release、绑 8 个 NUMA0 物理核、`ipc_concurrency_test --mode=pub`、maxPayload=24、3 轮）。原因是 `writing_`（及紧邻的 `next_`）单条 cache line 在所有 writer 核之间乒乓，每次加锁都要付 O(写者数) 的 cache 一致性代价。高频多 writer 应把多生产者收敛成一个发布线程（单生产者队列），或显式 `writerLock=false` 后在应用层自行串行化。
 - 默认 `slotSize=2048` 使默认段内存约 8.3MiB（原约 4.0MiB）。
 
 ## 相关文档（相关任务、tm_kit_reference 章节）
