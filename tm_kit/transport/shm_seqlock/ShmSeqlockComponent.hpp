@@ -71,8 +71,8 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
     //                    waiter registrations leaked by readers killed while asleep)
     //  pauseAfter=<n>    in spin mode, issue PAUSE after n empty polls (default 0 = never)
     //  join=latest|next  latest: first delivered message is the latest already
-    //                    published one (default); next: first message published
-    //                    after joining
+    //                    published one; next: first message published after joining
+    //                    (default)
     //  mlock=true|false  best-effort mlock of the mapping (default true)
     //  cpu=<spec>        CPU binding for the segment's reader thread,
     //                    CpuBindingSpec syntax (none/auto/numa:<n>/cpus:<list>/<list>;
