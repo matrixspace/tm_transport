@@ -25,6 +25,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstddef>
 #include <cstdio>
 #include <cstring>
 #include <future>
@@ -36,6 +37,7 @@
 #include <thread>
 #include <vector>
 
+#include <fcntl.h>
 #include <unistd.h>
 
 #include <boost/algorithm/string.hpp>
@@ -283,6 +285,124 @@ namespace {
         _exit(pass ? 0 : 1);
     }
 
+    //On-disk probe for the segment header: mirrors the leading fields of
+    //ShmSeqlockHeader in src/shm_seqlock/ShmSeqlockComponent.cpp so the test can
+    //assert the default layout/slotSize/slotCount without linking against the
+    //component's private constants. The static_asserts pin the byte offsets.
+    struct ShmSeqlockHeaderProbe {
+        alignas(128) uint64_t magic;
+        uint32_t layoutVersion;
+        uint32_t slotCapacity;
+        uint32_t slotCount;
+        uint32_t slotStride;
+        uint32_t flags;
+    };
+    static_assert(offsetof(ShmSeqlockHeaderProbe, layoutVersion) == 8, "unexpected shm_seqlock header layout");
+    static_assert(offsetof(ShmSeqlockHeaderProbe, slotCapacity) == 12, "unexpected shm_seqlock header layout");
+    static_assert(offsetof(ShmSeqlockHeaderProbe, slotCount) == 16, "unexpected shm_seqlock header layout");
+    static_assert(offsetof(ShmSeqlockHeaderProbe, slotStride) == 20, "unexpected shm_seqlock header layout");
+
+    //Verifies the component defaults with a bare locator (no properties):
+    //  layout=inline-premark, slotSize=2048, slotCount=4096, writerLock=true.
+    int runDefaults(Options const &o) {
+        auto segment = opt(o, "segment", "shm_seqlock_defaults");
+        auto locator = transport::ConnectionLocator::parse("::::"+segment);
+        std::vector<std::string> topics {"a.x", "a.yy", "b.zzzzzz"};
+
+        transport::shm_seqlock::ShmSeqlockComponent pubComp;
+        auto pub = pubComp.shm_seqlock_getPublisher(locator);
+
+        std::atomic<uint64_t> received {0}, bad {0}, topicBad {0};
+        transport::shm_seqlock::ShmSeqlockComponent subComp;
+        subComp.shm_seqlock_addSubscriptionClient(
+            locator
+            , transport::shm_seqlock::ShmSeqlockComponent::NoTopicSelection {}
+            , [&](basic::ByteDataWithTopic &&d) {
+                PayloadHeader h;
+                if (!checkPayload(d.content, h)) {
+                    ++bad;
+                } else if (h.topicIdx >= topics.size() || d.topic != topics[h.topicIdx]) {
+                    ++topicBad;
+                } else {
+                    ++received;
+                }
+            }
+        );
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+        auto lost = [&]() {
+            auto m = subComp.shm_seqlock_readerStats();
+            return (m.empty() ? 0UL : m.begin()->second.lost);
+        };
+        auto deadline = nowNs()+5000000000LL;
+
+        //(1) slotSize=2048 default: a 1500B payload is accepted (the old 1000
+        //default would have rejected it) and a 2500B payload is rejected.
+        std::string mid, big;
+        makePayload(mid, 1, 0xFFFF0000ULL, 1500, 0);
+        makePayload(big, 1, 0xFFFF0001ULL, 2500, 0);
+        pub({topics[0], mid});
+        pub({topics[0], big});
+        while (nowNs() < deadline && received.load() < 1) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+
+        //(2) writerLock=true default: two threads publish interleaved seqs; the
+        //default lock serializes them so no message is corrupted. Ordering of the
+        //delivered seqs is lock-acquisition order, so only integrity is checked.
+        uint64_t perThread = optNum(o, "count", 1000);
+        std::thread t0([&]() {
+            std::string payload;
+            for (uint64_t seq=0; seq<perThread; ++seq) {
+                makePayload(payload, 1, 2*seq, sizeof(PayloadHeader)+16, 0);
+                pub({topics[0], payload});
+            }
+        });
+        std::thread t1([&]() {
+            std::string payload;
+            for (uint64_t seq=0; seq<perThread; ++seq) {
+                makePayload(payload, 1, 2*seq+1, sizeof(PayloadHeader)+16, 1);
+                pub({topics[1], payload});
+            }
+        });
+        t0.join();
+        t1.join();
+        while (nowNs() < deadline && received.load()+lost() < 1+2*perThread) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+
+        auto ps = pubComp.shm_seqlock_publisherStats().begin()->second;
+
+        //(3) header probe: layout=inline-premark(3), slotSize=2048, slotCount=4096.
+        bool layoutOk = false, capOk = false, countOk = false;
+        int fd = ::open(("/dev/shm/"+segment).c_str(), O_RDONLY);
+        if (fd >= 0) {
+            ShmSeqlockHeaderProbe probe {};
+            if (::read(fd, &probe, sizeof(probe)) == static_cast<ssize_t>(sizeof(probe))) {
+                layoutOk = (probe.layoutVersion == 3); //SHM_SEQLOCK_LAYOUT_INLINE_PREMARK
+                capOk = (probe.slotCapacity == 2048);
+                countOk = (probe.slotCount == 4096);
+            }
+            ::close(fd);
+        }
+
+        bool pass = (bad.load() == 0 && topicBad.load() == 0
+            && received.load()+lost() == 1+2*perThread
+            && ps.rejected == 1 && layoutOk && capOk && countOk);
+        std::printf("DEFAULTS received=%lu lost=%lu bad=%lu topicBad=%lu rejected=%lu layout=%s slotSize=%s slotCount=%s %s\n"
+            , static_cast<unsigned long>(received.load()), static_cast<unsigned long>(lost())
+            , static_cast<unsigned long>(bad.load()), static_cast<unsigned long>(topicBad.load())
+            , static_cast<unsigned long>(ps.rejected)
+            , (layoutOk ? "inline-premark" : "MISMATCH")
+            , (capOk ? "2048" : "MISMATCH")
+            , (countOk ? "4096" : "MISMATCH")
+            , (pass ? "PASS" : "FAIL"));
+        std::fflush(stdout);
+        ::unlink(("/dev/shm/"+segment).c_str());
+        ::unlink(("/dev/shm/"+segment+".lock").c_str());
+        _exit(pass ? 0 : 1);
+    }
+
     using TheEnvironment = infra::Environment<
         infra::CheckTimeComponent<false>,
         infra::TrivialExitControlComponent,
@@ -511,6 +631,8 @@ int main(int argc, char **argv) {
     std::string mode = argv[1];
     if (mode == "stress") {
         return runStress(o);
+    } else if (mode == "defaults") {
+        return runDefaults(o);
     } else if (mode == "pub") {
         return runPub(o);
     } else if (mode == "sub") {

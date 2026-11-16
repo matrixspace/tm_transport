@@ -271,16 +271,16 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             OneShmSeqlockSender(ConnectionLocator const &locator)
                 : locator_(locator), shmName_(shmNameFor(locator)), lockPath_(), lockFd_(-1), map_()
                 , futex_(locator.query("wait", "spin") == "futex")
-                , writerLock_(queryBool(locator, "writerLock", false))
+                , writerLock_(queryBool(locator, "writerLock", true))
                 , layout_(SHM_SEQLOCK_LAYOUT_INLINE), noPremark_(queryBool(locator, "testNoPremark", false))
                 , next_(0), lastTopic_(), lastTopicHash_(topicHash(nullptr, 0)), rejected_(0), emptyWakes_(0), waiterResets_(0)
             {
                 lockPath_ = "/dev/shm"+shmName_+".lock";
-                std::size_t capacity = queryNumber(locator, "slotSize", 1000);
+                std::size_t capacity = queryNumber(locator, "slotSize", 2048);
                 std::size_t count = queryNumber(locator, "slotCount", 4096);
                 bool stride128 = queryBool(locator, "stride128", false);
                 bool doMlock = queryBool(locator, "mlock", true);
-                auto layoutName = locator.query("layout", "inline");
+                auto layoutName = locator.query("layout", "inline-premark");
                 if (layoutName == "split") {
                     layout_ = SHM_SEQLOCK_LAYOUT_SPLIT;
                 } else if (layoutName == "inline-premark") {
