@@ -44,6 +44,8 @@
 - `shm_seqlock_test stress --layout=inline|split|inline-premark --count=300000` → 三个 layout **全部 PASS**（bad/ooo/topicBad/corrupt 全 0）。
 - `ipc_concurrency_test`（shm_seqlock）→ **pass=6 fail=0 risk=5 safe=0**。5 个"无锁"探针全部 RISK（corrupt>0）：显式 `writerLock=false` 确实关掉了锁（验证"强制关锁"生效）；`#5`（首个 locator 未加锁、后续 locator 加锁）也 RISK，复现 H04 风险；`writerLock=true` 的各场景（含心跳共段）全部 PASS。其中 `#5` 探针在首轮因 `writerLock=false,writerLock=true` 重复属性导致解析失败，已修复为替换式构造（`ALT=${CH/$UP/$LP}`），复跑通过。
 
+补充实测（release，绑核，`wait=spin`，256B，3 轮 × 20s）：无争用单写者下 `writerLock=true` 的 publish 开销约为 **p50 +1~2 ns、p90 +4 ns 以内**（resource test 同 NUMA：mean 108.7→109.7、p50 持平、p90 119→124；stability worker 同/跨 NUMA：publish p50 false 56~57 vs true 58）。跨 NUMA 不改变该开销（锁是 writer 进程本地 `atomic_flag`，与 NUMA 无关），且跨 NUMA 未抬高 writer 侧 publish 成本（同/跨 NUMA p50 均为 ~56–58 ns，跨节点代价在读者侧远端读）。p90/p99 尾部噪声较大、且 worker 同 NUMA 出现 `false p90=130 / true p90=64` 的反直觉值，属 `steady_clock` 量 ~57ns 时的测量伪影/共享机干扰，以 p50 为准。
+
 ## 兼容性与注意事项
 
 - 默认 `layout` 改为 inline-premark 后，新建段带一个"始终预标记"的 slot，读者最多落后 `slotCount-1` 条（4096 槽下无感）；旧段/旧读者按段头布局走，无 ABI 影响。
