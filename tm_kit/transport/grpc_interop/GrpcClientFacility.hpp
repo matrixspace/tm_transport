@@ -189,16 +189,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                     }
                     void idleWork() {}
                     void waitForStart() {
-                        while (true) {
-                            std::unique_lock<std::mutex> lock(startMutex_);
-                            startCond_.wait_for(lock, std::chrono::milliseconds(1));
-                            if (channel_) {
-                                lock.unlock();
-                                break;
-                            } else {
-                                lock.unlock();
-                            }
-                        }
+                        std::unique_lock<std::mutex> lock(startMutex_);
+                        startCond_.wait(lock, [this]{ return (bool)channel_; });
+                        lock.unlock();
                     }
                 };
                 return M::template fromAbstractOnOrderFacility<Req,Resp>(new LocalF(locator));
