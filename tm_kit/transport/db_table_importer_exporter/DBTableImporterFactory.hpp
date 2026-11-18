@@ -200,13 +200,12 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
         {
             static_assert((infra::app_classification_v<M> == infra::AppClassification::RealTime), "repeated db table importer is only supported in real time mode");
             return M::template uniformSimpleImporter<std::vector<T>>(
-                [session,importerInput,interval](
-                    typename M::EnvironmentType *env
-                ) -> std::tuple<bool, typename M::template Data<std::vector<T>>> {
+                [session,importerInput,interval,first=true](
+                    typename M::EnvironmentType *env, typename M::ImporterStopContext const &stop
+                ) mutable -> std::tuple<bool, typename M::template Data<std::vector<T>>> {
                     using DF = transport::struct_field_info_utils::db_table_importer_exporter::StructFieldInfoBasedDataFiller<T>;
-                    static bool first = true;
-                    if (!first) {
-                        std::this_thread::sleep_for(interval);
+                    if ((!first && stop.waitForStop(interval)) || stop.stopRequested()) {
+                        return {false, std::nullopt};
                     }
                     first = false;
                     try {
@@ -214,6 +213,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                         soci::rowset<soci::row> queryRes =
                             session->prepare << selectStatement<T>(session, importerInput);
                         for (auto const &r : queryRes) {
+                            if (stop.stopRequested()) {
+                                return {false, std::nullopt};
+                            }
                             value.push_back(DF::retrieveData(r,0));
                         }
                         return {
@@ -238,17 +240,15 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
             -> std::shared_ptr<typename M::template Importer<std::vector<T>>>
         {
             static_assert((infra::app_classification_v<M> == infra::AppClassification::RealTime), "repeated db table importer with key check is only supported in real time mode");
+            using Key = std::decay_t<decltype(std::declval<std::decay_t<KeyExtractor> &>()(std::declval<T>()))>;
+            using SeenKeys = std::unordered_set<Key, basic::struct_field_info_utils::StructFieldInfoBasedHash<Key>>;
             return M::template uniformSimpleImporter<std::vector<T>>(
-                [session,importerInput,interval,keyExtractor=std::move(keyExtractor)](
-                    typename M::EnvironmentType *env
+                [session,importerInput,interval,keyExtractor=std::move(keyExtractor),first=true,seen=SeenKeys{}](
+                    typename M::EnvironmentType *env, typename M::ImporterStopContext const &stop
                 ) mutable -> std::tuple<bool, typename M::template Data<std::vector<T>>> {
                     using DF = transport::struct_field_info_utils::db_table_importer_exporter::StructFieldInfoBasedDataFiller<T>;
-                    using Key = std::decay_t<decltype(keyExtractor(std::declval<T>()))>;
-                    static bool first = true;
-                    static std::unordered_set<Key, basic::struct_field_info_utils::StructFieldInfoBasedHash<Key>> seen;
-
-                    if (!first) {
-                        std::this_thread::sleep_for(interval);
+                    if ((!first && stop.waitForStop(interval)) || stop.stopRequested()) {
+                        return {false, std::nullopt};
                     }
                     first = false;
                     try {
@@ -256,6 +256,9 @@ namespace dev { namespace cd606 { namespace tm { namespace transport { namespace
                         soci::rowset<soci::row> queryRes =
                             session->prepare << selectStatement<T>(session, importerInput);
                         for (auto const &r : queryRes) {
+                            if (stop.stopRequested()) {
+                                return {false, std::nullopt};
+                            }
                             auto d = DF::retrieveData(r, 0);
                             auto k = keyExtractor(d);
                             if (seen.find(k) == seen.end()) {

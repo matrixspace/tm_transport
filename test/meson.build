@@ -15,3 +15,4 @@ if build_machine.system() == 'linux'
     subdir('threaded_handler_transport_test')
 endif
 subdir('aeron_ipc_test')
+subdir('db_poll_stop_test')
