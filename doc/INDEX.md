@@ -28,3 +28,5 @@
 - 2026-11-09：[执行器实现分层](../../tm_infra/doc/20261105-realtime-threaded-executor/executor-layering.md)：共享池接入测试切换到basic头文件和命名空间。
 
 - [修复条件变量无谓词 1ms 轮询等待（主记录在 tm_basic）](../../tm_basic/doc/20261117-fix-cv-1ms-poll/README.md) — 2026-11-17 完成：`GrpcClientFacility::waitForStart` 从 `wait_for(lock, 1ms)` 改为带谓词阻塞 `wait`。
+
+- 2026-11-18：[数据库轮询导入器停止评审修复](20261118-db-poll-stop/README.md)。重复导入器支持取消轮询等待，SQLite 验证首轮和实例隔离。
